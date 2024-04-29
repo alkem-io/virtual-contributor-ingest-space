@@ -1,0 +1,8 @@
+mutation uploadFileOnReference($file: Upload!, $uploadData: StorageBucketUploadFileOnReferenceInput!) {
+  uploadFileOnReference(file: $file, uploadData: $uploadData) {
+    id
+    description
+    name
+    uri
+  }
+}

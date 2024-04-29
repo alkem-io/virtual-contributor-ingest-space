@@ -1,0 +1,22 @@
+query organizations {
+  organizations {
+    id
+    nameID
+    profile {
+      id
+      displayName
+      visual(type: AVATAR) {
+        id
+        uri
+      }
+      description
+    }
+    agent {
+      id
+      credentials {
+        type
+        resourceID
+      }
+    }
+  }
+}

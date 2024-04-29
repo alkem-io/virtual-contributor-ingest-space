@@ -1,0 +1,21 @@
+mutation createContributionOnCallout(
+  $contributionData: CreateContributionOnCalloutInput!
+) {
+  createContributionOnCallout(contributionData: $contributionData) {
+    id
+    post {
+      nameID
+      profile {
+        id
+        displayName
+        tagset {
+          tags
+        }
+        description
+        visuals {
+          id
+        }
+      }
+    }
+  }
+}

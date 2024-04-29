@@ -1,0 +1,20 @@
+query hostInfo($spaceID: UUID_NAMEID!) {
+  space(ID: $spaceID) {
+    account {
+      id
+      host {
+        id
+        nameID
+        profile {
+          id
+          displayName
+          tagsets {
+            id
+            name
+            tags
+          }
+        }
+      }
+    }
+  }
+}

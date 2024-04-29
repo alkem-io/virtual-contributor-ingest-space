@@ -1,0 +1,5 @@
+query user($userID: UUID_NAMEID_EMAIL!) {
+  user(ID: $userID) {
+    ...UserDetails
+  }
+}

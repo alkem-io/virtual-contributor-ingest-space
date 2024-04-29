@@ -1,0 +1,10 @@
+query metadata {
+  platform {
+    metadata {
+      services {
+        name
+        version
+      }
+    }
+  }
+}

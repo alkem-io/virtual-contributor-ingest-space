@@ -1,0 +1,12 @@
+mutation createGroupOnOrganization($groupData: CreateUserGroupInput!) {
+  createGroupOnOrganization(groupData: $groupData) {
+    id
+    profile {
+      id
+      displayName
+       visual(type: AVATAR) {
+          id
+       }
+    }
+  }
+}

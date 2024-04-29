@@ -1,0 +1,13 @@
+mutation createOrganization($organizationData: CreateOrganizationInput!) {
+  createOrganization(organizationData: $organizationData) {
+    nameID
+    id
+    profile {
+      id
+      displayName
+      visual(type: AVATAR) {
+        id
+      }
+    }
+  }
+}

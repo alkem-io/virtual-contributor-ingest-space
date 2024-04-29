@@ -1,0 +1,12 @@
+mutation createGroupOnCommunity($groupData: CreateUserGroupInput!) {
+  createGroupOnCommunity(groupData: $groupData) {
+    id
+    profile {
+      id
+      displayName
+      visual(type: AVATAR) {
+         id
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+mutation updateSpace($spaceData: UpdateSpaceInput!) {
+  updateSpace(spaceData: $spaceData) {
+    nameID
+    account {
+      host {
+        nameID
+      }
+    }
+    community {
+      id
+    }
+    profile {
+      tagline
+      visuals {
+        id
+        name
+      }
+    }
+  }
+}

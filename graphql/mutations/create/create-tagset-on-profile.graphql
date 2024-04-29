@@ -1,0 +1,6 @@
+mutation createTagsetOnProfile($tagsetData: CreateTagsetOnProfileInput!) {
+  createTagsetOnProfile(tagsetData: $tagsetData) {
+    id
+    tags
+  }
+}

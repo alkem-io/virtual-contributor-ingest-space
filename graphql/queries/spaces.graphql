@@ -1,0 +1,13 @@
+query spaces {
+  spaces {
+    id
+    nameID
+    profile {
+      displayName
+      visuals {
+        name
+        id
+      }
+    }
+  }
+}
