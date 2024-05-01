@@ -1,5 +1,0 @@
-mutation updateProfile($profileData: UpdateProfileDirectInput!) {
-  updateProfile(profileData: $profileData) {
-    id
-  }
-}

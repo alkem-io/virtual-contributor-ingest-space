@@ -1,7 +1,0 @@
-mutation uploadImageOnVisual($file: Upload!, $uploadData: VisualUploadImageInput!) {
-  uploadImageOnVisual(file: $file, uploadData: $uploadData) {
-    id
-    name
-    uri
-  }
-}

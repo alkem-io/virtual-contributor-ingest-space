@@ -1,8 +1,0 @@
-mutation deleteReference($input: DeleteReferenceInput!) {
-  deleteReference(deleteData: $input) {
-    id
-    name
-    description
-    uri
-  }
-}
