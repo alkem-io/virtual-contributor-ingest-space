@@ -1,21 +1,36 @@
-import { ChromaClient } from 'chromadb'
-import Documents from './documents'
-import { OpenAIClient, AzureKeyCredential } from '@azure/openai'
-
+import { ChromaClient } from 'chromadb';
+import Documents from './documents';
+import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 
 export default async (space: string, docs: Documents) => {
-  const chroma = new ChromaClient({ path: process.env.CHROMA_PATH })
+  const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+  const key = process.env.AZURE_OPENAI_API_KEY;
+  const depolyment = process.env.EMBEDDINGS_DEPLOYMENT_NAME;
 
-  const forEmbed = docs.forEmbed()
+  if (!endpoint || !key || !depolyment) {
+    throw new Error('AI configuration missing from ENV.');
+  }
 
-  const openAi = new OpenAIClient(process.env.AZURE_OPENAI_ENDPOINT!, new AzureKeyCredential(process.env.AZURE_OPENAI_API_KEY!));
-  const { data } = await openAi.getEmbeddings(process.env.EMBEDDINGS_DEPLOYMENT_NAME!, forEmbed.documents);
+  console.log({
+    path: `http://${process.env.VECTOR_DB_HOST}:${process.env.VECTOR_DB_PORT}`,
+  });
 
-  const collection = await chroma.getOrCreateCollection({name: space})
+  const client = new ChromaClient({
+    path: `http://${process.env.VECTOR_DB_HOST}:${process.env.VECTOR_DB_PORT}`,
+  });
+
+  const heartbeat = await client.heartbeat();
+  console.log(heartbeat);
+
+  const forEmbed = docs.forEmbed();
+
+  const openAi = new OpenAIClient(endpoint, new AzureKeyCredential(key));
+  const { data } = await openAi.getEmbeddings(depolyment, forEmbed.documents);
+
+  const collection = await client.getOrCreateCollection({ name: space });
 
   await collection.add({
     ...forEmbed,
-    embeddings: data.map(({embedding}) => embedding)
-
-  })
-}
+    embeddings: data.map(({ embedding }) => embedding),
+  });
+};

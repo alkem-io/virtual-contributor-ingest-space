@@ -2,8 +2,10 @@ node_modules
 build
 *.log
 .env
+.env.development
 .DS_Store
 dist
 secrets/*.json
 .idea
 .vscode
+

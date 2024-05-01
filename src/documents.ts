@@ -1,4 +1,4 @@
-import { Metadata } from "chromadb";
+import { Metadata } from 'chromadb';
 
 export type DocumentType = 'space' | 'challenge' | 'callout';
 
@@ -7,10 +7,15 @@ export default class Documents {
   private documents: string[] = [];
   private metadatas: Metadata[] = [];
 
-  add(id: string, document: string, source: string, type: DocumentType): Documents {
-    this.ids.push(id)
-    this.documents.push(document)
-    this.metadatas.push({source, type})
+  add(
+    id: string,
+    document: string,
+    source: string,
+    type: DocumentType
+  ): Documents {
+    this.ids.push(id);
+    this.documents.push(document);
+    this.metadatas.push({ source, type });
     return this;
   }
 
@@ -19,6 +24,6 @@ export default class Documents {
       ids: this.ids,
       documents: this.documents,
       metadatas: this.metadatas,
-    }
+    };
   }
 }
