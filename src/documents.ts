@@ -11,11 +11,12 @@ export default class Documents {
     id: string,
     document: string,
     source: string,
-    type: DocumentType
+    type: DocumentType,
+    title: string
   ): Documents {
     this.ids.push(id);
     this.documents.push(document);
-    this.metadatas.push({ source, type });
+    this.metadatas.push({ source, type, title });
     return this;
   }
 

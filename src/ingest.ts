@@ -29,7 +29,7 @@ export default async (space: string, docs: Documents) => {
 
   const collection = await client.getOrCreateCollection({ name: space });
 
-  await collection.add({
+  await collection.upsert({
     ...forEmbed,
     embeddings: data.map(({ embedding }) => embedding),
   });

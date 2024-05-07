@@ -16,19 +16,19 @@ export const main = async (spaceId: string) => {
   logger.info(`Space ${space.nameID} loaded.`);
 
   const documents = new Documents();
-  const { id, source, document, type } = generateDocument(space);
-  documents.add(id, document, source, type);
+  const { id, source, document, type, title } = generateDocument(space);
+  documents.add(id, document, source, type, title);
 
   for (let i = 0; i < (space.subspaces || []).length; i++) {
     const challenge = (space.subspaces || [])[i];
-    const { id, source, document, type } = generateDocument(challenge);
-    documents.add(id, document, source, type);
+    const { id, source, document, type, title } = generateDocument(challenge);
+    documents.add(id, document, source, type, title);
 
     for (let j = 0; j < (challenge.collaboration?.callouts || []).length; j++) {
       const callout = (challenge.collaboration?.callouts || [])[j];
       const { id, type } = callout;
       const generated = generateDocument(callout.framing);
-      const source = generated.source;
+      const { title, source } = generated;
       let document = generated.document;
 
       // extra loop but will do for now
@@ -59,7 +59,13 @@ export const main = async (spaceId: string) => {
       if (processedMessages)
         document = `${document}\nMessages:\n${processedMessages}`;
 
-      documents.add(id, document, source, type as unknown as DocumentType);
+      documents.add(
+        id,
+        document,
+        source,
+        type as unknown as DocumentType,
+        title
+      );
     }
   }
   await ingest(space.nameID, documents);

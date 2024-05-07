@@ -5,6 +5,7 @@ interface GeneratedDocument {
   source: string;
   document: string;
   type: DocumentType;
+  title: string;
 }
 
 export default (docLike: any): GeneratedDocument => {
@@ -50,5 +51,5 @@ export default (docLike: any): GeneratedDocument => {
   if (processedRefs) document = `${document}\nReferences:\n${processedRefs}`;
 
   document = `${document}\nURL: ${source}`;
-  return { id, source, type, document };
+  return { id, source, type, document, title: displayName };
 };
