@@ -1,8 +1,18 @@
 import { ChromaClient } from 'chromadb';
 import Documents from './documents';
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
+import { logger } from '@alkemio/client-lib';
 
-export default async (space: string, docs: Documents) => {
+export enum SpaceIngestionPurpose {
+  Knowledge = 'kwnowledge',
+  Context = 'context',
+}
+
+export default async (
+  spaceNameID: string,
+  docs: Documents,
+  purpose: SpaceIngestionPurpose
+) => {
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
   const key = process.env.AZURE_OPENAI_API_KEY;
   const depolyment = process.env.EMBEDDINGS_DEPLOYMENT_NAME;
@@ -10,10 +20,6 @@ export default async (space: string, docs: Documents) => {
   if (!endpoint || !key || !depolyment) {
     throw new Error('AI configuration missing from ENV.');
   }
-
-  console.log({
-    path: `http://${process.env.VECTOR_DB_HOST}:${process.env.VECTOR_DB_PORT}`,
-  });
 
   const client = new ChromaClient({
     path: `http://${process.env.VECTOR_DB_HOST}:${process.env.VECTOR_DB_PORT}`,
@@ -27,7 +33,11 @@ export default async (space: string, docs: Documents) => {
   const openAi = new OpenAIClient(endpoint, new AzureKeyCredential(key));
   const { data } = await openAi.getEmbeddings(depolyment, forEmbed.documents);
 
-  const collection = await client.getOrCreateCollection({ name: space });
+  const name = `${spaceNameID}-${purpose}`;
+  logger.info(`Adding to collection ${name}`);
+  const collection = await client.getOrCreateCollection({
+    name,
+  });
 
   await collection.upsert({
     ...forEmbed,

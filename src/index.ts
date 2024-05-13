@@ -3,10 +3,10 @@ import { AlkemioClient, createConfigUsingEnvVars } from '@alkemio/client-lib';
 
 import Documents, { DocumentType } from './documents';
 import logger from './logger';
-import ingest from './ingest';
+import ingest, { SpaceIngestionPurpose } from './ingest';
 import generateDocument from './generate-document';
 
-export const main = async (spaceId: string) => {
+export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   logger.info(`Ingest invoked for space ${spaceId}`);
   const config = createConfigUsingEnvVars();
   const alkemioCliClient = new AlkemioClient(config);
@@ -68,7 +68,7 @@ export const main = async (spaceId: string) => {
       );
     }
   }
-  await ingest(space.nameID, documents);
+  await ingest(space.nameID, documents, purpose);
   logger.info('Space ingested.');
 };
 
@@ -83,7 +83,7 @@ export const main = async (spaceId: string) => {
   const connectionString = `amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@${RABBITMQ_HOST}:${RABBITMQ_PORT}`;
 
   const conn = await amqplib.connect(connectionString);
-  const queue = RABBITMQ_QUEUE ?? 'virtual-contributor-added-to-space';
+  const queue = RABBITMQ_QUEUE ?? 'ingest-space';
 
   const channel = await conn.createChannel();
   await channel.assertQueue(queue);
@@ -94,7 +94,7 @@ export const main = async (spaceId: string) => {
       //maybe share them in a package
       //publish a confifrmation
       const decoded = JSON.parse(JSON.parse(msg.content.toString()));
-      await main(decoded.spaceId);
+      await main(decoded.spaceId, decoded.purpose);
       // add rety mechanism as well
       channel.ack(msg);
     } else {
