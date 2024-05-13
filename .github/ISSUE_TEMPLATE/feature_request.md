@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ''
-labels: ''
+labels: "enhancement, ai, genai, virtual contributor, virtual contributor ingest space"
 assignees: ''
 
 ---
