@@ -1,8 +1,8 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
-labels: ''
+title: "BUG: "
+labels: "bug, ai, genai, virtual contributor, virtual contributor ingest space"
 assignees: ''
 
 ---
