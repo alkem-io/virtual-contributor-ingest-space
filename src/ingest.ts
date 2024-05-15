@@ -26,13 +26,18 @@ export default async (
   });
 
   const heartbeat = await client.heartbeat();
-  console.log(heartbeat);
+  logger.info(`Chrome heartbeat ${heartbeat}`);
 
   const forEmbed = docs.forEmbed();
 
   const openAi = new OpenAIClient(endpoint, new AzureKeyCredential(key));
-  const { data } = await openAi.getEmbeddings(depolyment, forEmbed.documents);
-
+  let data: any[] = [];
+  try {
+    const response = await openAi.getEmbeddings(depolyment, forEmbed.documents);
+    data = response.data;
+  } catch (e) {
+    logger.error('Embeeddings error.', e);
+  }
   const name = `${spaceNameID}-${purpose}`;
   logger.info(`Adding to collection ${name}`);
   const collection = await client.getOrCreateCollection({
