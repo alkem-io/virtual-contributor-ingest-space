@@ -1,10 +1,11 @@
 import amqplib from 'amqplib';
+import { Document } from 'langchain/document';
+
 import { AlkemioClient, createConfigUsingEnvVars } from '@alkemio/client-lib';
 
-import Documents, { DocumentType } from './documents';
 import logger from './logger';
 import ingest, { SpaceIngestionPurpose } from './ingest';
-import generateDocument from './generate-document';
+import generateDocument from './generate.document';
 
 export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   logger.info(`Ingest invoked for space ${spaceId}`);
@@ -15,27 +16,50 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
 
   logger.info(`Space ${space.nameID} loaded.`);
 
-  const documents = new Documents();
-  const { id, source, document, type, title } = generateDocument(space);
-  documents.add(id, document, source, type, title);
+  const documents: Document[] = [];
+  // const documents = new Documents();
+  const { documentId, source, pageContent, type, title } =
+    generateDocument(space);
+  documents.push(
+    new Document({
+      pageContent,
+      metadata: {
+        documentId,
+        source,
+        type,
+        title,
+      },
+    })
+  );
 
   for (let i = 0; i < (space.subspaces || []).length; i++) {
     const challenge = (space.subspaces || [])[i];
-    const { id, source, document, type, title } = generateDocument(challenge);
-    documents.add(id, document, source, type, title);
+    const { documentId, source, pageContent, type, title } =
+      generateDocument(challenge);
+    documents.push(
+      new Document({
+        pageContent,
+        metadata: {
+          documentId,
+          source,
+          type,
+          title,
+        },
+      })
+    );
 
     for (let j = 0; j < (challenge.collaboration?.callouts || []).length; j++) {
       const callout = (challenge.collaboration?.callouts || [])[j];
-      const { id, type } = callout;
+      const { id: documentId, type } = callout;
       const generated = generateDocument(callout.framing);
       const { title, source } = generated;
-      let document = generated.document;
+      let pageContent = generated.pageContent;
 
       // extra loop but will do for now
       const contributions = callout.contributions
         ?.filter((article: any) => !!article.link)
         .map((contribution: any) => {
-          const { document: contribArticle } = generateDocument(
+          const { pageContent: contribArticle } = generateDocument(
             contribution.link
           );
           return contribArticle;
@@ -43,7 +67,7 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
         .join('\n');
 
       if (contributions)
-        document = `${document}\nContributions:\n${contributions}`;
+        pageContent = `${pageContent}\nContributions:\n${contributions}`;
 
       const messages = callout.comments?.messages || [];
       const processedMessages = messages
@@ -57,19 +81,28 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
         .join('\n');
 
       if (processedMessages)
-        document = `${document}\nMessages:\n${processedMessages}`;
+        pageContent = `${pageContent}\nMessages:\n${processedMessages}`;
 
-      documents.add(
-        id,
-        document,
-        source,
-        type as unknown as DocumentType,
-        title
+      documents.push(
+        new Document({
+          pageContent,
+          metadata: {
+            documentId,
+            source,
+            type,
+            title,
+          },
+        })
       );
     }
   }
-  await ingest(space.nameID, documents, purpose);
-  logger.info('Space ingested.');
+  const ingestionResult = await ingest(space.nameID, documents, purpose);
+
+  if (ingestionResult) {
+    logger.info('Space ingested.');
+  } else {
+    logger.info('Ingestion error.');
+  }
 };
 
 (async () => {

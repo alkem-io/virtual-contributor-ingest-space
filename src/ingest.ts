@@ -1,7 +1,9 @@
-import { ChromaClient } from 'chromadb';
-import Documents from './documents';
-import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
+import { Document } from 'langchain/document';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { OpenAIClient, AzureKeyCredential, EmbeddingItem } from '@azure/openai';
 import { logger } from '@alkemio/client-lib';
+import { dbConnect } from './db.connect';
+import { Metadata } from 'chromadb';
 
 export enum SpaceIngestionPurpose {
   Knowledge = 'kwnowledge',
@@ -10,7 +12,7 @@ export enum SpaceIngestionPurpose {
 
 export default async (
   spaceNameID: string,
-  docs: Documents,
+  docs: Document[],
   purpose: SpaceIngestionPurpose
 ) => {
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
@@ -21,26 +23,70 @@ export default async (
     throw new Error('AI configuration missing from ENV.');
   }
 
-  const client = new ChromaClient({
-    path: `http://${process.env.VECTOR_DB_HOST}:${process.env.VECTOR_DB_PORT}`,
+  const chunkSize = process.env.CHUNK_SIZE;
+  const chunkOverlap = process.env.CHUNK_OVERLAP;
+  if (!chunkSize || !chunkOverlap) {
+    throw new Error('Chunk size/overlap missing.');
+  }
+
+  const splitter = new RecursiveCharacterTextSplitter({
+    chunkSize: parseInt(chunkSize),
+    chunkOverlap: parseInt(chunkOverlap),
   });
-
-  const heartbeat = await client.heartbeat();
-  console.log(heartbeat);
-
-  const forEmbed = docs.forEmbed();
-
-  const openAi = new OpenAIClient(endpoint, new AzureKeyCredential(key));
-  const { data } = await openAi.getEmbeddings(depolyment, forEmbed.documents);
 
   const name = `${spaceNameID}-${purpose}`;
-  logger.info(`Adding to collection ${name}`);
-  const collection = await client.getOrCreateCollection({
+  const ids: string[] = [];
+  const documents: string[] = [];
+  const metadatas: Array<Metadata> = [];
+
+  logger.info('Splitting documents...');
+  for (let docIndex = 0; docIndex < docs.length; docIndex++) {
+    const doc = docs[docIndex];
+    const splitted = await splitter.splitDocuments([doc]);
+    logger.info(
+      `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${
+        doc.metadata.documentId
+      }), # of chunks: ${splitted.length}`
+    );
+    splitted.forEach((chunk, chunkIndex) => {
+      ids.push(`${chunk.metadata.documentId}-chunk${chunkIndex}`);
+      documents.push(chunk.pageContent);
+      metadatas.push({ ...chunk.metadata, chunkIndex });
+    });
+  }
+
+  logger.info('Connecting to Chroma...');
+  const client = dbConnect();
+  const heartbeat = await client.heartbeat();
+  logger.info(`Chroma heartbeat ${heartbeat}`);
+
+  logger.info('Generating embeddings...');
+  const openAi = new OpenAIClient(endpoint, new AzureKeyCredential(key));
+  let data: EmbeddingItem[] = [];
+  try {
+    const response = await openAi.getEmbeddings(depolyment, documents);
+    data = response.data;
+  } catch (e) {
+    logger.error('Embeeddings error.', e);
+    return false;
+  }
+  logger.info('Embedding generated');
+
+  logger.info(`Deleting old collection: ${name}`);
+  await client.deleteCollection({ name });
+  logger.info(`Creating collection: ${name}`);
+  const collection = await client.createCollection({
     name,
+    metadata: { createdAt: new Date().getTime() },
   });
 
+  logger.info(`Adding to collection collection: ${name}`);
   await collection.upsert({
-    ...forEmbed,
+    ids,
+    documents,
+    metadatas,
     embeddings: data.map(({ embedding }) => embedding),
   });
+  logger.info(`Added to collection collection: ${name}`);
+  return true;
 };
