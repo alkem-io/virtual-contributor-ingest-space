@@ -1,10 +1,11 @@
 import amqplib from 'amqplib';
+import { Document } from 'langchain/document';
+
 import { AlkemioClient, createConfigUsingEnvVars } from '@alkemio/client-lib';
 
-import Documents, { DocumentType } from './documents';
 import logger from './logger';
 import ingest, { SpaceIngestionPurpose } from './ingest';
-import generateDocument from './generate-document';
+import generateDocument from './generate.document';
 
 export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   logger.info(`Ingest invoked for space ${spaceId}`);
@@ -15,14 +16,35 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
 
   logger.info(`Space ${space.nameID} loaded.`);
 
-  const documents = new Documents();
+  const documents: Document[] = [];
+  // const documents = new Documents();
   const { id, source, document, type, title } = generateDocument(space);
-  documents.add(id, document, source, type, title);
+  documents.push(
+    new Document({
+      pageContent: document,
+      metadata: {
+        documentId: id,
+        source,
+        type,
+        title,
+      },
+    })
+  );
 
   for (let i = 0; i < (space.subspaces || []).length; i++) {
     const challenge = (space.subspaces || [])[i];
     const { id, source, document, type, title } = generateDocument(challenge);
-    documents.add(id, document, source, type, title);
+    documents.push(
+      new Document({
+        pageContent: document,
+        metadata: {
+          documentId: id,
+          source,
+          type,
+          title,
+        },
+      })
+    );
 
     for (let j = 0; j < (challenge.collaboration?.callouts || []).length; j++) {
       const callout = (challenge.collaboration?.callouts || [])[j];
@@ -59,17 +81,26 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
       if (processedMessages)
         document = `${document}\nMessages:\n${processedMessages}`;
 
-      documents.add(
-        id,
-        document,
-        source,
-        type as unknown as DocumentType,
-        title
+      documents.push(
+        new Document({
+          pageContent: document,
+          metadata: {
+            documentId: id,
+            source,
+            type,
+            title,
+          },
+        })
       );
     }
   }
-  await ingest(space.nameID, documents, purpose);
-  logger.info('Space ingested.');
+  const ingestionResult = await ingest(space.nameID, documents, purpose);
+
+  if (ingestionResult) {
+    logger.info('Space ingested.');
+  } else {
+    logger.info('Ingestion error.');
+  }
 };
 
 (async () => {
