@@ -1,6 +1,6 @@
 {
   "name": "@alkemio/space-ingest",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "",
   "author": "Alkemio Foundation",
   "private": true,
@@ -40,7 +40,7 @@
     "typescript": "^4.1.2"
   },
   "dependencies": {
-    "@alkemio/client-lib": "file:../client-lib",
+    "@alkemio/client-lib": "^0.30.0",
     "@azure/openai": "^1.0.0-beta.12",
     "@dotenvx/dotenvx": "^0.35.1",
     "@langchain/community": "^0.2.4",
