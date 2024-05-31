@@ -1,21 +1,30 @@
 import amqplib from 'amqplib';
 import { Document } from 'langchain/document';
 
-import { AlkemioClient, createConfigUsingEnvVars } from '@alkemio/client-lib';
+import {
+  AlkemioClient,
+  Callout,
+  createConfigUsingEnvVars,
+} from '@alkemio/client-lib';
 
 import logger from './logger';
 import ingest, { SpaceIngestionPurpose } from './ingest';
 import generateDocument from './generate.document';
+import { handleCallout } from './callout.handlers';
 
 export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   logger.info(`Ingest invoked for space ${spaceId}`);
   const config = createConfigUsingEnvVars();
-  const alkemioCliClient = new AlkemioClient(config);
-  await alkemioCliClient.enableAuthentication();
-  const space = await alkemioCliClient.ingestSpace(spaceId);
+  const alkemioClient = new AlkemioClient(config);
+  await alkemioClient.enableAuthentication();
+  const space = await alkemioClient.ingestSpace(spaceId);
 
-  logger.info(`Space ${space.nameID} loaded.`);
+  process.env.TOKEN = alkemioClient.apiToken;
 
+  if (!space) {
+    logger.error(`Space ${spaceId} not found.`);
+    return;
+  }
   const documents: Document[] = [];
   // const documents = new Documents();
   const { documentId, source, pageContent, type, title } =
@@ -50,50 +59,16 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
 
     for (let j = 0; j < (challenge.collaboration?.callouts || []).length; j++) {
       const callout = (challenge.collaboration?.callouts || [])[j];
-      const { id: documentId, type } = callout;
-      const generated = generateDocument(callout.framing);
-      const { title, source } = generated;
-      let pageContent = generated.pageContent;
-
-      // extra loop but will do for now
-      const contributions = callout.contributions
-        ?.filter((article: any) => !!article.link)
-        .map((contribution: any) => {
-          const { pageContent: contribArticle } = generateDocument(
-            contribution.link
-          );
-          return contribArticle;
-        })
-        .join('\n');
-
-      if (contributions)
-        pageContent = `${pageContent}\nContributions:\n${contributions}`;
-
-      const messages = callout.comments?.messages || [];
-      const processedMessages = messages
-        .map((message: any) => {
-          const {
-            profile: { displayName: senderName, url: senderUrl },
-          } = message.sender!;
-          const postedOn = new Date(message.timestamp).toLocaleString('en-US');
-          return `\t${senderName} with profile link ${senderUrl} said '${message.message}' on ${postedOn}`;
-        })
-        .join('\n');
-
-      if (processedMessages)
-        pageContent = `${pageContent}\nMessages:\n${processedMessages}`;
-
-      documents.push(
-        new Document({
-          pageContent,
-          metadata: {
-            documentId,
-            source,
-            type,
-            title,
-          },
-        })
-      );
+      if (callout) {
+        const document = await handleCallout(
+          callout as Partial<Callout>,
+          alkemioClient
+        );
+        // empty doc - nothing to do here
+        if (document) {
+          documents.push(...document);
+        }
+      }
     }
   }
   const ingestionResult = await ingest(space.nameID, documents, purpose);
