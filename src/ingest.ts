@@ -23,15 +23,12 @@ export default async (
     throw new Error('AI configuration missing from ENV.');
   }
 
-  const chunkSize = process.env.CHUNK_SIZE;
-  const chunkOverlap = process.env.CHUNK_OVERLAP;
-  if (!chunkSize || !chunkOverlap) {
-    throw new Error('Chunk size/overlap missing.');
-  }
+  const chunkSize = parseInt(process.env.CHUNK_SIZE || '1000');
+  const chunkOverlap = parseInt(process.env.CHUNK_OVERLAP || '100');
 
   const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: parseInt(chunkSize),
-    chunkOverlap: parseInt(chunkOverlap),
+    chunkSize,
+    chunkOverlap,
   });
 
   const name = `${spaceNameID}-${purpose}`;
