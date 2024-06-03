@@ -69,21 +69,30 @@ export default async (
   }
   logger.info('Embedding generated');
 
-  logger.info(`Deleting old collection: ${name}`);
-  await client.deleteCollection({ name });
-  logger.info(`Creating collection: ${name}`);
-  const collection = await client.createCollection({
-    name,
-    metadata: { createdAt: new Date().getTime() },
-  });
+  try {
+    logger.info(`Deleting old collection: ${name}`);
+    await client.deleteCollection({ name });
+  } catch (e) {
+    logger.info(`Collection '${name}' doesn't exist.`);
+  }
 
-  logger.info(`Adding to collection collection: ${name}`);
-  await collection.upsert({
-    ids,
-    documents,
-    metadatas,
-    embeddings: data.map(({ embedding }) => embedding),
-  });
-  logger.info(`Added to collection collection: ${name}`);
+  try {
+    logger.info(`Creating collection: ${name}`);
+    const collection = await client.getOrCreateCollection({
+      name,
+      metadata: { createdAt: new Date().getTime() },
+    });
+
+    logger.info(`Adding to collection collection: ${name}`);
+    await collection.upsert({
+      ids,
+      documents,
+      metadatas,
+      embeddings: data.map(({ embedding }) => embedding),
+    });
+    logger.info(`Added to collection collection: ${name}`);
+  } catch (e) {
+    logger.error(`Error adding to collection: ${name}`, e);
+  }
   return true;
 };
