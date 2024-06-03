@@ -5,6 +5,7 @@ import { MimeType, AlkemioClient, Callout } from '@alkemio/client-lib';
 import { Document } from 'langchain/document';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocumentType } from '../document.type';
+import logger from '..//logger';
 
 const downloadDocument = async (
   uri: string,
@@ -18,29 +19,32 @@ const downloadDocument = async (
       client = http;
     }
 
-    client.get(
-      uri,
-      {
-        headers: {
-          authorization: `Bearer ${process.env.TOKEN}`,
+    client
+      .get(
+        uri,
+        {
+          headers: {
+            authorization: `Bearer ${process.env.TOKEN}`,
+          },
         },
-      },
-      res => {
-        const { statusCode } = res;
+        res => {
+          const { statusCode } = res;
 
-        if (statusCode !== 200) {
-          return reject(false);
+          if (statusCode !== 200) {
+            return reject(false);
+          }
+          // Image will be stored at this path
+          const filePath = fs.createWriteStream(path);
+          res.pipe(filePath);
+          filePath.on('finish', () => {
+            filePath.close();
+            return resolve(true);
+          });
         }
-
-        // Image will be stored at this path
-        const filePath = fs.createWriteStream(path);
-        res.pipe(filePath);
-        filePath.on('finish', () => {
-          filePath.close();
-          return resolve(true);
-        });
-      }
-    );
+      )
+      .on('error', e => {
+        reject(e);
+      });
   });
 };
 
@@ -78,11 +82,16 @@ export const linkCollectionHandler = async (
     if (!docInfo || docInfo.mimeType !== MimeType.Pdf) {
       continue;
     }
-    console.log(docInfo);
 
     const path = `/tmp/${documentId}`;
 
-    const download = await downloadDocument(link.uri, path);
+    let download;
+    try {
+      download = await downloadDocument(link.uri, path);
+    } catch (error) {
+      logger.error('Error downloading file:', error);
+      download = false;
+    }
 
     if (download) {
       const loader = new PDFLoader(path, {
@@ -98,6 +107,8 @@ export const linkCollectionHandler = async (
         title: link.profile.displayName,
       };
       documents.push(doc);
+
+      fs.unlinkSync(path);
     }
   }
   return documents;
