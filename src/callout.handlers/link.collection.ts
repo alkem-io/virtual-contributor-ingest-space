@@ -107,6 +107,8 @@ export const linkCollectionHandler = async (
         title: link.profile.displayName,
       };
       documents.push(doc);
+
+      fs.unlinkSync(path);
     }
   }
   return documents;
