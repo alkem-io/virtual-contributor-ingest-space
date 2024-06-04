@@ -17,7 +17,8 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   const config = createConfigUsingEnvVars();
   const alkemioClient = new AlkemioClient(config);
   await alkemioClient.enableAuthentication();
-  const space = await alkemioClient.ingestSpace(spaceId);
+
+  const space = await alkemioClient.ingestSpace(spaceId); // UUID
 
   process.env.TOKEN = alkemioClient.apiToken;
 
@@ -71,6 +72,8 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
       }
     }
   }
+
+  // UUID -> nameID
   const ingestionResult = await ingest(space.nameID, documents, purpose);
 
   if (ingestionResult) {
@@ -96,6 +99,7 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   const channel = await conn.createChannel();
   await channel.assertQueue(queue);
 
+  logger.info('Ingest Space ready. Waiting for RPC messages...');
   channel.consume(queue, async msg => {
     if (msg !== null) {
       //TODO create event class matching the one from Server
@@ -106,7 +110,7 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
       // add rety mechanism as well
       channel.ack(msg);
     } else {
-      console.log('Consumer cancelled by server');
+      logger.error('Consumer cancelled by server');
     }
   });
 })();

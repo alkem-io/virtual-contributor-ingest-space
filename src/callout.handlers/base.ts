@@ -25,18 +25,24 @@ export const baseHandler = async (
     pageContent = `${pageContent}\nContributions:\n${contributions}`;
 
   const messages = callout.comments?.messages || [];
-  const processedMessages = messages
-    .map((message: any) => {
-      const {
-        profile: { displayName: senderName, url: senderUrl },
-      } = message.sender!;
-      const postedOn = new Date(message.timestamp).toLocaleString('en-US');
-      return `\t${senderName} with profile link ${senderUrl} said '${message.message}' on ${postedOn}`;
-    })
-    .join('\n');
+  const processedMessages: string[] = [];
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i];
+    if (!message.sender) {
+      continue;
+    }
 
-  if (processedMessages)
-    pageContent = `${pageContent}\nMessages:\n${processedMessages}`;
+    const {
+      profile: { displayName: senderName, url: senderUrl },
+    } = message.sender;
+    const postedOn = new Date(message.timestamp).toLocaleString('en-US');
+    processedMessages.push(
+      `\t${senderName} with profile link ${senderUrl} said '${message.message}' on ${postedOn}`
+    );
+  }
+
+  if (processedMessages.length)
+    pageContent = `${pageContent}\nMessages:\n${processedMessages.join('\n')}`;
 
   return [
     new Document({
