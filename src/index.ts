@@ -13,13 +13,17 @@ import ingest, { SpaceIngestionPurpose } from './ingest';
 import generateDocument from './generate.document';
 import { handleCallout } from './callout.handlers';
 
-const handleSubspaces = async (
-  subspaces: Partial<Space>[],
+// recursive function
+// first invocation is with [rootSpace]
+// second invocation is with rootSpace.subspaces
+// third is with the subspaces of each subspace and so on
+const processSpaceTree = async (
+  spaces: Partial<Space>[],
   alkemioClient: AlkemioClient
 ) => {
   const documents: Document[] = [];
-  for (let i = 0; i < subspaces.length; i++) {
-    const subspace = subspaces[i];
+  for (let i = 0; i < spaces.length; i++) {
+    const subspace = spaces[i];
     const { documentId, source, pageContent, type, title } =
       generateDocument(subspace);
     documents.push(
@@ -48,7 +52,8 @@ const handleSubspaces = async (
       }
     }
 
-    const subspacesDocs = await handleSubspaces(
+    // incoke recursively for the subspaces of the rootSpace
+    const subspacesDocs = await processSpaceTree(
       (subspace.subspaces || []) as Partial<Space>[],
       alkemioClient
     );
@@ -72,16 +77,16 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     logger.error(`Space ${spaceId} not found.`);
     return;
   }
-  const documents: Document[] = await handleSubspaces(
+  const documents: Document[] = await processSpaceTree(
     [space as Partial<Space>],
     alkemioClient
   );
 
-  const subspacesDocs = await handleSubspaces(
-    (space.subspaces || []) as Partial<Space>[],
-    alkemioClient
-  );
-  documents.push(...subspacesDocs);
+  // const subspacesDocs = await processSpaceTree(
+  //   (space.subspaces || []) as Partial<Space>[],
+  //   alkemioClient
+  // );
+  // documents.push(...subspacesDocs);
 
   // UUID -> nameID
   const ingestionResult = await ingest(space.nameID, documents, purpose);
