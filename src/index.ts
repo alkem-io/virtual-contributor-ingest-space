@@ -72,20 +72,9 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     logger.error(`Space ${spaceId} not found.`);
     return;
   }
-  const documents: Document[] = [];
-  // const documents = new Documents();
-  const { documentId, source, pageContent, type, title } =
-    generateDocument(space);
-  documents.push(
-    new Document({
-      pageContent,
-      metadata: {
-        documentId,
-        source,
-        type,
-        title,
-      },
-    })
+  const documents: Document[] = await handleSubspaces(
+    [space as Partial<Space>],
+    alkemioClient
   );
 
   const subspacesDocs = await handleSubspaces(
