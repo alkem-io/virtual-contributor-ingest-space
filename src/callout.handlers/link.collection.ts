@@ -42,8 +42,8 @@ const downloadDocument = async (
           });
         }
       )
-      .on('error', e => {
-        reject(e);
+      .on('error', error => {
+        reject(error);
       });
   });
 };
@@ -89,7 +89,8 @@ export const linkCollectionHandler = async (
     try {
       download = await downloadDocument(link.uri, path);
     } catch (error) {
-      logger.error('Error downloading file:', error);
+      logger.error('Error downloading file:');
+      logger.error(error);
       download = false;
     }
 
@@ -98,16 +99,22 @@ export const linkCollectionHandler = async (
         splitPages: false,
       });
 
-      const [doc] = await loader.load();
+      try {
+        const [doc] = await loader.load();
 
-      doc.metadata = {
-        documentId,
-        source: link.uri,
-        type: DocumentType.PdfFile,
-        title: link.profile.displayName,
-      };
-      documents.push(doc);
-
+        if (doc) {
+          doc.metadata = {
+            documentId,
+            source: link.uri,
+            type: DocumentType.PdfFile,
+            title: link.profile.displayName,
+          };
+          documents.push(doc);
+        }
+      } catch (error) {
+        logger.error(`PDF file ${documentId} - ${link.uri} failed to load.`);
+        logger.error(error);
+      }
       fs.unlinkSync(path);
     }
   }

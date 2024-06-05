@@ -43,10 +43,12 @@ export default async (
     logger.info(
       `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${
         doc.metadata.documentId
-      }), # of chunks: ${splitted.length}`
+      }) of type ${doc.metadata.type}, # of chunks: ${splitted.length}`
     );
     splitted.forEach((chunk, chunkIndex) => {
-      ids.push(`${chunk.metadata.documentId}-chunk${chunkIndex}`);
+      ids.push(
+        `${chunk.metadata.documentId}-${chunk.metadata.type}-chunk${chunkIndex}`
+      );
       documents.push(chunk.pageContent);
       metadatas.push({ ...chunk.metadata, chunkIndex });
     });
