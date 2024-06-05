@@ -4,6 +4,7 @@ import { Document } from 'langchain/document';
 import {
   AlkemioClient,
   Callout,
+  Space,
   createConfigUsingEnvVars,
 } from '@alkemio/client-lib';
 
@@ -11,6 +12,51 @@ import logger from './logger';
 import ingest, { SpaceIngestionPurpose } from './ingest';
 import generateDocument from './generate.document';
 import { handleCallout } from './callout.handlers';
+
+const handleSubspaces = async (
+  subspaces: Partial<Space>[],
+  alkemioClient: AlkemioClient
+) => {
+  const documents: Document[] = [];
+  for (let i = 0; i < subspaces.length; i++) {
+    const subspace = subspaces[i];
+    const { documentId, source, pageContent, type, title } =
+      generateDocument(subspace);
+    documents.push(
+      new Document({
+        pageContent,
+        metadata: {
+          documentId,
+          source,
+          type,
+          title,
+        },
+      })
+    );
+
+    for (let j = 0; j < (subspace.collaboration?.callouts || []).length; j++) {
+      const callout = (subspace.collaboration?.callouts || [])[j];
+      if (callout) {
+        const document = await handleCallout(
+          callout as Partial<Callout>,
+          alkemioClient
+        );
+        // empty doc - nothing to do here
+        if (document) {
+          documents.push(...document);
+        }
+      }
+    }
+
+    const subspacesDocs = await handleSubspaces(
+      (subspace.subspaces || []) as Partial<Space>[],
+      alkemioClient
+    );
+    documents.push(...subspacesDocs);
+  }
+
+  return documents;
+};
 
 export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   logger.info(`Ingest invoked for space ${spaceId}`);
@@ -42,36 +88,11 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     })
   );
 
-  for (let i = 0; i < (space.subspaces || []).length; i++) {
-    const challenge = (space.subspaces || [])[i];
-    const { documentId, source, pageContent, type, title } =
-      generateDocument(challenge);
-    documents.push(
-      new Document({
-        pageContent,
-        metadata: {
-          documentId,
-          source,
-          type,
-          title,
-        },
-      })
-    );
-
-    for (let j = 0; j < (challenge.collaboration?.callouts || []).length; j++) {
-      const callout = (challenge.collaboration?.callouts || [])[j];
-      if (callout) {
-        const document = await handleCallout(
-          callout as Partial<Callout>,
-          alkemioClient
-        );
-        // empty doc - nothing to do here
-        if (document) {
-          documents.push(...document);
-        }
-      }
-    }
-  }
+  const subspacesDocs = await handleSubspaces(
+    (space.subspaces || []) as Partial<Space>[],
+    alkemioClient
+  );
+  documents.push(...subspacesDocs);
 
   // UUID -> nameID
   const ingestionResult = await ingest(space.nameID, documents, purpose);
