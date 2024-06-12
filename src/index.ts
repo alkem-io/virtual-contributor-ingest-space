@@ -82,12 +82,6 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     alkemioClient
   );
 
-  // const subspacesDocs = await processSpaceTree(
-  //   (space.subspaces || []) as Partial<Space>[],
-  //   alkemioClient
-  // );
-  // documents.push(...subspacesDocs);
-
   // UUID -> nameID
   const ingestionResult = await ingest(space.nameID, documents, purpose);
 

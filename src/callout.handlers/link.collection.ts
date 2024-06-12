@@ -3,9 +3,12 @@ import https from 'https';
 import http from 'http';
 import { MimeType, AlkemioClient, Callout } from '@alkemio/client-lib';
 import { Document } from 'langchain/document';
+import { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
-import { DocumentType } from '../document.type';
+import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
+import { MimeTypeDocumentMap } from '../document.type';
 import logger from '..//logger';
+import { SpreadSheetLoader, DocLoader } from '../loaders';
 
 const downloadDocument = async (
   uri: string,
@@ -31,7 +34,7 @@ const downloadDocument = async (
           const { statusCode } = res;
 
           if (statusCode !== 200) {
-            return reject(false);
+            return reject(res);
           }
           // Image will be stored at this path
           const filePath = fs.createWriteStream(path);
@@ -48,11 +51,27 @@ const downloadDocument = async (
   });
 };
 
+const fileLoaderFactories: {
+  [key in MimeType]?: (path: string) => BaseDocumentLoader;
+} = {
+  [MimeType.Pdf]: (path: string) => new PDFLoader(path, { splitPages: false }),
+
+  [MimeType.Ods]: (path: string) => new SpreadSheetLoader(path),
+  [MimeType.Xlsx]: (path: string) => new SpreadSheetLoader(path),
+  [MimeType.Xls]: (path: string) => new SpreadSheetLoader(path),
+
+  [MimeType.Odt]: (path: string) => new DocLoader(path),
+  [MimeType.Docx]: (path: string) => new DocxLoader(path),
+
+  // skip old MS Word .doc format as it's too hard to parse :(
+  // [MimeType.Doc]: (path: string) => new DocLoader(path),
+};
+
 export const linkCollectionHandler = async (
   callout: Partial<Callout>,
-  alkemioClient: AlkemioClient
+  alkemioClient: AlkemioClient | null
 ): Promise<Document[]> => {
-  if (!callout.contributions?.length) {
+  if (!callout.contributions?.length || !alkemioClient) {
     return [];
   }
   const profile = callout.framing?.profile;
@@ -79,7 +98,13 @@ export const linkCollectionHandler = async (
 
     const docInfo = await alkemioClient.document(documentId);
 
-    if (!docInfo || docInfo.mimeType !== MimeType.Pdf) {
+    logger.info(JSON.stringify(docInfo));
+
+    if (!docInfo) {
+      continue;
+    }
+    const loaderFactory = fileLoaderFactories[docInfo?.mimeType as MimeType];
+    if (!loaderFactory) {
       continue;
     }
 
@@ -95,24 +120,26 @@ export const linkCollectionHandler = async (
     }
 
     if (download) {
-      const loader = new PDFLoader(path, {
-        splitPages: false,
-      });
+      const loader = loaderFactory(path);
 
       try {
-        const [doc] = await loader.load();
+        const docs = await loader.load();
 
-        if (doc) {
+        for (let index = 0; index < docs.length; index++) {
+          const doc = docs[index];
           doc.metadata = {
-            documentId,
+            ...doc.metadata,
+            documentId: `${documentId}-page${index}`,
             source: link.uri,
-            type: DocumentType.PdfFile,
+            type: MimeTypeDocumentMap[docInfo.mimeType],
             title: link.profile.displayName,
           };
           documents.push(doc);
         }
       } catch (error) {
-        logger.error(`PDF file ${documentId} - ${link.uri} failed to load.`);
+        logger.error(
+          `${docInfo.mimeType} file ${documentId} - ${link.uri} failed to load.`
+        );
         logger.error(error);
       }
       fs.unlinkSync(path);

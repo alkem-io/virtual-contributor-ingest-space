@@ -5,7 +5,10 @@ import { linkCollectionHandler } from './link.collection';
 
 const handlersMap: Record<
   CalloutType,
-  (callout: Partial<Callout>, alkemioClient: any) => Promise<Document[]>
+  (
+    callout: Partial<Callout>,
+    alkemioClient: AlkemioClient | null
+  ) => Promise<Document[]>
 > = {
   [CalloutType.LinkCollection]: linkCollectionHandler,
   [CalloutType.Post]: baseHandler,
