@@ -32,15 +32,17 @@ const downloadDocument = async (
         },
         res => {
           const { statusCode } = res;
-
-          if (statusCode !== 200) {
-            return reject(res);
-          }
-          // Image will be stored at this path
+          // file will be stored at this path
           const filePath = fs.createWriteStream(path);
           res.pipe(filePath);
           filePath.on('finish', () => {
             filePath.close();
+            if (statusCode !== 200) {
+              // reject here so the result of the request is stored on the filesystem
+              // for easier debugging
+              return reject(res);
+            }
+
             return resolve(true);
           });
         }
@@ -113,9 +115,10 @@ export const linkCollectionHandler = async (
     let download;
     try {
       download = await downloadDocument(link.uri, path);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error downloading file:');
-      logger.error(error);
+      logger.error(error.message);
+      logger.error(error.stack);
       download = false;
     }
 
@@ -136,11 +139,12 @@ export const linkCollectionHandler = async (
           };
           documents.push(doc);
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error(
           `${docInfo.mimeType} file ${documentId} - ${link.uri} failed to load.`
         );
-        logger.error(error);
+        logger.error(error.message);
+        logger.error(error.stack);
       }
       fs.unlinkSync(path);
     }
