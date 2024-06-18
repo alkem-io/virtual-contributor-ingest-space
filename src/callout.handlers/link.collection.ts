@@ -12,7 +12,8 @@ import { SpreadSheetLoader, DocLoader } from '../loaders';
 
 const downloadDocument = async (
   uri: string,
-  path: string
+  path: string,
+  apiToken: string
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     let client;
@@ -27,7 +28,7 @@ const downloadDocument = async (
         uri,
         {
           headers: {
-            authorization: `Bearer ${process.env.TOKEN}`,
+            authorization: `Bearer ${apiToken}`,
           },
         },
         res => {
@@ -100,12 +101,12 @@ export const linkCollectionHandler = async (
 
     const docInfo = await alkemioClient.document(documentId);
 
-    logger.info(JSON.stringify(docInfo));
-
     if (!docInfo) {
       continue;
     }
-    const loaderFactory = fileLoaderFactories[docInfo?.mimeType as MimeType];
+
+    const loaderFactory = fileLoaderFactories[docInfo.mimeType];
+
     if (!loaderFactory) {
       continue;
     }
@@ -113,8 +114,9 @@ export const linkCollectionHandler = async (
     const path = `/tmp/${documentId}`;
 
     let download;
+
     try {
-      download = await downloadDocument(link.uri, path);
+      download = await downloadDocument(link.uri, path, alkemioClient.apiToken);
     } catch (error: any) {
       logger.error('Error downloading file:');
       logger.error(error.message);
