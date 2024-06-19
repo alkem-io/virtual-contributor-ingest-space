@@ -67,11 +67,25 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   logger.info(`Ingest invoked for space ${spaceId}`);
   const config = createConfigUsingEnvVars();
   const alkemioClient = new AlkemioClient(config);
-  await alkemioClient.enableAuthentication();
 
-  const space = await alkemioClient.ingestSpace(spaceId); // UUID
+  // make sure the service user has valid credentials
+  try {
+    await alkemioClient.enableAuthentication();
+  } catch (error: any) {
+    logger.error(error.message);
+    logger.error(error.stack);
+    return;
+  }
 
-  process.env.TOKEN = alkemioClient.apiToken;
+  // make sure the service user has sufficient priviliges
+  let space;
+  try {
+    space = await alkemioClient.ingestSpace(spaceId); // UUID
+  } catch (error: any) {
+    logger.error(error.message);
+    logger.error(error.stack);
+    return;
+  }
 
   if (!space) {
     logger.error(`Space ${spaceId} not found.`);
@@ -82,20 +96,16 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     alkemioClient
   );
 
-  // const subspacesDocs = await processSpaceTree(
-  //   (space.subspaces || []) as Partial<Space>[],
-  //   alkemioClient
-  // );
-  // documents.push(...subspacesDocs);
-
   // UUID -> nameID
   const ingestionResult = await ingest(space.nameID, documents, purpose);
 
   if (ingestionResult) {
-    logger.info('Space ingested.');
+    logger.info('Space embedded.');
   } else {
-    logger.info('Ingestion error.');
+    logger.error('Embedding error.');
   }
+
+  return true;
 };
 
 (async () => {
@@ -121,9 +131,14 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
       //maybe share them in a package
       //publish a confifrmation
       const decoded = JSON.parse(JSON.parse(msg.content.toString()));
-      await main(decoded.spaceId, decoded.purpose);
+      const result = await main(decoded.spaceId, decoded.purpose);
       // add rety mechanism as well
       channel.ack(msg);
+      if (result) {
+        logger.info('Ingestion completed successfully.');
+      } else {
+        logger.error('Ingestion failed.');
+      }
     } else {
       logger.error('Consumer cancelled by server');
     }
