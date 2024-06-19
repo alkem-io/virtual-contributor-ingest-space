@@ -16,14 +16,14 @@ export class DocLoader extends BaseDocumentLoader {
     return new Promise((resolve, reject) => {
       const fileBuffers = fs.readFileSync(this.filePath);
       parseOfficeAsync(fileBuffers)
-        .then(pageContent => {
+        .then((pageContent: string) => {
           resolve([
             new Document({
               pageContent,
             }),
           ]);
         })
-        .catch(err => {
+        .catch((err: Error) => {
           reject(err);
         });
     });
@@ -32,7 +32,7 @@ export class DocLoader extends BaseDocumentLoader {
 
 async function DocLoaderImports() {
   try {
-    const { parseOfficeAsync, parseOffice } = await import('officeParser');
+    const { parseOfficeAsync, parseOffice } = await import('officeparser');
     return { parseOffice, parseOfficeAsync };
   } catch (e) {
     console.error(e);
