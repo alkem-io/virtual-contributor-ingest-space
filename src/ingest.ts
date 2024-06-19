@@ -4,6 +4,7 @@ import { OpenAIClient, AzureKeyCredential, EmbeddingItem } from '@azure/openai';
 import { logger } from '@alkemio/client-lib';
 import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
+import { DocumentType } from './document.type';
 
 export enum SpaceIngestionPurpose {
   Knowledge = 'kwnowledge',
@@ -39,7 +40,15 @@ export default async (
   logger.info('Splitting documents...');
   for (let docIndex = 0; docIndex < docs.length; docIndex++) {
     const doc = docs[docIndex];
-    const splitted = await splitter.splitDocuments([doc]);
+
+    let splitted;
+    // do not split spreadhseets to prevent data loss
+    if (doc.metadata.type === DocumentType.SpreadSheet) {
+      splitted = [doc];
+    } else {
+      splitted = await splitter.splitDocuments([doc]);
+    }
+
     logger.info(
       `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${
         doc.metadata.documentId

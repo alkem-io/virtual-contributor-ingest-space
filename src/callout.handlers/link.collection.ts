@@ -3,13 +3,17 @@ import https from 'https';
 import http from 'http';
 import { MimeType, AlkemioClient, Callout } from '@alkemio/client-lib';
 import { Document } from 'langchain/document';
+import { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
-import { DocumentType } from '../document.type';
+import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
+import { MimeTypeDocumentMap } from '../document.type';
 import logger from '..//logger';
+import { SpreadSheetLoader, DocLoader } from '../loaders';
 
 const downloadDocument = async (
   uri: string,
-  path: string
+  path: string,
+  apiToken: string
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     let client;
@@ -24,20 +28,22 @@ const downloadDocument = async (
         uri,
         {
           headers: {
-            authorization: `Bearer ${process.env.TOKEN}`,
+            authorization: `Bearer ${apiToken}`,
           },
         },
         res => {
           const { statusCode } = res;
-
-          if (statusCode !== 200) {
-            return reject(false);
-          }
-          // Image will be stored at this path
+          // file will be stored at this path
           const filePath = fs.createWriteStream(path);
           res.pipe(filePath);
           filePath.on('finish', () => {
             filePath.close();
+            if (statusCode !== 200) {
+              // reject here so the result of the request is stored on the filesystem
+              // for easier debugging
+              return reject(res);
+            }
+
             return resolve(true);
           });
         }
@@ -48,11 +54,27 @@ const downloadDocument = async (
   });
 };
 
+const fileLoaderFactories: {
+  [key in MimeType]?: (path: string) => BaseDocumentLoader;
+} = {
+  [MimeType.Pdf]: (path: string) => new PDFLoader(path, { splitPages: false }),
+
+  [MimeType.Ods]: (path: string) => new SpreadSheetLoader(path),
+  [MimeType.Xlsx]: (path: string) => new SpreadSheetLoader(path),
+  [MimeType.Xls]: (path: string) => new SpreadSheetLoader(path),
+
+  [MimeType.Odt]: (path: string) => new DocLoader(path),
+  [MimeType.Docx]: (path: string) => new DocxLoader(path),
+
+  // skip old MS Word .doc format as it's too hard to parse :(
+  // [MimeType.Doc]: (path: string) => new DocLoader(path),
+};
+
 export const linkCollectionHandler = async (
   callout: Partial<Callout>,
-  alkemioClient: AlkemioClient
+  alkemioClient: AlkemioClient | null
 ): Promise<Document[]> => {
-  if (!callout.contributions?.length) {
+  if (!callout.contributions?.length || !alkemioClient) {
     return [];
   }
   const profile = callout.framing?.profile;
@@ -77,43 +99,59 @@ export const linkCollectionHandler = async (
       continue;
     }
 
-    const docInfo = await alkemioClient.document(documentId);
+    let docInfo;
+    try {
+      docInfo = await alkemioClient.document(documentId);
+      if (!docInfo) {
+        continue;
+      }
+    } catch (error) {
+      logger.error(error);
+      continue;
+    }
 
-    if (!docInfo || docInfo.mimeType !== MimeType.Pdf) {
+    const loaderFactory = fileLoaderFactories[docInfo.mimeType];
+
+    if (!loaderFactory) {
       continue;
     }
 
     const path = `/tmp/${documentId}`;
 
     let download;
+
     try {
-      download = await downloadDocument(link.uri, path);
-    } catch (error) {
+      download = await downloadDocument(link.uri, path, alkemioClient.apiToken);
+    } catch (error: any) {
       logger.error('Error downloading file:');
-      logger.error(error);
+      logger.error(error.message);
+      logger.error(error.stack);
       download = false;
     }
 
     if (download) {
-      const loader = new PDFLoader(path, {
-        splitPages: false,
-      });
+      const loader = loaderFactory(path);
 
       try {
-        const [doc] = await loader.load();
+        const docs = await loader.load();
 
-        if (doc) {
+        for (let index = 0; index < docs.length; index++) {
+          const doc = docs[index];
           doc.metadata = {
-            documentId,
+            ...doc.metadata,
+            documentId: `${documentId}-page${index}`,
             source: link.uri,
-            type: DocumentType.PdfFile,
+            type: MimeTypeDocumentMap[docInfo.mimeType],
             title: link.profile.displayName,
           };
           documents.push(doc);
         }
-      } catch (error) {
-        logger.error(`PDF file ${documentId} - ${link.uri} failed to load.`);
-        logger.error(error);
+      } catch (error: any) {
+        logger.error(
+          `${docInfo.mimeType} file ${documentId} - ${link.uri} failed to load.`
+        );
+        logger.error(error.message);
+        logger.error(error.stack);
       }
       fs.unlinkSync(path);
     }
