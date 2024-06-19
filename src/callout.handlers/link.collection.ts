@@ -99,9 +99,14 @@ export const linkCollectionHandler = async (
       continue;
     }
 
-    const docInfo = await alkemioClient.document(documentId);
-
-    if (!docInfo) {
+    let docInfo;
+    try {
+      docInfo = await alkemioClient.document(documentId);
+      if (!docInfo) {
+        continue;
+      }
+    } catch (error) {
+      logger.error(error);
       continue;
     }
 
