@@ -80,7 +80,7 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   // make sure the service user has sufficient priviliges
   let space;
   try {
-    space = await alkemioClient.ingestSpace(spaceId); // UUID
+    space = await alkemioClient.ingestSpace(spaceId);
   } catch (error: any) {
     logger.error(error.message);
     logger.error(error.stack);
@@ -96,8 +96,7 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     alkemioClient
   );
 
-  // UUID -> nameID
-  const ingestionResult = await ingest(space.nameID, documents, purpose);
+  const ingestionResult = await ingest(space.id, documents, purpose);
 
   if (ingestionResult) {
     logger.info('Space embedded.');
