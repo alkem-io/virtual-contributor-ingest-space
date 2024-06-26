@@ -64,7 +64,7 @@ const processSpaceTree = async (
 };
 
 export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
-  logger.info(`Ingest invoked for space ${spaceId}`);
+  logger.info(`Ingestion started for space: ${spaceId}`);
   const config = createConfigUsingEnvVars();
   const alkemioClient = new AlkemioClient(config);
 
@@ -123,13 +123,21 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   const channel = await conn.createChannel();
   await channel.assertQueue(queue);
 
+  // important! handle message in a sequemce instead of paralell; for some reason
+  // _spamming_ the queue with messages results in all sorts of random exceptions;
+  //
+  // being able to bomb the queue with messages is important for a collection name migration
+  // we need to do
+  channel.prefetch(1);
+
   logger.info('Ingest Space ready. Waiting for RPC messages...');
-  channel.consume(queue, async msg => {
+  await channel.consume(queue, async msg => {
     if (msg !== null) {
       //TODO create event class matching the one from Server
       //maybe share them in a package
       //publish a confifrmation
       const decoded = JSON.parse(JSON.parse(msg.content.toString()));
+      logger.info(`Ingest invoked for space: ${decoded.spaceId}`);
       const result = await main(decoded.spaceId, decoded.purpose);
       // add rety mechanism as well
       channel.ack(msg);

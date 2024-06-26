@@ -37,7 +37,7 @@ export default async (
   const documents: string[] = [];
   const metadatas: Array<Metadata> = [];
 
-  logger.info('Splitting documents...');
+  logger.info(`Splitting documents for space: ${spaceNameID}`);
   for (let docIndex = 0; docIndex < docs.length; docIndex++) {
     const doc = docs[docIndex];
 
