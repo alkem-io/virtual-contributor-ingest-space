@@ -1,17 +1,13 @@
 import amqplib from 'amqplib';
 import { Document } from 'langchain/document';
 
-import { Callout, Space, createConfigUsingEnvVars } from '@alkemio/client-lib';
+import { Callout, SpaceIngestionPurpose, Space } from './generated/graphql';
 
 import logger from './logger';
-import ingest, { SpaceIngestionPurpose } from './ingest';
+import ingest from './ingest';
 import generateDocument from './generate.document';
 import { handleCallout } from './callout.handlers';
-// <<<<<<< Updated upstream
 import { AlkemioCliClient } from './graphql-client/AlkemioCliClient';
-// =======
-// import { DocumentType } from './document.type';
-// >>>>>>> Stashed changes
 
 // recursive function
 // first invocation is with [rootSpace]
@@ -65,8 +61,7 @@ const processSpaceTree = async (
 
 export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   logger.info(`Ingestion started for space: ${spaceId}`);
-  const config = createConfigUsingEnvVars();
-  const alkemioClient = new AlkemioCliClient(config, logger);
+  const alkemioClient = new AlkemioCliClient();
 
   // make sure the service user has valid credentials
   try {
@@ -97,15 +92,17 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   );
 
   console.log(
-    documents.map(doc => {
-      // if (doc.metadata.type === DocumentType.POST) {
-      //   return doc.pageContent;
-      // }
-      return doc.metadata.type;
-    })
+    new Set(
+      documents.map(doc => {
+        // if (doc.metadata.type === DocumentType.POST) {
+        //   return doc.pageContent;
+        // }
+        return doc.metadata.type;
+      })
+    )
   );
 
-  const ingestionResult = true; //await ingest(space.id, documents, purpose);
+  const ingestionResult = await ingest(space.id, documents, purpose);
 
   if (ingestionResult) {
     logger.info('Space embedded.');

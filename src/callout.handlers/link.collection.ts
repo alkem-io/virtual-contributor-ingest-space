@@ -1,7 +1,7 @@
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import { MimeType, Callout } from '@alkemio/client-lib';
+import { MimeType, Callout } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';

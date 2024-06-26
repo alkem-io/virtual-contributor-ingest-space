@@ -2,17 +2,40 @@
 import { GraphQLClient } from 'graphql-request';
 import { Sdk, getSdk } from '../generated/graphql';
 import { Logger } from 'winston';
-import { AlkemioClient, AlkemioClientConfig } from '@alkemio/client-lib';
+import {
+  AlkemioClient,
+  AlkemioClientConfig as BaseAlkemioClientConfig,
+  createConfigUsingEnvVars,
+} from '@alkemio/client-lib';
+import logger from '../logger';
+
+interface AlkemioClientConfig extends BaseAlkemioClientConfig {
+  logger: Logger;
+}
 
 export class AlkemioCliClient {
   public config!: AlkemioClientConfig;
   public sdkClient!: Sdk;
   public alkemioLibClient!: AlkemioClient;
   public logger: Logger;
+  public apiToken!: string;
 
-  constructor(config: AlkemioClientConfig, logger: Logger) {
+  constructor(config?: AlkemioClientConfig) {
+    if (!config) {
+      config = createConfigUsingEnvVars();
+    }
+
+    if (!config) {
+      throw new Error('Unable to find env vars config');
+    }
+
     this.config = config;
-    this.logger = logger;
+    if (config.logger) {
+      this.logger = config.logger;
+    } else {
+      this.logger = logger;
+    }
+    this.apiToken = 'Not set yet!';
     this.logger.info(`Alkemio server: ${config.apiEndpointPrivateGraphql}`);
   }
 
@@ -20,12 +43,12 @@ export class AlkemioCliClient {
     try {
       this.alkemioLibClient = new AlkemioClient(this.config);
       await this.alkemioLibClient.enableAuthentication();
-      const apiToken = this.alkemioLibClient.apiToken;
+      this.apiToken = this.alkemioLibClient.apiToken;
+      this.logger.info(`API token: ${this.apiToken}`);
 
-      this.logger.info(`API token: ${apiToken}`);
       const client = new GraphQLClient(this.config.apiEndpointPrivateGraphql, {
         headers: {
-          authorization: `Bearer ${apiToken}`,
+          authorization: `Bearer ${this.apiToken}`,
         },
       });
       this.sdkClient = getSdk(client);
@@ -48,13 +71,12 @@ export class AlkemioCliClient {
   public async ingestSpace(spaceID: string) {
     const result = await this.sdkClient.spaceIngest({ spaceID });
 
-    return result.data;
+    return result.data.lookup.space;
   }
 
   public async document(documentID: string) {
-    const response = await this.sdkClient.document({
-      id: documentID,
-    });
-    return response.data?.lookup.document;
+    const result = await this.sdkClient.document({ documentID });
+
+    return result.data.lookup.document;
   }
 }

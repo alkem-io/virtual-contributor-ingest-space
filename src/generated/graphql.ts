@@ -12484,7 +12484,7 @@ export type Resolvers<ContextType = any> = {
 };
 
 export type DocumentQueryVariables = Exact<{
-  id: Scalars['UUID'];
+  documentID: Scalars['UUID'];
 }>;
 
 export type DocumentQuery = {
@@ -13266,9 +13266,9 @@ export const UserAgentFragmentDoc = gql`
   }
 `;
 export const DocumentDocument = gql`
-  query document($id: UUID!) {
+  query document($documentID: UUID!) {
     lookup {
-      document(ID: $id) {
+      document(ID: $documentID) {
         id
         mimeType
         url

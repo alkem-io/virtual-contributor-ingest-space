@@ -1,4 +1,4 @@
-import { Callout, CalloutType } from '@alkemio/client-lib';
+import { Callout, CalloutType } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import { baseHandler } from './base';
 import { linkCollectionHandler } from './link.collection';

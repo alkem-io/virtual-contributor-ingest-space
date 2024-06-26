@@ -1,6 +1,6 @@
-query document($id: UUID!){
+query document($documentID: UUID!){
 	lookup {
-    document(ID: $id) {
+    document(ID: $documentID) {
       id
       mimeType
       url

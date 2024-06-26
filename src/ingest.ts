@@ -1,15 +1,11 @@
+import { SpaceIngestionPurpose } from './generated/graphql';
 import { Document } from 'langchain/document';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { OpenAIClient, AzureKeyCredential, EmbeddingItem } from '@azure/openai';
-import { logger } from '@alkemio/client-lib';
+import logger from './logger';
 import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
 import { DocumentType } from './document.type';
-
-export enum SpaceIngestionPurpose {
-  Knowledge = 'kwnowledge',
-  Context = 'context',
-}
 
 export default async (
   spaceNameID: string,
@@ -42,8 +38,9 @@ export default async (
     const doc = docs[docIndex];
 
     let splitted;
+    console.log(doc.metadata.type);
     // do not split spreadhseets to prevent data loss
-    if (doc.metadata.type === DocumentType.SpreadSheet) {
+    if (doc.metadata.type === DocumentType.SPREADSHEET) {
       splitted = [doc];
     } else {
       splitted = await splitter.splitDocuments([doc]);
