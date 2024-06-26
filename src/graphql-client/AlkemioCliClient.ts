@@ -9,10 +9,12 @@ export class AlkemioCliClient {
   public sdkClient!: Sdk;
   public alkemioLibClient!: AlkemioClient;
   public logger: Logger;
+  public apiToken!: string;
 
   constructor(config: AlkemioClientConfig, logger: Logger) {
     this.config = config;
     this.logger = logger;
+    this.apiToken = 'Not set yet!';
     this.logger.info(`Alkemio server: ${config.apiEndpointPrivateGraphql}`);
   }
 
@@ -20,12 +22,12 @@ export class AlkemioCliClient {
     try {
       this.alkemioLibClient = new AlkemioClient(this.config);
       await this.alkemioLibClient.enableAuthentication();
-      const apiToken = this.alkemioLibClient.apiToken;
+      this.apiToken = this.alkemioLibClient.apiToken;
 
-      this.logger.info(`API token: ${apiToken}`);
+      this.logger.info(`API token: ${this.apiToken}`);
       const client = new GraphQLClient(this.config.apiEndpointPrivateGraphql, {
         headers: {
-          authorization: `Bearer ${apiToken}`,
+          authorization: `Bearer ${this.apiToken}`,
         },
       });
       this.sdkClient = getSdk(client);
