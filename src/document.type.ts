@@ -1,4 +1,4 @@
-import { CalloutType, MimeType, SpaceType } from './generated/graphql';
+import { CalloutType, MimeType, SpaceType } from './generated/graphql'; // '@alkemio/client-lib';
 
 export enum DocumentType {
   KNOWLEDGE = 'KNOWLEDGE',
@@ -8,6 +8,7 @@ export enum DocumentType {
   PDF_FILE = 'PDF_FILE',
   SPREADSHEET = 'SPREADSHEET',
   DOCUMENT = 'DOCUMENT',
+  // copy CalloutType here
   LINK_COLLECTION = 'LINK_COLLECTION',
   POST = 'POST',
   POST_COLLECTION = 'POST_COLLECTION',
@@ -24,7 +25,7 @@ export const typesMap: {
   [SpaceType.Opportunity]: DocumentType.SUBSPACE,
 };
 
-export const getType = (type: SpaceType | CalloutType): DocumentType => {
+export const mapType = (type: SpaceType | CalloutType): DocumentType => {
   const mapped = typesMap[type];
   if (mapped) {
     return mapped;

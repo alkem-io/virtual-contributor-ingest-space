@@ -91,17 +91,6 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     alkemioClient
   );
 
-  console.log(
-    new Set(
-      documents.map(doc => {
-        // if (doc.metadata.type === DocumentType.POST) {
-        //   return doc.pageContent;
-        // }
-        return doc.metadata.type;
-      })
-    )
-  );
-
   const ingestionResult = await ingest(space.id, documents, purpose);
 
   if (ingestionResult) {

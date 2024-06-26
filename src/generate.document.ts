@@ -1,4 +1,4 @@
-import { DocumentType, getType } from './document.type';
+import { DocumentType, mapType } from './document.type';
 
 interface GeneratedDocument {
   documentId: string;
@@ -56,7 +56,7 @@ export default (docLike: any): GeneratedDocument => {
   return {
     documentId,
     source,
-    type: getType(type),
+    type: mapType(type),
     pageContent,
     title: displayName,
   };
