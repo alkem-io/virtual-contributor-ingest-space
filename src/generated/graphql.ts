@@ -12483,6 +12483,18 @@ export type Resolvers<ContextType = any> = {
   WhiteboardTemplate?: WhiteboardTemplateResolvers<ContextType>;
 };
 
+export type DocumentQueryVariables = Exact<{
+  id: Scalars['UUID'];
+}>;
+
+export type DocumentQuery = {
+  lookup: {
+    document?:
+      | { id: string; mimeType: MimeType; url: string; displayName: string }
+      | undefined;
+  };
+};
+
 export type SpaceDetailsFragment = {
   id: string;
   nameID: string;
@@ -13253,6 +13265,18 @@ export const UserAgentFragmentDoc = gql`
     __typename
   }
 `;
+export const DocumentDocument = gql`
+  query document($id: UUID!) {
+    lookup {
+      document(ID: $id) {
+        id
+        mimeType
+        url
+        displayName
+      }
+    }
+  }
+`;
 export const MeDocument = gql`
   query me {
     me {
@@ -13295,6 +13319,7 @@ const defaultWrapper: SdkFunctionWrapper = (
   _operationName,
   _operationType
 ) => action();
+const DocumentDocumentString = print(DocumentDocument);
 const MeDocumentString = print(MeDocument);
 const SpaceIngestDocumentString = print(SpaceIngestDocument);
 export function getSdk(
@@ -13302,6 +13327,25 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
+    document(
+      variables: DocumentQueryVariables,
+      requestHeaders?: Dom.RequestInit['headers']
+    ): Promise<{
+      data: DocumentQuery;
+      extensions?: any;
+      headers: Dom.Headers;
+      status: number;
+    }> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.rawRequest<DocumentQuery>(DocumentDocumentString, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'document',
+        'query'
+      );
+    },
     me(
       variables?: MeQueryVariables,
       requestHeaders?: Dom.RequestInit['headers']

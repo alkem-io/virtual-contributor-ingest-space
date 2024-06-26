@@ -7,7 +7,11 @@ import logger from './logger';
 import ingest, { SpaceIngestionPurpose } from './ingest';
 import generateDocument from './generate.document';
 import { handleCallout } from './callout.handlers';
+// <<<<<<< Updated upstream
 import { AlkemioCliClient } from './graphql-client/AlkemioCliClient';
+// =======
+// import { DocumentType } from './document.type';
+// >>>>>>> Stashed changes
 
 // recursive function
 // first invocation is with [rootSpace]
@@ -92,7 +96,16 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     alkemioClient
   );
 
-  const ingestionResult = await ingest(space.id, documents, purpose);
+  console.log(
+    documents.map(doc => {
+      // if (doc.metadata.type === DocumentType.POST) {
+      //   return doc.pageContent;
+      // }
+      return doc.metadata.type;
+    })
+  );
+
+  const ingestionResult = true; //await ingest(space.id, documents, purpose);
 
   if (ingestionResult) {
     logger.info('Space embedded.');

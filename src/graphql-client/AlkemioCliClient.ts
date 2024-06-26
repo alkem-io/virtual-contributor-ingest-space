@@ -3,7 +3,6 @@ import { GraphQLClient } from 'graphql-request';
 import { Sdk, getSdk } from '../generated/graphql';
 import { Logger } from 'winston';
 import { AlkemioClient, AlkemioClientConfig } from '@alkemio/client-lib';
-import { UUID } from 'crypto';
 
 export class AlkemioCliClient {
   public config!: AlkemioClientConfig;
@@ -50,5 +49,12 @@ export class AlkemioCliClient {
     const result = await this.sdkClient.spaceIngest({ spaceID });
 
     return result.data;
+  }
+
+  public async document(documentID: string) {
+    const response = await this.sdkClient.document({
+      id: documentID,
+    });
+    return response.data?.lookup.document;
   }
 }
