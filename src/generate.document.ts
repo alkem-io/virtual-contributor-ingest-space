@@ -1,4 +1,4 @@
-import { DocumentType } from './document.type';
+import { DocumentType, mapType } from './document.type';
 
 interface GeneratedDocument {
   documentId: string;
@@ -53,5 +53,11 @@ export default (docLike: any): GeneratedDocument => {
     pageContent = `${pageContent}\nReferences:\n${processedRefs}`;
 
   pageContent = `${pageContent}\nURL: ${source}`;
-  return { documentId, source, type, pageContent, title: displayName };
+  return {
+    documentId,
+    source,
+    type: mapType(type),
+    pageContent,
+    title: displayName,
+  };
 };

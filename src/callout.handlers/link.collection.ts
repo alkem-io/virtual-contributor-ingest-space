@@ -1,7 +1,7 @@
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import { MimeType, AlkemioClient, Callout } from '@alkemio/client-lib';
+import { MimeType, Callout } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
@@ -9,6 +9,7 @@ import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { MimeTypeDocumentMap } from '../document.type';
 import logger from '..//logger';
 import { SpreadSheetLoader, DocLoader } from '../loaders';
+import { AlkemioCliClient } from 'src/graphql-client/AlkemioCliClient';
 
 const downloadDocument = async (
   uri: string,
@@ -72,7 +73,7 @@ const fileLoaderFactories: {
 
 export const linkCollectionHandler = async (
   callout: Partial<Callout>,
-  alkemioClient: AlkemioClient | null
+  alkemioClient: AlkemioCliClient | null
 ): Promise<Document[]> => {
   if (!callout.contributions?.length || !alkemioClient) {
     return [];
