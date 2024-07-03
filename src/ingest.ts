@@ -7,6 +7,11 @@ import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
 import { DocumentType } from './document.type';
 
+const batch = (arr: any[], size: number) =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+    arr.slice(i * size, i * size + size)
+  );
+
 export default async (
   spaceNameID: string,
   docs: Document[],
@@ -38,7 +43,6 @@ export default async (
     const doc = docs[docIndex];
 
     let splitted;
-    console.log(doc.metadata.type);
     // do not split spreadhseets to prevent data loss
     if (doc.metadata.type === DocumentType.SPREADSHEET) {
       splitted = [doc];
@@ -67,15 +71,31 @@ export default async (
 
   logger.info('Generating embeddings...');
   const openAi = new OpenAIClient(endpoint, new AzureKeyCredential(key));
+
   let data: EmbeddingItem[] = [];
-  try {
-    const response = await openAi.getEmbeddings(depolyment, documents);
-    data = response.data;
-  } catch (e) {
-    logger.error('Embeeddings error.', e);
-    return false;
+
+  logger.info(`Total number of chunks: ${documents.length}`);
+  const docBatches = batch(documents, 20);
+  const metadataBatches = batch(metadatas, 20);
+  const idsBatches = batch(ids, 20);
+
+  for (let i = 0; i < docBatches.length; i++) {
+    try {
+      const batch = docBatches[i];
+      const response = await openAi.getEmbeddings(depolyment, batch);
+      data = [...data, ...response.data];
+      logger.info(
+        `Embedding generated for batch ${i}; Batch size is: ${batch.length}`
+      );
+    } catch (e) {
+      logger.error('Embeeddings error.', e);
+      logger.error(`Metadatas for batch are: ${metadataBatches[i]}`);
+      return false;
+    }
   }
+
   logger.info('Embedding generated');
+  logger.info(`Total number of generated embeddings: ${data.length}`);
 
   try {
     logger.info(`Deleting old collection: ${name}`);
@@ -84,23 +104,30 @@ export default async (
     logger.info(`Collection '${name}' doesn't exist.`);
   }
 
-  try {
-    logger.info(`Creating collection: ${name}`);
-    const collection = await client.getOrCreateCollection({
-      name,
-      metadata: { createdAt: new Date().getTime() },
-    });
+  const embeddingsBatches = batch(data, 20);
 
-    logger.info(`Adding to collection collection: ${name}`);
-    await collection.upsert({
-      ids,
-      documents,
-      metadatas,
-      embeddings: data.map(({ embedding }) => embedding),
-    });
-    logger.info(`Added to collection collection: ${name}`);
-  } catch (e) {
-    logger.error(`Error adding to collection: ${name}`, e);
+  for (let i = 0; i < embeddingsBatches.length; i++) {
+    try {
+      logger.info(`Creating collection: ${name}`);
+      const collection = await client.getOrCreateCollection({
+        name,
+        metadata: { createdAt: new Date().getTime() },
+      });
+
+      logger.info(`Adding to collection collection: ${name}`);
+      await collection.upsert({
+        ids: idsBatches[i],
+        documents: docBatches[i],
+        metadatas: metadataBatches[i],
+        embeddings: embeddingsBatches[i].map(({ embedding }) => embedding),
+      });
+      logger.info(
+        `Batch ${i} of size ${embeddingsBatches[i].length} added to collection ${name}`
+      );
+    } catch (e) {
+      logger.error(`Error adding to collection: ${name}`, e);
+      logger.error(`Metadatas for batch are: ${metadataBatches[i]}`);
+    }
   }
   return true;
 };
