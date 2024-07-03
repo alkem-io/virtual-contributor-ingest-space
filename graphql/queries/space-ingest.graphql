@@ -1,0 +1,13 @@
+query spaceIngest($spaceID: UUID!){
+  lookup {
+    space(ID: $spaceID) {
+      ...SpaceIngest
+      subspaces {
+        ...SpaceIngest
+        subspaces {
+          ...SpaceIngest
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+query document($documentID: UUID!){
+	lookup {
+    document(ID: $documentID) {
+      id
+      mimeType
+      url
+      displayName
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { Callout } from '@alkemio/client-lib';
+import { Callout } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import generateDocument from '../generate.document';
 

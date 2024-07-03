@@ -1,17 +1,13 @@
 import amqplib from 'amqplib';
 import { Document } from 'langchain/document';
 
-import {
-  AlkemioClient,
-  Callout,
-  Space,
-  createConfigUsingEnvVars,
-} from '@alkemio/client-lib';
+import { Callout, SpaceIngestionPurpose, Space } from './generated/graphql';
 
 import logger from './logger';
-import ingest, { SpaceIngestionPurpose } from './ingest';
+import ingest from './ingest';
 import generateDocument from './generate.document';
 import { handleCallout } from './callout.handlers';
+import { AlkemioCliClient } from './graphql-client/AlkemioCliClient';
 
 // recursive function
 // first invocation is with [rootSpace]
@@ -19,7 +15,7 @@ import { handleCallout } from './callout.handlers';
 // third is with the subspaces of each subspace and so on
 const processSpaceTree = async (
   spaces: Partial<Space>[],
-  alkemioClient: AlkemioClient
+  alkemioClient: AlkemioCliClient
 ) => {
   const documents: Document[] = [];
   for (let i = 0; i < spaces.length; i++) {
@@ -65,12 +61,11 @@ const processSpaceTree = async (
 
 export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   logger.info(`Ingestion started for space: ${spaceId}`);
-  const config = createConfigUsingEnvVars();
-  const alkemioClient = new AlkemioClient(config);
+  const alkemioClient = new AlkemioCliClient();
 
   // make sure the service user has valid credentials
   try {
-    await alkemioClient.enableAuthentication();
+    await alkemioClient.initialise();
   } catch (error: any) {
     logger.error(error.message);
     logger.error(error.stack);
