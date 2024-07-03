@@ -90,7 +90,6 @@ export default async (
     } catch (e) {
       logger.error('Embeeddings error.', e);
       logger.error(`Metadatas for batch are: ${metadataBatches[i]}`);
-      return false;
     }
   }
 
@@ -127,6 +126,7 @@ export default async (
     } catch (e) {
       logger.error(`Error adding to collection: ${name}`, e);
       logger.error(`Metadatas for batch are: ${metadataBatches[i]}`);
+      return false;
     }
   }
   return true;
