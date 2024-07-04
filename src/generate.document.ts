@@ -21,6 +21,7 @@ export default (docLike: any): GeneratedDocument => {
       displayName,
       location,
       visuals,
+      type: profileType,
     },
     context,
   } = docLike;
@@ -56,7 +57,7 @@ export default (docLike: any): GeneratedDocument => {
   return {
     documentId,
     source,
-    type: mapType(type),
+    type: mapType(type ?? profileType),
     pageContent,
     title: displayName,
   };

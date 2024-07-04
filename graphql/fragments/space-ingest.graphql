@@ -59,42 +59,24 @@ fragment SpaceIngest on Space {
       }
       framing {
         profile {
-          description
-          displayName
-          tagline
-          url
-          tagset {
-            tags
-          }
-          references {
-            description
-            name
-            uri
-          }
-          visuals {
-            uri
-            name
-          }
+          ...ProfileFields
         }
       }
       contributions {
+        post {
+          id
+          nameID
+          profile {
+            ...ProfileFields
+          }
+        }
         link {
+          id
           uri
           profile {
-            description
-            displayName
-            url
-            type
-            references {
-              description
-              name
-              uri
-            }
-            visuals {
-              uri
-              name
-            }
+            ...ProfileFields
           }
+
         }
       }
     }

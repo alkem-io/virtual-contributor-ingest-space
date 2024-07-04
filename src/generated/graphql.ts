@@ -559,8 +559,12 @@ export type AgentBeginVerifiedCredentialRequestOutput = {
 export type AiPersona = {
   /** The authorization rules for the entity */
   authorization?: Maybe<Authorization>;
-  /** The type of knowledge provided by this AI Persona. */
-  bodyOfKnowledgeType: AiPersonaBodyOfKnowledgeType;
+  /** A overview of knowledge provided by this AI Persona. */
+  bodyOfKnowledge: Scalars['Markdown'];
+  /** The body of knowledge ID used for the AI Persona. */
+  bodyOfKnowledgeID?: Maybe<Scalars['String']>;
+  /** The body of knowledge type used for the AI Persona. */
+  bodyOfKnowledgeType?: Maybe<AiPersonaBodyOfKnowledgeType>;
   /** The type of context sharing that are supported by this AI Persona when used. */
   dataAccessMode: AiPersonaDataAccessMode;
   /** The description for this AI Persona. */
@@ -592,24 +596,6 @@ export enum AiPersonaInteractionMode {
   DiscussionTagging = 'DISCUSSION_TAGGING',
 }
 
-export type AiPersonaQuestionInput = {
-  /** Virtual Persona Type. */
-  aiPersonaID: Scalars['UUID'];
-  /** The question that is being asked. */
-  question: Scalars['String'];
-};
-
-export type AiPersonaResult = {
-  /** The answer to the question */
-  answer: Scalars['String'];
-  /** The id of the answer; null if an error was returned */
-  id?: Maybe<Scalars['String']>;
-  /** The original question */
-  question: Scalars['String'];
-  /** The sources used to answer the question */
-  sources?: Maybe<Array<Source>>;
-};
-
 export type AiPersonaService = {
   /** The authorization rules for the entity */
   authorization?: Maybe<Authorization>;
@@ -638,24 +624,13 @@ export type AiPersonaServiceQuestionInput = {
   question: Scalars['String'];
 };
 
-export type AiPersonaServiceResult = {
-  /** The answer to the question */
-  answer: Scalars['String'];
-  /** The id of the answer; null if an error was returned */
-  id?: Maybe<Scalars['String']>;
-  /** The original question */
-  question: Scalars['String'];
-  /** The sources used to answer the question */
-  sources?: Maybe<Array<Source>>;
-};
-
 export type AiServer = {
   /** A particular AiPersonaService */
   aiPersonaService: AiPersonaService;
   /** The AiPersonaServices on this aiServer */
   aiPersonaServices: Array<AiPersonaService>;
   /** Ask the virtual persona engine for guidance. */
-  askAiPersonaServiceQuestion: AiPersonaServiceResult;
+  askAiPersonaServiceQuestion: MessageAnswerQuestion;
   /** The authorization rules for the entity */
   authorization?: Maybe<Authorization>;
   /** The default AiPersonaService in use on the aiServer. */
@@ -1083,17 +1058,6 @@ export type ChatGuidanceInput = {
   language?: InputMaybe<Scalars['String']>;
   /** The question that is being asked. */
   question: Scalars['String'];
-};
-
-export type ChatGuidanceResult = {
-  /** The answer to the question */
-  answer: Scalars['String'];
-  /** The id of the answer; null if an error was returned */
-  id?: Maybe<Scalars['String']>;
-  /** The original question */
-  question: Scalars['String'];
-  /** The sources used to answer the question */
-  sources?: Maybe<Array<Source>>;
 };
 
 export type Collaboration = {
@@ -1558,6 +1522,7 @@ export type CreateActorInput = {
 export type CreateAiPersonaInput = {
   aiPersonaService?: InputMaybe<CreateAiPersonaServiceInput>;
   aiPersonaServiceID?: InputMaybe<Scalars['UUID']>;
+  bodyOfKnowledge?: InputMaybe<Scalars['Markdown']>;
   description?: InputMaybe<Scalars['Markdown']>;
 };
 
@@ -2777,6 +2742,26 @@ export type Message = {
   timestamp: Scalars['Float'];
 };
 
+/** A detailed answer to a question, typically from an AI service. */
+export type MessageAnswerQuestion = {
+  /** The answer to the question */
+  answer: Scalars['String'];
+  /** The id of the answer; null if an error was returned */
+  id?: Maybe<Scalars['String']>;
+  /** The original question */
+  question: Scalars['String'];
+  /** The sources used to answer the question */
+  sources?: Maybe<Array<MessageAnswerToQuestionSource>>;
+};
+
+/** A source used in a detailed answer to a question. */
+export type MessageAnswerToQuestionSource = {
+  /** The title of the source */
+  title?: Maybe<Scalars['String']>;
+  /** The URI of the source */
+  uri?: Maybe<Scalars['String']>;
+};
+
 export type Metadata = {
   /** Collection of metadata about Alkemio services. */
   services: Array<ServiceMetadata>;
@@ -3008,6 +2993,8 @@ export type Mutation = {
   messageUser: Scalars['String'];
   /** Moves the specified Contribution to another Callout. */
   moveContributionToCallout: CalloutContribution;
+  /** Triggers a request to the backing AI Service to refresh the knowledge that is available to it. */
+  refreshVirtualContributorBodyOfKnowledge: Scalars['Boolean'];
   /** Removes an Organization from a Role in the specified Community. */
   removeCommunityRoleFromOrganization: Organization;
   /** Removes a User from a Role in the specified Community. */
@@ -3499,6 +3486,10 @@ export type MutationMessageUserArgs = {
 
 export type MutationMoveContributionToCalloutArgs = {
   moveContributionData: MoveCalloutContributionInput;
+};
+
+export type MutationRefreshVirtualContributorBodyOfKnowledgeArgs = {
+  deleteData: RefreshVirtualContributorBodyOfKnowledgeInput;
 };
 
 export type MutationRemoveCommunityRoleFromOrganizationArgs = {
@@ -4214,10 +4205,10 @@ export type Query = {
   adminCommunicationOrphanedUsage: CommunicationAdminOrphanedUsageResult;
   /** Alkemio AiServer */
   aiServer: AiServer;
-  /** Ask the virtual persona engine for guidance. */
-  askAiPersonaQuestion: AiPersonaResult;
   /** Ask the chat engine for guidance. */
-  askChatGuidanceQuestion: ChatGuidanceResult;
+  askChatGuidanceQuestion: MessageAnswerQuestion;
+  /** Ask the virtual contributor a question directly. */
+  askVirtualContributorQuestion: MessageAnswerQuestion;
   /** Get supported credential metadata */
   getSupportedVerifiedCredentialMetadata: Array<CredentialMetadataOutput>;
   /** Allow direct lookup of entities from the domain model */
@@ -4290,12 +4281,12 @@ export type QueryAdminCommunicationMembershipArgs = {
   communicationData: CommunicationAdminMembershipInput;
 };
 
-export type QueryAskAiPersonaQuestionArgs = {
-  chatData: AiPersonaQuestionInput;
-};
-
 export type QueryAskChatGuidanceQuestionArgs = {
   chatData: ChatGuidanceInput;
+};
+
+export type QueryAskVirtualContributorQuestionArgs = {
+  chatData: VirtualContributorQuestionInput;
 };
 
 export type QueryOrganizationArgs = {
@@ -4424,6 +4415,11 @@ export type Reference = {
   name: Scalars['String'];
   /** URI of the reference */
   uri: Scalars['String'];
+};
+
+export type RefreshVirtualContributorBodyOfKnowledgeInput = {
+  /** The ID of the Virtual Contributor to update. */
+  virtualContributorID: Scalars['UUID'];
 };
 
 export type Relation = {
@@ -4582,6 +4578,8 @@ export type RolesResultCommunity = {
   displayName: Scalars['String'];
   /** A unique identifier for this membership result. */
   id: Scalars['String'];
+  /** The level of the Space e.g. space/challenge/opportunity. */
+  level: Scalars['Float'];
   /** Name Identifier of the entity */
   nameID: Scalars['NameID'];
   /** The roles held by the contributor */
@@ -4610,6 +4608,8 @@ export type RolesResultSpace = {
   displayName: Scalars['String'];
   /** A unique identifier for this membership result. */
   id: Scalars['String'];
+  /** The level of the Space e.g. space/challenge/opportunity. */
+  level: Scalars['Float'];
   /** Name Identifier of the entity */
   nameID: Scalars['NameID'];
   /** The roles held by the contributor */
@@ -4846,13 +4846,6 @@ export type ServiceMetadata = {
   name?: Maybe<Scalars['String']>;
   /** Version in the format {major.minor.patch} - using SemVer. */
   version?: Maybe<Scalars['String']>;
-};
-
-export type Source = {
-  /** The title of the source */
-  title?: Maybe<Scalars['String']>;
-  /** The URI of the source */
-  uri?: Maybe<Scalars['String']>;
 };
 
 export type Space = {
@@ -5917,7 +5910,7 @@ export type VirtualContributor = Contributor & {
   /** The Agent representing this User. */
   agent: Agent;
   /** The AI persona being used by this virtual contributor */
-  aiPersona: AiPersona;
+  aiPersona?: Maybe<AiPersona>;
   /** The authorization rules for the Contributor */
   authorization?: Maybe<Authorization>;
   /** The ID of the Contributor */
@@ -5932,6 +5925,13 @@ export type VirtualContributor = Contributor & {
   searchVisibility: SearchVisibility;
   /** The StorageAggregator for managing storage buckets in use by this Virtual */
   storageAggregator?: Maybe<StorageAggregator>;
+};
+
+export type VirtualContributorQuestionInput = {
+  /** The question that is being asked. */
+  question: Scalars['String'];
+  /** Virtual Contributor to be asked. */
+  virtualContributorID: Scalars['UUID'];
 };
 
 export type Visual = {
@@ -6163,12 +6163,9 @@ export type ResolversTypes = {
   AiPersonaDataAccessMode: AiPersonaDataAccessMode;
   AiPersonaEngine: AiPersonaEngine;
   AiPersonaInteractionMode: AiPersonaInteractionMode;
-  AiPersonaQuestionInput: AiPersonaQuestionInput;
-  AiPersonaResult: ResolverTypeWrapper<AiPersonaResult>;
   AiPersonaService: ResolverTypeWrapper<AiPersonaService>;
   AiPersonaServiceIngestInput: AiPersonaServiceIngestInput;
   AiPersonaServiceQuestionInput: AiPersonaServiceQuestionInput;
-  AiPersonaServiceResult: ResolverTypeWrapper<AiPersonaServiceResult>;
   AiServer: ResolverTypeWrapper<AiServer>;
   AnyInvitation:
     | ResolversTypes['Invitation']
@@ -6216,7 +6213,6 @@ export type ResolversTypes = {
   CalloutVisibility: CalloutVisibility;
   ChatGuidanceAnswerRelevanceInput: ChatGuidanceAnswerRelevanceInput;
   ChatGuidanceInput: ChatGuidanceInput;
-  ChatGuidanceResult: ResolverTypeWrapper<ChatGuidanceResult>;
   Collaboration: ResolverTypeWrapper<Collaboration>;
   Communication: ResolverTypeWrapper<Communication>;
   CommunicationAdminEnsureAccessInput: CommunicationAdminEnsureAccessInput;
@@ -6387,6 +6383,8 @@ export type ResolversTypes = {
   Markdown: ResolverTypeWrapper<Scalars['Markdown']>;
   MeQueryResults: ResolverTypeWrapper<MeQueryResults>;
   Message: ResolverTypeWrapper<Message>;
+  MessageAnswerQuestion: ResolverTypeWrapper<MessageAnswerQuestion>;
+  MessageAnswerToQuestionSource: ResolverTypeWrapper<MessageAnswerToQuestionSource>;
   MessageID: ResolverTypeWrapper<Scalars['MessageID']>;
   Metadata: ResolverTypeWrapper<Metadata>;
   MigrateEmbeddings: ResolverTypeWrapper<MigrateEmbeddings>;
@@ -6428,6 +6426,7 @@ export type ResolversTypes = {
   Question: ResolverTypeWrapper<Question>;
   Reaction: ResolverTypeWrapper<Reaction>;
   Reference: ResolverTypeWrapper<Reference>;
+  RefreshVirtualContributorBodyOfKnowledgeInput: RefreshVirtualContributorBodyOfKnowledgeInput;
   Relation: ResolverTypeWrapper<Relation>;
   RelayPaginatedSpace: ResolverTypeWrapper<RelayPaginatedSpace>;
   RelayPaginatedSpaceEdge: ResolverTypeWrapper<RelayPaginatedSpaceEdge>;
@@ -6475,7 +6474,6 @@ export type ResolversTypes = {
   SearchVisibility: SearchVisibility;
   Sentry: ResolverTypeWrapper<Sentry>;
   ServiceMetadata: ResolverTypeWrapper<ServiceMetadata>;
-  Source: ResolverTypeWrapper<Source>;
   Space: ResolverTypeWrapper<Space>;
   SpaceDefaults: ResolverTypeWrapper<SpaceDefaults>;
   SpaceFilterInput: SpaceFilterInput;
@@ -6586,6 +6584,7 @@ export type ResolversTypes = {
   VerifiedCredential: ResolverTypeWrapper<VerifiedCredential>;
   VerifiedCredentialClaim: ResolverTypeWrapper<VerifiedCredentialClaim>;
   VirtualContributor: ResolverTypeWrapper<VirtualContributor>;
+  VirtualContributorQuestionInput: VirtualContributorQuestionInput;
   Visual: ResolverTypeWrapper<Visual>;
   VisualType: VisualType;
   VisualUploadImageInput: VisualUploadImageInput;
@@ -6638,12 +6637,9 @@ export type ResolversParentTypes = {
   AgentBeginVerifiedCredentialOfferOutput: AgentBeginVerifiedCredentialOfferOutput;
   AgentBeginVerifiedCredentialRequestOutput: AgentBeginVerifiedCredentialRequestOutput;
   AiPersona: AiPersona;
-  AiPersonaQuestionInput: AiPersonaQuestionInput;
-  AiPersonaResult: AiPersonaResult;
   AiPersonaService: AiPersonaService;
   AiPersonaServiceIngestInput: AiPersonaServiceIngestInput;
   AiPersonaServiceQuestionInput: AiPersonaServiceQuestionInput;
-  AiPersonaServiceResult: AiPersonaServiceResult;
   AiServer: AiServer;
   AnyInvitation:
     | ResolversParentTypes['Invitation']
@@ -6681,7 +6677,6 @@ export type ResolversParentTypes = {
   CalloutTemplate: CalloutTemplate;
   ChatGuidanceAnswerRelevanceInput: ChatGuidanceAnswerRelevanceInput;
   ChatGuidanceInput: ChatGuidanceInput;
-  ChatGuidanceResult: ChatGuidanceResult;
   Collaboration: Collaboration;
   Communication: Communication;
   CommunicationAdminEnsureAccessInput: CommunicationAdminEnsureAccessInput;
@@ -6839,6 +6834,8 @@ export type ResolversParentTypes = {
   Markdown: Scalars['Markdown'];
   MeQueryResults: MeQueryResults;
   Message: Message;
+  MessageAnswerQuestion: MessageAnswerQuestion;
+  MessageAnswerToQuestionSource: MessageAnswerToQuestionSource;
   MessageID: Scalars['MessageID'];
   Metadata: Metadata;
   MigrateEmbeddings: MigrateEmbeddings;
@@ -6870,6 +6867,7 @@ export type ResolversParentTypes = {
   Question: Question;
   Reaction: Reaction;
   Reference: Reference;
+  RefreshVirtualContributorBodyOfKnowledgeInput: RefreshVirtualContributorBodyOfKnowledgeInput;
   Relation: Relation;
   RelayPaginatedSpace: RelayPaginatedSpace;
   RelayPaginatedSpaceEdge: RelayPaginatedSpaceEdge;
@@ -6915,7 +6913,6 @@ export type ResolversParentTypes = {
   SearchResultUserGroup: SearchResultUserGroup;
   Sentry: Sentry;
   ServiceMetadata: ServiceMetadata;
-  Source: Source;
   Space: Space;
   SpaceDefaults: SpaceDefaults;
   SpaceFilterInput: SpaceFilterInput;
@@ -7017,6 +7014,7 @@ export type ResolversParentTypes = {
   VerifiedCredential: VerifiedCredential;
   VerifiedCredentialClaim: VerifiedCredentialClaim;
   VirtualContributor: VirtualContributor;
+  VirtualContributorQuestionInput: VirtualContributorQuestionInput;
   Visual: Visual;
   VisualUploadImageInput: VisualUploadImageInput;
   Whiteboard: Whiteboard;
@@ -7534,8 +7532,18 @@ export type AiPersonaResolvers<
     ParentType,
     ContextType
   >;
+  bodyOfKnowledge?: Resolver<
+    ResolversTypes['Markdown'],
+    ParentType,
+    ContextType
+  >;
+  bodyOfKnowledgeID?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
   bodyOfKnowledgeType?: Resolver<
-    ResolversTypes['AiPersonaBodyOfKnowledgeType'],
+    Maybe<ResolversTypes['AiPersonaBodyOfKnowledgeType']>,
     ParentType,
     ContextType
   >;
@@ -7548,21 +7556,6 @@ export type AiPersonaResolvers<
   id?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
   interactionModes?: Resolver<
     Array<ResolversTypes['AiPersonaInteractionMode']>,
-    ParentType,
-    ContextType
-  >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type AiPersonaResultResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['AiPersonaResult'] = ResolversParentTypes['AiPersonaResult']
-> = {
-  answer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  question?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  sources?: Resolver<
-    Maybe<Array<ResolversTypes['Source']>>,
     ParentType,
     ContextType
   >;
@@ -7599,21 +7592,6 @@ export type AiPersonaServiceResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type AiPersonaServiceResultResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['AiPersonaServiceResult'] = ResolversParentTypes['AiPersonaServiceResult']
-> = {
-  answer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  question?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  sources?: Resolver<
-    Maybe<Array<ResolversTypes['Source']>>,
-    ParentType,
-    ContextType
-  >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type AiServerResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['AiServer'] = ResolversParentTypes['AiServer']
@@ -7630,7 +7608,7 @@ export type AiServerResolvers<
     ContextType
   >;
   askAiPersonaServiceQuestion?: Resolver<
-    ResolversTypes['AiPersonaServiceResult'],
+    ResolversTypes['MessageAnswerQuestion'],
     ParentType,
     ContextType,
     RequireFields<AiServerAskAiPersonaServiceQuestionArgs, 'chatData'>
@@ -8040,21 +8018,6 @@ export type CalloutTemplateResolvers<
   id?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
   profile?: Resolver<ResolversTypes['Profile'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['CalloutType'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type ChatGuidanceResultResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['ChatGuidanceResult'] = ResolversParentTypes['ChatGuidanceResult']
-> = {
-  answer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  question?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  sources?: Resolver<
-    Maybe<Array<ResolversTypes['Source']>>,
-    ParentType,
-    ContextType
-  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -9424,6 +9387,30 @@ export type MessageResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type MessageAnswerQuestionResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['MessageAnswerQuestion'] = ResolversParentTypes['MessageAnswerQuestion']
+> = {
+  answer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  question?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  sources?: Resolver<
+    Maybe<Array<ResolversTypes['MessageAnswerToQuestionSource']>>,
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MessageAnswerToQuestionSourceResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['MessageAnswerToQuestionSource'] = ResolversParentTypes['MessageAnswerToQuestionSource']
+> = {
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  uri?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export interface MessageIdScalarConfig
   extends GraphQLScalarTypeConfig<ResolversTypes['MessageID'], any> {
   name: 'MessageID';
@@ -10078,6 +10065,15 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationMoveContributionToCalloutArgs, 'moveContributionData'>
+  >;
+  refreshVirtualContributorBodyOfKnowledge?: Resolver<
+    ResolversTypes['Boolean'],
+    ParentType,
+    ContextType,
+    RequireFields<
+      MutationRefreshVirtualContributorBodyOfKnowledgeArgs,
+      'deleteData'
+    >
   >;
   removeCommunityRoleFromOrganization?: Resolver<
     ResolversTypes['Organization'],
@@ -11006,17 +11002,17 @@ export type QueryResolvers<
     ContextType
   >;
   aiServer?: Resolver<ResolversTypes['AiServer'], ParentType, ContextType>;
-  askAiPersonaQuestion?: Resolver<
-    ResolversTypes['AiPersonaResult'],
-    ParentType,
-    ContextType,
-    RequireFields<QueryAskAiPersonaQuestionArgs, 'chatData'>
-  >;
   askChatGuidanceQuestion?: Resolver<
-    ResolversTypes['ChatGuidanceResult'],
+    ResolversTypes['MessageAnswerQuestion'],
     ParentType,
     ContextType,
     RequireFields<QueryAskChatGuidanceQuestionArgs, 'chatData'>
+  >;
+  askVirtualContributorQuestion?: Resolver<
+    ResolversTypes['MessageAnswerQuestion'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryAskVirtualContributorQuestionArgs, 'chatData'>
   >;
   getSupportedVerifiedCredentialMetadata?: Resolver<
     Array<ResolversTypes['CredentialMetadataOutput']>,
@@ -11317,6 +11313,7 @@ export type RolesResultCommunityResolvers<
 > = {
   displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  level?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   nameID?: Resolver<ResolversTypes['NameID'], ParentType, ContextType>;
   roles?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['SpaceType'], ParentType, ContextType>;
@@ -11346,6 +11343,7 @@ export type RolesResultSpaceResolvers<
 > = {
   displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  level?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   nameID?: Resolver<ResolversTypes['NameID'], ParentType, ContextType>;
   roles?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   spaceID?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -11543,15 +11541,6 @@ export type ServiceMetadataResolvers<
 > = {
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   version?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type SourceResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Source'] = ResolversParentTypes['Source']
-> = {
-  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  uri?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -12167,7 +12156,11 @@ export type VirtualContributorResolvers<
 > = {
   account?: Resolver<Maybe<ResolversTypes['Account']>, ParentType, ContextType>;
   agent?: Resolver<ResolversTypes['Agent'], ParentType, ContextType>;
-  aiPersona?: Resolver<ResolversTypes['AiPersona'], ParentType, ContextType>;
+  aiPersona?: Resolver<
+    Maybe<ResolversTypes['AiPersona']>,
+    ParentType,
+    ContextType
+  >;
   authorization?: Resolver<
     Maybe<ResolversTypes['Authorization']>,
     ParentType,
@@ -12315,9 +12308,7 @@ export type Resolvers<ContextType = any> = {
   AgentBeginVerifiedCredentialOfferOutput?: AgentBeginVerifiedCredentialOfferOutputResolvers<ContextType>;
   AgentBeginVerifiedCredentialRequestOutput?: AgentBeginVerifiedCredentialRequestOutputResolvers<ContextType>;
   AiPersona?: AiPersonaResolvers<ContextType>;
-  AiPersonaResult?: AiPersonaResultResolvers<ContextType>;
   AiPersonaService?: AiPersonaServiceResolvers<ContextType>;
-  AiPersonaServiceResult?: AiPersonaServiceResultResolvers<ContextType>;
   AiServer?: AiServerResolvers<ContextType>;
   AnyInvitation?: AnyInvitationResolvers<ContextType>;
   Application?: ApplicationResolvers<ContextType>;
@@ -12339,7 +12330,6 @@ export type Resolvers<ContextType = any> = {
   CalloutGroup?: CalloutGroupResolvers<ContextType>;
   CalloutPostCreated?: CalloutPostCreatedResolvers<ContextType>;
   CalloutTemplate?: CalloutTemplateResolvers<ContextType>;
-  ChatGuidanceResult?: ChatGuidanceResultResolvers<ContextType>;
   Collaboration?: CollaborationResolvers<ContextType>;
   Communication?: CommunicationResolvers<ContextType>;
   CommunicationAdminMembershipResult?: CommunicationAdminMembershipResultResolvers<ContextType>;
@@ -12400,6 +12390,8 @@ export type Resolvers<ContextType = any> = {
   Markdown?: GraphQLScalarType;
   MeQueryResults?: MeQueryResultsResolvers<ContextType>;
   Message?: MessageResolvers<ContextType>;
+  MessageAnswerQuestion?: MessageAnswerQuestionResolvers<ContextType>;
+  MessageAnswerToQuestionSource?: MessageAnswerToQuestionSourceResolvers<ContextType>;
   MessageID?: GraphQLScalarType;
   Metadata?: MetadataResolvers<ContextType>;
   MigrateEmbeddings?: MigrateEmbeddingsResolvers<ContextType>;
@@ -12448,7 +12440,6 @@ export type Resolvers<ContextType = any> = {
   SearchResultUserGroup?: SearchResultUserGroupResolvers<ContextType>;
   Sentry?: SentryResolvers<ContextType>;
   ServiceMetadata?: ServiceMetadataResolvers<ContextType>;
-  Source?: SourceResolvers<ContextType>;
   Space?: SpaceResolvers<ContextType>;
   SpaceDefaults?: SpaceDefaultsResolvers<ContextType>;
   SpaceSettings?: SpaceSettingsResolvers<ContextType>;
@@ -12493,6 +12484,19 @@ export type DocumentQuery = {
       | { id: string; mimeType: MimeType; url: string; displayName: string }
       | undefined;
   };
+};
+
+export type ProfileFieldsFragment = {
+  id: string;
+  description?: any | undefined;
+  displayName: string;
+  tagline: string;
+  url: string;
+  type?: ProfileType | undefined;
+  references?:
+    | Array<{ description?: string | undefined; name: string; uri: string }>
+    | undefined;
+  visuals: Array<{ uri: string; name: string }>;
 };
 
 export type SpaceDetailsFragment = {
@@ -12551,11 +12555,12 @@ export type SpaceIngestFragment = {
         | undefined;
       framing: {
         profile: {
+          id: string;
           description?: any | undefined;
           displayName: string;
           tagline: string;
           url: string;
-          tagset?: { tags: Array<string> } | undefined;
+          type?: ProfileType | undefined;
           references?:
             | Array<{
                 description?: string | undefined;
@@ -12567,12 +12572,36 @@ export type SpaceIngestFragment = {
         };
       };
       contributions: Array<{
+        post?:
+          | {
+              id: string;
+              nameID: string;
+              profile: {
+                id: string;
+                description?: any | undefined;
+                displayName: string;
+                tagline: string;
+                url: string;
+                type?: ProfileType | undefined;
+                references?:
+                  | Array<{
+                      description?: string | undefined;
+                      name: string;
+                      uri: string;
+                    }>
+                  | undefined;
+                visuals: Array<{ uri: string; name: string }>;
+              };
+            }
+          | undefined;
         link?:
           | {
               uri: string;
               profile: {
+                id: string;
                 description?: any | undefined;
                 displayName: string;
+                tagline: string;
                 url: string;
                 type?: ProfileType | undefined;
                 references?:
@@ -12838,11 +12867,12 @@ export type SpaceIngestQuery = {
                     | undefined;
                   framing: {
                     profile: {
+                      id: string;
                       description?: any | undefined;
                       displayName: string;
                       tagline: string;
                       url: string;
-                      tagset?: { tags: Array<string> } | undefined;
+                      type?: ProfileType | undefined;
                       references?:
                         | Array<{
                             description?: string | undefined;
@@ -12854,12 +12884,36 @@ export type SpaceIngestQuery = {
                     };
                   };
                   contributions: Array<{
+                    post?:
+                      | {
+                          id: string;
+                          nameID: string;
+                          profile: {
+                            id: string;
+                            description?: any | undefined;
+                            displayName: string;
+                            tagline: string;
+                            url: string;
+                            type?: ProfileType | undefined;
+                            references?:
+                              | Array<{
+                                  description?: string | undefined;
+                                  name: string;
+                                  uri: string;
+                                }>
+                              | undefined;
+                            visuals: Array<{ uri: string; name: string }>;
+                          };
+                        }
+                      | undefined;
                     link?:
                       | {
                           uri: string;
                           profile: {
+                            id: string;
                             description?: any | undefined;
                             displayName: string;
+                            tagline: string;
                             url: string;
                             type?: ProfileType | undefined;
                             references?:
@@ -12921,11 +12975,12 @@ export type SpaceIngestQuery = {
                   | undefined;
                 framing: {
                   profile: {
+                    id: string;
                     description?: any | undefined;
                     displayName: string;
                     tagline: string;
                     url: string;
-                    tagset?: { tags: Array<string> } | undefined;
+                    type?: ProfileType | undefined;
                     references?:
                       | Array<{
                           description?: string | undefined;
@@ -12937,12 +12992,36 @@ export type SpaceIngestQuery = {
                   };
                 };
                 contributions: Array<{
+                  post?:
+                    | {
+                        id: string;
+                        nameID: string;
+                        profile: {
+                          id: string;
+                          description?: any | undefined;
+                          displayName: string;
+                          tagline: string;
+                          url: string;
+                          type?: ProfileType | undefined;
+                          references?:
+                            | Array<{
+                                description?: string | undefined;
+                                name: string;
+                                uri: string;
+                              }>
+                            | undefined;
+                          visuals: Array<{ uri: string; name: string }>;
+                        };
+                      }
+                    | undefined;
                   link?:
                     | {
                         uri: string;
                         profile: {
+                          id: string;
                           description?: any | undefined;
                           displayName: string;
+                          tagline: string;
                           url: string;
                           type?: ProfileType | undefined;
                           references?:
@@ -13004,11 +13083,12 @@ export type SpaceIngestQuery = {
                 | undefined;
               framing: {
                 profile: {
+                  id: string;
                   description?: any | undefined;
                   displayName: string;
                   tagline: string;
                   url: string;
-                  tagset?: { tags: Array<string> } | undefined;
+                  type?: ProfileType | undefined;
                   references?:
                     | Array<{
                         description?: string | undefined;
@@ -13020,12 +13100,36 @@ export type SpaceIngestQuery = {
                 };
               };
               contributions: Array<{
+                post?:
+                  | {
+                      id: string;
+                      nameID: string;
+                      profile: {
+                        id: string;
+                        description?: any | undefined;
+                        displayName: string;
+                        tagline: string;
+                        url: string;
+                        type?: ProfileType | undefined;
+                        references?:
+                          | Array<{
+                              description?: string | undefined;
+                              name: string;
+                              uri: string;
+                            }>
+                          | undefined;
+                        visuals: Array<{ uri: string; name: string }>;
+                      };
+                    }
+                  | undefined;
                 link?:
                   | {
                       uri: string;
                       profile: {
+                        id: string;
                         description?: any | undefined;
                         displayName: string;
+                        tagline: string;
                         url: string;
                         type?: ProfileType | undefined;
                         references?:
@@ -13068,6 +13172,25 @@ export const SpaceDetailsFragmentDoc = gql`
     }
     context {
       id
+    }
+  }
+`;
+export const ProfileFieldsFragmentDoc = gql`
+  fragment ProfileFields on Profile {
+    id
+    description
+    displayName
+    tagline
+    url
+    type
+    references {
+      description
+      name
+      uri
+    }
+    visuals {
+      uri
+      name
     }
   }
 `;
@@ -13132,47 +13255,28 @@ export const SpaceIngestFragmentDoc = gql`
         }
         framing {
           profile {
-            description
-            displayName
-            tagline
-            url
-            tagset {
-              tags
-            }
-            references {
-              description
-              name
-              uri
-            }
-            visuals {
-              uri
-              name
-            }
+            ...ProfileFields
           }
         }
         contributions {
+          post {
+            id
+            nameID
+            profile {
+              ...ProfileFields
+            }
+          }
           link {
             uri
             profile {
-              description
-              displayName
-              url
-              type
-              references {
-                description
-                name
-                uri
-              }
-              visuals {
-                uri
-                name
-              }
+              ...ProfileFields
             }
           }
         }
       }
     }
   }
+  ${ProfileFieldsFragmentDoc}
 `;
 export const VisualFullFragmentDoc = gql`
   fragment VisualFull on Visual {

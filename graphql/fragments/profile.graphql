@@ -1,0 +1,21 @@
+fragment ProfileFields on Profile {
+  id
+  description
+  displayName
+  tagline
+  url
+  type
+  # tagset {
+  #   tags
+  # }
+  references {
+    description
+    name
+    uri
+  }
+  visuals {
+    uri
+    name
+  }
+}
+

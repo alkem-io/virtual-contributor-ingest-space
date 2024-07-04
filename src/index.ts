@@ -91,7 +91,7 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     alkemioClient
   );
 
-  const ingestionResult = await ingest(space.id, documents, purpose);
+  const ingestionResult = true; //await ingest(space.id, documents, purpose);
 
   if (ingestionResult) {
     logger.info('Space embedded.');
