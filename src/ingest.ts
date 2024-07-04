@@ -7,8 +7,8 @@ import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
 import { DocumentType } from './document.type';
 
-const batch = (arr: any[], size: number) =>
-  Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
     arr.slice(i * size, i * size + size)
   );
 
@@ -27,6 +27,7 @@ export default async (
 
   const chunkSize = parseInt(process.env.CHUNK_SIZE || '1000');
   const chunkOverlap = parseInt(process.env.CHUNK_OVERLAP || '100');
+  const batchSize = parseInt(process.env.BATCH_SIZE || '20');
 
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize,
@@ -75,9 +76,9 @@ export default async (
   let data: EmbeddingItem[] = [];
 
   logger.info(`Total number of chunks: ${documents.length}`);
-  const docBatches = batch(documents, 20);
-  const metadataBatches = batch(metadatas, 20);
-  const idsBatches = batch(ids, 20);
+  const docBatches = batch(documents, batchSize);
+  const metadataBatches = batch(metadatas, batchSize);
+  const idsBatches = batch(ids, batchSize);
 
   for (let i = 0; i < docBatches.length; i++) {
     try {
@@ -103,7 +104,7 @@ export default async (
     logger.info(`Collection '${name}' doesn't exist.`);
   }
 
-  const embeddingsBatches = batch(data, 20);
+  const embeddingsBatches = batch(data, batchSize);
 
   for (let i = 0; i < embeddingsBatches.length; i++) {
     try {

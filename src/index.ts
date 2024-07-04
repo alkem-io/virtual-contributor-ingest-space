@@ -126,23 +126,31 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   channel.prefetch(1);
 
   logger.info('Ingest Space ready. Waiting for RPC messages...');
-  await channel.consume(queue, async msg => {
-    if (msg !== null) {
-      //TODO create event class matching the one from Server
-      //maybe share them in a package
-      //publish a confifrmation
-      const decoded = JSON.parse(JSON.parse(msg.content.toString()));
-      logger.info(`Ingest invoked for space: ${decoded.spaceId}`);
-      const result = await main(decoded.spaceId, decoded.purpose);
-      // add rety mechanism as well
-      channel.ack(msg);
-      if (result) {
-        logger.info('Ingestion completed successfully.');
+  await channel.consume(
+    queue,
+    async msg => {
+      if (msg !== null) {
+        //TODO create event class matching the one from Server
+        //maybe share them in a package
+        //publish a confifrmation
+        const decoded = JSON.parse(JSON.parse(msg.content.toString()));
+        logger.info(`Ingest invoked for space: ${decoded.spaceId}`);
+        const result = await main(decoded.spaceId, decoded.purpose);
+
+        // add rety mechanism as well
+        // do auto ack of the messages in order to be able to scale the service
+        // channel.ack(msg);
+        if (result) {
+          logger.info('Ingestion completed successfully.');
+        } else {
+          logger.error('Ingestion failed.');
+        }
       } else {
-        logger.error('Ingestion failed.');
+        logger.error('Consumer cancelled by server');
       }
-    } else {
-      logger.error('Consumer cancelled by server');
+    },
+    {
+      noAck: true,
     }
-  });
+  );
 })();
