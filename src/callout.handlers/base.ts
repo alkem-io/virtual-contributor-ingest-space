@@ -1,4 +1,4 @@
-import { Callout } from '../generated/graphql';
+import { Callout, CalloutContribution } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import generateDocument from '../generate.document';
 
@@ -6,23 +6,10 @@ export const baseHandler = async (
   callout: Partial<Callout>
 ): Promise<Document[]> => {
   const { id: documentId, type } = callout;
+
   const generated = generateDocument(callout.framing);
   const { title, source } = generated;
   let pageContent = generated.pageContent;
-
-  // extra loop but will do for now
-  const contributions = callout.contributions
-    ?.filter((article: any) => !!article.link)
-    .map((contribution: any) => {
-      const { pageContent: contribArticle } = generateDocument(
-        contribution.link
-      );
-      return contribArticle;
-    })
-    .join('\n');
-
-  if (contributions)
-    pageContent = `${pageContent}\nContributions:\n${contributions}`;
 
   const messages = callout.comments?.messages || [];
   const processedMessages: string[] = [];
@@ -44,7 +31,7 @@ export const baseHandler = async (
   if (processedMessages.length)
     pageContent = `${pageContent}\nMessages:\n${processedMessages.join('\n')}`;
 
-  return [
+  const result: Document[] = [
     new Document({
       pageContent,
       metadata: {
@@ -55,4 +42,31 @@ export const baseHandler = async (
       },
     }),
   ];
+
+  // extra loop but will do for now
+  callout.contributions
+    ?.map((contribution: Partial<CalloutContribution>) => {
+      let docLike;
+      if (!!contribution.link) {
+        docLike = contribution.link;
+      } else if (!!contribution.post) {
+        docLike = contribution.post;
+      }
+      const { pageContent, documentId, source, type, title } =
+        generateDocument(docLike);
+      result.push(
+        new Document({
+          pageContent,
+          metadata: {
+            documentId,
+            source,
+            type,
+            title,
+          },
+        })
+      );
+    })
+    .join('\n');
+
+  return result;
 };

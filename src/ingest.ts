@@ -1,4 +1,4 @@
-import { SpaceIngestionPurpose } from './generated/graphql';
+import { SpaceIngestionPurpose } from './space.ingestion.purpose';
 import { Document } from 'langchain/document';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { OpenAIClient, AzureKeyCredential, EmbeddingItem } from '@azure/openai';
@@ -6,9 +6,10 @@ import logger from './logger';
 import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
 import { DocumentType } from './document.type';
+import { BATCH_SIZE, CHUNK_OVERLAP, CHUNK_SIZE } from './constants';
 
-const batch = (arr: any[], size: number) =>
-  Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
     arr.slice(i * size, i * size + size)
   );
 
@@ -25,12 +26,9 @@ export default async (
     throw new Error('AI configuration missing from ENV.');
   }
 
-  const chunkSize = parseInt(process.env.CHUNK_SIZE || '1000');
-  const chunkOverlap = parseInt(process.env.CHUNK_OVERLAP || '100');
-
   const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize,
-    chunkOverlap,
+    chunkSize: CHUNK_SIZE,
+    chunkOverlap: CHUNK_OVERLAP,
   });
 
   const name = `${spaceNameID}-${purpose}`;
@@ -75,9 +73,9 @@ export default async (
   let data: EmbeddingItem[] = [];
 
   logger.info(`Total number of chunks: ${documents.length}`);
-  const docBatches = batch(documents, 20);
-  const metadataBatches = batch(metadatas, 20);
-  const idsBatches = batch(ids, 20);
+  const docBatches = batch(documents, BATCH_SIZE);
+  const metadataBatches = batch(metadatas, BATCH_SIZE);
+  const idsBatches = batch(ids, BATCH_SIZE);
 
   for (let i = 0; i < docBatches.length; i++) {
     try {
@@ -103,7 +101,7 @@ export default async (
     logger.info(`Collection '${name}' doesn't exist.`);
   }
 
-  const embeddingsBatches = batch(data, 20);
+  const embeddingsBatches = batch(data, BATCH_SIZE);
 
   for (let i = 0; i < embeddingsBatches.length; i++) {
     try {
