@@ -5,9 +5,9 @@ fragment ProfileFields on Profile {
   tagline
   url
   type
-  # tagset {
-  #   tags
-  # }
+  tagset {
+    tags
+  }
   references {
     description
     name

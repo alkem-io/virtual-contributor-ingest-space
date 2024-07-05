@@ -12486,6 +12486,7 @@ export type ProfileFieldsFragment = {
   tagline: string;
   url: string;
   type?: ProfileType | undefined;
+  tagset?: { tags: Array<string> } | undefined;
   references?:
     | Array<{ description?: string | undefined; name: string; uri: string }>
     | undefined;
@@ -12556,6 +12557,7 @@ export type SpaceIngestFragment = {
           tagline: string;
           url: string;
           type?: ProfileType | undefined;
+          tagset?: { tags: Array<string> } | undefined;
           references?:
             | Array<{
                 description?: string | undefined;
@@ -12578,6 +12580,7 @@ export type SpaceIngestFragment = {
                 tagline: string;
                 url: string;
                 type?: ProfileType | undefined;
+                tagset?: { tags: Array<string> } | undefined;
                 references?:
                   | Array<{
                       description?: string | undefined;
@@ -12600,6 +12603,7 @@ export type SpaceIngestFragment = {
                 tagline: string;
                 url: string;
                 type?: ProfileType | undefined;
+                tagset?: { tags: Array<string> } | undefined;
                 references?:
                   | Array<{
                       description?: string | undefined;
@@ -12871,6 +12875,7 @@ export type SpaceIngestQuery = {
                       tagline: string;
                       url: string;
                       type?: ProfileType | undefined;
+                      tagset?: { tags: Array<string> } | undefined;
                       references?:
                         | Array<{
                             description?: string | undefined;
@@ -12893,6 +12898,7 @@ export type SpaceIngestQuery = {
                             tagline: string;
                             url: string;
                             type?: ProfileType | undefined;
+                            tagset?: { tags: Array<string> } | undefined;
                             references?:
                               | Array<{
                                   description?: string | undefined;
@@ -12915,6 +12921,7 @@ export type SpaceIngestQuery = {
                             tagline: string;
                             url: string;
                             type?: ProfileType | undefined;
+                            tagset?: { tags: Array<string> } | undefined;
                             references?:
                               | Array<{
                                   description?: string | undefined;
@@ -12982,6 +12989,7 @@ export type SpaceIngestQuery = {
                     tagline: string;
                     url: string;
                     type?: ProfileType | undefined;
+                    tagset?: { tags: Array<string> } | undefined;
                     references?:
                       | Array<{
                           description?: string | undefined;
@@ -13004,6 +13012,7 @@ export type SpaceIngestQuery = {
                           tagline: string;
                           url: string;
                           type?: ProfileType | undefined;
+                          tagset?: { tags: Array<string> } | undefined;
                           references?:
                             | Array<{
                                 description?: string | undefined;
@@ -13026,6 +13035,7 @@ export type SpaceIngestQuery = {
                           tagline: string;
                           url: string;
                           type?: ProfileType | undefined;
+                          tagset?: { tags: Array<string> } | undefined;
                           references?:
                             | Array<{
                                 description?: string | undefined;
@@ -13093,6 +13103,7 @@ export type SpaceIngestQuery = {
                   tagline: string;
                   url: string;
                   type?: ProfileType | undefined;
+                  tagset?: { tags: Array<string> } | undefined;
                   references?:
                     | Array<{
                         description?: string | undefined;
@@ -13115,6 +13126,7 @@ export type SpaceIngestQuery = {
                         tagline: string;
                         url: string;
                         type?: ProfileType | undefined;
+                        tagset?: { tags: Array<string> } | undefined;
                         references?:
                           | Array<{
                               description?: string | undefined;
@@ -13137,6 +13149,7 @@ export type SpaceIngestQuery = {
                         tagline: string;
                         url: string;
                         type?: ProfileType | undefined;
+                        tagset?: { tags: Array<string> } | undefined;
                         references?:
                           | Array<{
                               description?: string | undefined;
@@ -13188,6 +13201,9 @@ export const ProfileFieldsFragmentDoc = gql`
     tagline
     url
     type
+    tagset {
+      tags
+    }
     references {
       description
       name
