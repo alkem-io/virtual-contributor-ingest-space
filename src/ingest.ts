@@ -1,4 +1,4 @@
-import { SpaceIngestionPurpose } from './generated/graphql';
+import { SpaceIngestionPurpose } from './space.ingestion.purpose';
 import { Document } from 'langchain/document';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { OpenAIClient, AzureKeyCredential, EmbeddingItem } from '@azure/openai';

@@ -1,7 +1,8 @@
 import amqplib from 'amqplib';
 import { Document } from 'langchain/document';
 
-import { Callout, SpaceIngestionPurpose, Space } from './generated/graphql';
+import { SpaceIngestionPurpose } from './space.ingestion.purpose';
+import { CalloutVisibility, Callout, Space } from './generated/graphql';
 
 import logger from './logger';
 import ingest from './ingest';
@@ -36,7 +37,7 @@ const processSpaceTree = async (
 
     for (let j = 0; j < (subspace.collaboration?.callouts || []).length; j++) {
       const callout = (subspace.collaboration?.callouts || [])[j];
-      if (callout) {
+      if (callout && callout.visibility === CalloutVisibility.Published) {
         const document = await handleCallout(
           callout as Partial<Callout>,
           alkemioClient

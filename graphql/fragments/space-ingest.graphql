@@ -36,6 +36,7 @@ fragment SpaceIngest on Space {
       id
       nameID
       type
+      visibility
       comments {
         messagesCount
         messages {
@@ -58,43 +59,26 @@ fragment SpaceIngest on Space {
         }
       }
       framing {
+        id
         profile {
-          description
-          displayName
-          tagline
-          url
-          tagset {
-            tags
-          }
-          references {
-            description
-            name
-            uri
-          }
-          visuals {
-            uri
-            name
-          }
+          ...ProfileFields
         }
       }
       contributions {
+        post {
+          id
+          nameID
+          profile {
+            ...ProfileFields
+          }
+        }
         link {
+          id
           uri
           profile {
-            description
-            displayName
-            url
-            type
-            references {
-              description
-              name
-              uri
-            }
-            visuals {
-              uri
-              name
-            }
+            ...ProfileFields
           }
+
         }
       }
     }
