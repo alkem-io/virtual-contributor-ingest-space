@@ -36,6 +36,7 @@ fragment SpaceIngest on Space {
       id
       nameID
       type
+      visibility
       comments {
         messagesCount
         messages {
@@ -58,6 +59,7 @@ fragment SpaceIngest on Space {
         }
       }
       framing {
+        id
         profile {
           ...ProfileFields
         }

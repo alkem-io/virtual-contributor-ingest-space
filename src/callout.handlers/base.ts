@@ -1,7 +1,6 @@
 import { Callout, CalloutContribution } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import generateDocument from '../generate.document';
-import { DocumentType } from 'src/document.type';
 
 export const baseHandler = async (
   callout: Partial<Callout>
@@ -55,7 +54,6 @@ export const baseHandler = async (
       }
       const { pageContent, documentId, source, type, title } =
         generateDocument(docLike);
-      console.log(type);
       result.push(
         new Document({
           pageContent,
@@ -67,7 +65,6 @@ export const baseHandler = async (
           },
         })
       );
-      console.log(generated);
     })
     .join('\n');
 

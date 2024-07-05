@@ -1,3 +1,4 @@
+import { Reference, Visual } from './generated/graphql';
 import { DocumentType, mapType } from './document.type';
 
 interface GeneratedDocument {
@@ -8,6 +9,7 @@ interface GeneratedDocument {
   title: string;
 }
 
+// type this pls
 export default (docLike: any): GeneratedDocument => {
   const {
     id: documentId,
@@ -25,6 +27,10 @@ export default (docLike: any): GeneratedDocument => {
     },
     context,
   } = docLike;
+
+  if (!docLike.id) {
+    console.log(docLike);
+  }
   const { vision, impact, who } = context || {};
   const { city, country, postalCode } = location || {};
 
@@ -38,7 +44,7 @@ export default (docLike: any): GeneratedDocument => {
   if (who) pageContent = `${pageContent}\nWho: ${who}`;
 
   const processedVisuals = visuals
-    .map((visual: any) => `\t${visual.name}: ${visual.uri}`)
+    .map((visual: Visual) => `\t${visual.name}: ${visual.uri}`)
     .join('\n');
   if (processedVisuals)
     pageContent = `${pageContent}\nVisuals: ${processedVisuals}`;
@@ -47,7 +53,7 @@ export default (docLike: any): GeneratedDocument => {
     pageContent = `${pageContent}\nLocation: ${postalCode} ${city} ${country}`;
 
   const processedRefs = references.map(
-    ({ description, name, uri }: any) =>
+    ({ description, name, uri }: Reference) =>
       `\tReference name: ${name}\n\tReference description: ${description}\n\tUri: ${uri}\n`
   );
   if (processedRefs)
