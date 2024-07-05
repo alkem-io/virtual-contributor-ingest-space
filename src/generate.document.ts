@@ -9,7 +9,7 @@ interface GeneratedDocument {
   title: string;
 }
 
-// type this pls
+//TODO type this pls
 export default (docLike: any): GeneratedDocument => {
   const {
     id: documentId,
@@ -28,9 +28,6 @@ export default (docLike: any): GeneratedDocument => {
     context,
   } = docLike;
 
-  if (!docLike.id) {
-    console.log(docLike);
-  }
   const { vision, impact, who } = context || {};
   const { city, country, postalCode } = location || {};
 
