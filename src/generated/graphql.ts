@@ -1148,8 +1148,10 @@ export type CommunicationAdminRoomResult = {
   members: Array<Scalars['String']>;
 };
 
-export type CommunicationAdminUpdateRoomsJoinRuleInput = {
+export type CommunicationAdminUpdateRoomStateInput = {
   isPublic: Scalars['Boolean'];
+  isWorldVisible: Scalars['Boolean'];
+  roomID: Scalars['String'];
 };
 
 export type CommunicationRoom = {
@@ -2787,8 +2789,8 @@ export type Mutation = {
   adminCommunicationEnsureAccessToCommunications: Scalars['Boolean'];
   /** Remove an orphaned room from messaging platform. */
   adminCommunicationRemoveOrphanedRoom: Scalars['Boolean'];
-  /** Allow updating the rule for joining rooms: public or invite. */
-  adminCommunicationUpdateRoomsJoinRule: Scalars['Boolean'];
+  /** Allow updating the state flags of a particular rule. */
+  adminCommunicationUpdateRoomState: Scalars['Boolean'];
   /** Ingests new data into Elasticsearch from scratch. This will delete all existing data and ingest new data from the source. This is an admin only operation. */
   adminSearchIngestFromScratch: Scalars['String'];
   /** Reset the Authorization Policy on the specified AiServer. */
@@ -3127,8 +3129,8 @@ export type MutationAdminCommunicationRemoveOrphanedRoomArgs = {
   orphanedRoomData: CommunicationAdminRemoveOrphanedRoomInput;
 };
 
-export type MutationAdminCommunicationUpdateRoomsJoinRuleArgs = {
-  changeRoomAccessData: CommunicationAdminUpdateRoomsJoinRuleInput;
+export type MutationAdminCommunicationUpdateRoomStateArgs = {
+  roomStateData: CommunicationAdminUpdateRoomStateInput;
 };
 
 export type MutationAiServerCreateAiPersonaServiceArgs = {
@@ -3469,7 +3471,7 @@ export type MutationMoveContributionToCalloutArgs = {
 };
 
 export type MutationRefreshVirtualContributorBodyOfKnowledgeArgs = {
-  refreshData: RefreshVirtualContributorBodyOfKnowledgeInput;
+  deleteData: RefreshVirtualContributorBodyOfKnowledgeInput;
 };
 
 export type MutationRemoveCommunityRoleFromOrganizationArgs = {
@@ -4804,6 +4806,7 @@ export enum SearchResultType {
   Space = 'SPACE',
   User = 'USER',
   Usergroup = 'USERGROUP',
+  Whiteboard = 'WHITEBOARD',
 }
 
 export type SearchResultUser = SearchResult & {
@@ -6218,7 +6221,7 @@ export type ResolversTypes = {
   CommunicationAdminRemoveOrphanedRoomInput: CommunicationAdminRemoveOrphanedRoomInput;
   CommunicationAdminRoomMembershipResult: ResolverTypeWrapper<CommunicationAdminRoomMembershipResult>;
   CommunicationAdminRoomResult: ResolverTypeWrapper<CommunicationAdminRoomResult>;
-  CommunicationAdminUpdateRoomsJoinRuleInput: CommunicationAdminUpdateRoomsJoinRuleInput;
+  CommunicationAdminUpdateRoomStateInput: CommunicationAdminUpdateRoomStateInput;
   CommunicationRoom: ResolverTypeWrapper<CommunicationRoom>;
   CommunicationSendMessageToCommunityLeadsInput: CommunicationSendMessageToCommunityLeadsInput;
   CommunicationSendMessageToOrganizationInput: CommunicationSendMessageToOrganizationInput;
@@ -6678,7 +6681,7 @@ export type ResolversParentTypes = {
   CommunicationAdminRemoveOrphanedRoomInput: CommunicationAdminRemoveOrphanedRoomInput;
   CommunicationAdminRoomMembershipResult: CommunicationAdminRoomMembershipResult;
   CommunicationAdminRoomResult: CommunicationAdminRoomResult;
-  CommunicationAdminUpdateRoomsJoinRuleInput: CommunicationAdminUpdateRoomsJoinRuleInput;
+  CommunicationAdminUpdateRoomStateInput: CommunicationAdminUpdateRoomStateInput;
   CommunicationRoom: CommunicationRoom;
   CommunicationSendMessageToCommunityLeadsInput: CommunicationSendMessageToCommunityLeadsInput;
   CommunicationSendMessageToOrganizationInput: CommunicationSendMessageToOrganizationInput;
@@ -9424,13 +9427,13 @@ export type MutationResolvers<
       'orphanedRoomData'
     >
   >;
-  adminCommunicationUpdateRoomsJoinRule?: Resolver<
+  adminCommunicationUpdateRoomState?: Resolver<
     ResolversTypes['Boolean'],
     ParentType,
     ContextType,
     RequireFields<
-      MutationAdminCommunicationUpdateRoomsJoinRuleArgs,
-      'changeRoomAccessData'
+      MutationAdminCommunicationUpdateRoomStateArgs,
+      'roomStateData'
     >
   >;
   adminSearchIngestFromScratch?: Resolver<
@@ -10027,7 +10030,7 @@ export type MutationResolvers<
     ContextType,
     RequireFields<
       MutationRefreshVirtualContributorBodyOfKnowledgeArgs,
-      'refreshData'
+      'deleteData'
     >
   >;
   removeCommunityRoleFromOrganization?: Resolver<
@@ -12493,6 +12496,19 @@ export type ProfileFieldsFragment = {
   visuals: Array<{ uri: string; name: string }>;
 };
 
+export type ProfileNoTagsetFieldsFragment = {
+  id: string;
+  description?: any | undefined;
+  displayName: string;
+  tagline: string;
+  url: string;
+  type?: ProfileType | undefined;
+  references?:
+    | Array<{ description?: string | undefined; name: string; uri: string }>
+    | undefined;
+  visuals: Array<{ uri: string; name: string }>;
+};
+
 export type SpaceDetailsFragment = {
   id: string;
   nameID: string;
@@ -12603,7 +12619,6 @@ export type SpaceIngestFragment = {
                 tagline: string;
                 url: string;
                 type?: ProfileType | undefined;
-                tagset?: { tags: Array<string> } | undefined;
                 references?:
                   | Array<{
                       description?: string | undefined;
@@ -12921,7 +12936,6 @@ export type SpaceIngestQuery = {
                             tagline: string;
                             url: string;
                             type?: ProfileType | undefined;
-                            tagset?: { tags: Array<string> } | undefined;
                             references?:
                               | Array<{
                                   description?: string | undefined;
@@ -13035,7 +13049,6 @@ export type SpaceIngestQuery = {
                           tagline: string;
                           url: string;
                           type?: ProfileType | undefined;
-                          tagset?: { tags: Array<string> } | undefined;
                           references?:
                             | Array<{
                                 description?: string | undefined;
@@ -13149,7 +13162,6 @@ export type SpaceIngestQuery = {
                         tagline: string;
                         url: string;
                         type?: ProfileType | undefined;
-                        tagset?: { tags: Array<string> } | undefined;
                         references?:
                           | Array<{
                               description?: string | undefined;
@@ -13204,6 +13216,25 @@ export const ProfileFieldsFragmentDoc = gql`
     tagset {
       tags
     }
+    references {
+      description
+      name
+      uri
+    }
+    visuals {
+      uri
+      name
+    }
+  }
+`;
+export const ProfileNoTagsetFieldsFragmentDoc = gql`
+  fragment ProfileNoTagsetFields on Profile {
+    id
+    description
+    displayName
+    tagline
+    url
+    type
     references {
       description
       name
@@ -13293,7 +13324,7 @@ export const SpaceIngestFragmentDoc = gql`
             id
             uri
             profile {
-              ...ProfileFields
+              ...ProfileNoTagsetFields
             }
           }
         }
@@ -13301,6 +13332,7 @@ export const SpaceIngestFragmentDoc = gql`
     }
   }
   ${ProfileFieldsFragmentDoc}
+  ${ProfileNoTagsetFieldsFragmentDoc}
 `;
 export const VisualFullFragmentDoc = gql`
   fragment VisualFull on Visual {

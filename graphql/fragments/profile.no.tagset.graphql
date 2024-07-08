@@ -1,0 +1,18 @@
+fragment ProfileNoTagsetFields on Profile {
+  id
+  description
+  displayName
+  tagline
+  url
+  type
+  references {
+    description
+    name
+    uri
+  }
+  visuals {
+    uri
+    name
+  }
+}
+
