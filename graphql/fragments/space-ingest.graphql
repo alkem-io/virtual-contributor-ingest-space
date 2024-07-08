@@ -76,7 +76,7 @@ fragment SpaceIngest on Space {
           id
           uri
           profile {
-            ...ProfileFields
+            ...ProfileNoTagsetFields
           }
 
         }
