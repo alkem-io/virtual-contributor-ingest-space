@@ -1,3 +1,4 @@
+import { Logger } from 'winston';
 import { Callout, CalloutType } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import { baseHandler } from './base';
@@ -8,6 +9,7 @@ const handlersMap: Record<
   CalloutType,
   (
     callout: Partial<Callout>,
+    logger: Logger,
     alkemioClient: AlkemioCliClient | null
   ) => Promise<Document[]>
 > = {
@@ -20,11 +22,12 @@ const handlersMap: Record<
 
 export const handleCallout = async (
   callout: Partial<Callout>,
+  logger: Logger,
   alkemioClient: AlkemioCliClient | null = null
 ): Promise<Document[]> => {
   if (!callout.type) {
     throw new Error('Callout type is not part of query.');
   }
   const handler = handlersMap[callout.type];
-  return handler(callout, alkemioClient);
+  return handler(callout, logger, alkemioClient);
 };

@@ -14,16 +14,25 @@ const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
   );
 
 export default async (
-  spaceNameID: string,
+  spaceID: string,
   docs: Document[],
   purpose: SpaceIngestionPurpose
 ) => {
+  logger.defaultMeta.spaceId = spaceID;
+
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
   const key = process.env.AZURE_OPENAI_API_KEY;
   const depolyment = process.env.EMBEDDINGS_DEPLOYMENT_NAME;
 
   if (!endpoint || !key || !depolyment) {
-    throw new Error('AI configuration missing from ENV.');
+    logger.error(
+      `AI configuration missing from ENV or incomplete. Confige presence is:
+        AZURE_OPENAI_ENDPOINT:       ${!!endpoint}
+        AZURE_OPENAI_API_KEY:        ${!!key}
+        EMBEDDINGS_DEPLOYMENT_NAME1: ${!!depolyment}
+      `
+    );
+    return false;
   }
 
   const splitter = new RecursiveCharacterTextSplitter({
@@ -31,15 +40,16 @@ export default async (
     chunkOverlap: CHUNK_OVERLAP,
   });
 
-  const name = `${spaceNameID}-${purpose}`;
+  const name = `${spaceID}-${purpose}`;
+  logger.info(name);
   const ids: string[] = [];
   const documents: string[] = [];
   const metadatas: Array<Metadata> = [];
 
-  logger.info(`Splitting documents for space: ${spaceNameID}`);
+  logger.info(`Splitting documents for space: ${spaceID}`);
+
   for (let docIndex = 0; docIndex < docs.length; docIndex++) {
     const doc = docs[docIndex];
-
     let splitted;
     // do not split spreadhseets to prevent data loss
     if (doc.metadata.type === DocumentType.SPREADSHEET) {
@@ -51,8 +61,9 @@ export default async (
     logger.info(
       `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${
         doc.metadata.documentId
-      }) of type ${doc.metadata.type}, # of chunks: ${splitted.length}`
+      }) of type ${doc.metadata.type}; # of chunks: ${splitted.length}`
     );
+
     splitted.forEach((chunk, chunkIndex) => {
       ids.push(
         `${chunk.metadata.documentId}-${chunk.metadata.type}-chunk${chunkIndex}`
@@ -73,22 +84,41 @@ export default async (
   let data: EmbeddingItem[] = [];
 
   logger.info(`Total number of chunks: ${documents.length}`);
+  logger.info('Batching documents...');
   const docBatches = batch(documents, BATCH_SIZE);
+  logger.info(`Batch size is ${BATCH_SIZE}; # of batches ${docBatches.length}`);
+
   const metadataBatches = batch(metadatas, BATCH_SIZE);
   const idsBatches = batch(ids, BATCH_SIZE);
 
   for (let i = 0; i < docBatches.length; i++) {
     try {
       const batch = docBatches[i];
+      logger.info(
+        `Generating embeddings for batch ${i}; Batch size is: ${batch.length}`
+      );
       const response = await openAi.getEmbeddings(depolyment, batch);
       data = [...data, ...response.data];
-      logger.info(
-        `Embedding generated for batch ${i}; Batch size is: ${batch.length}`
+      logger.info('Embeddings generates');
+    } catch (error) {
+      logger.error('Embeeddings generation error error.');
+      logger.error(error);
+      logger.error(
+        `Metadatas for batch are: ${JSON.stringify(metadataBatches[i])}`
       );
-    } catch (e) {
-      logger.error('Embeeddings error.', e);
-      logger.error(`Metadatas for batch are: ${metadataBatches[i]}`);
     }
+  }
+
+  if (data.length !== documents.length) {
+    logger.error('Embeddings generation faied.');
+    logger.error(
+      `Generated embeddings for ${
+        data.length
+      } docuemnts. Missing embeddings for ${
+        documents.length - data.length
+      } docuemnts.`
+    );
+    return false;
   }
 
   logger.info('Embedding generated');
@@ -97,8 +127,9 @@ export default async (
   try {
     logger.info(`Deleting old collection: ${name}`);
     await client.deleteCollection({ name });
-  } catch (e) {
-    logger.info(`Collection '${name}' doesn't exist.`);
+    logger.info(`Collection: ${name} deleted.`);
+  } catch (error) {
+    logger.info(`Collection '${name}' doesn't exist. First time ingestion.`);
   }
 
   const embeddingsBatches = batch(data, BATCH_SIZE);
@@ -111,7 +142,7 @@ export default async (
         metadata: { createdAt: new Date().getTime() },
       });
 
-      logger.info(`Adding to collection collection: ${name}`);
+      logger.info(`Adding to collection : ${name}`);
       await collection.upsert({
         ids: idsBatches[i],
         documents: docBatches[i],
@@ -121,9 +152,12 @@ export default async (
       logger.info(
         `Batch ${i} of size ${embeddingsBatches[i].length} added to collection ${name}`
       );
-    } catch (e) {
-      logger.error(`Error adding to collection: ${name}`, e);
-      logger.error(`Metadatas for batch are: ${metadataBatches[i]}`);
+    } catch (error) {
+      logger.error('Error adding to collection. Halting...');
+      logger.error(error);
+      logger.error(
+        `Metadatas for batch are: ${JSON.stringify(metadataBatches[i])}`
+      );
       return false;
     }
   }
