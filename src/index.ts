@@ -40,6 +40,7 @@ const processSpaceTree = async (
       if (callout && callout.visibility === CalloutVisibility.Published) {
         const document = await handleCallout(
           callout as Partial<Callout>,
+          logger,
           alkemioClient
         );
         // empty doc - nothing to do here
@@ -61,15 +62,16 @@ const processSpaceTree = async (
 };
 
 export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
+  logger.defaultMeta.spaceId = spaceId;
+
   logger.info(`Ingestion started for space: ${spaceId}`);
   const alkemioClient = new AlkemioCliClient();
 
   // make sure the service user has valid credentials
   try {
     await alkemioClient.initialise();
-  } catch (error: any) {
-    logger.error(error.message);
-    logger.error(error.stack);
+  } catch (error) {
+    logger.error(error);
     return;
   }
 
@@ -77,9 +79,8 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   let space;
   try {
     space = await alkemioClient.ingestSpace(spaceId);
-  } catch (error: any) {
-    logger.error(error.message);
-    logger.error(error.stack);
+  } catch (error) {
+    logger.error(error);
     return;
   }
 
@@ -87,6 +88,7 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
     logger.error(`Space ${spaceId} not found.`);
     return;
   }
+
   const documents: Document[] = await processSpaceTree(
     [space as Partial<Space>],
     alkemioClient
@@ -137,7 +139,6 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
         const decoded = JSON.parse(JSON.parse(msg.content.toString()));
         logger.info(`Ingest invoked for space: ${decoded.spaceId}`);
         const result = await main(decoded.spaceId, decoded.purpose);
-
         // add rety mechanism as well
         // do auto ack of the messages in order to be able to scale the service
         // channel.ack(msg);
@@ -151,6 +152,12 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
       }
     },
     {
+      // acknowledge messages as they are read and not manually
+      //
+      // running a cluster of this service might cause issues
+      // for example we receive ingest for for space A and space B in that order; each message is picked by a
+      // different instance; space B is smaller and is ingested first; when the message is acknowledged it results
+      // in an error as messages should be acknoledged in the order of receival
       noAck: true,
     }
   );

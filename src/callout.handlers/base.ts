@@ -1,11 +1,16 @@
+import { Logger } from 'winston';
 import { Callout, CalloutContribution } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import generateDocument from '../generate.document';
 
 export const baseHandler = async (
-  callout: Partial<Callout>
+  callout: Partial<Callout>,
+  logger: Logger
 ): Promise<Document[]> => {
   const { id: documentId, type } = callout;
+  logger.info(
+    `Generating document for Callout (${documentId}) of type ${type}`
+  );
 
   const generated = generateDocument(callout.framing);
   const { title, source } = generated;
@@ -43,6 +48,7 @@ export const baseHandler = async (
     }),
   ];
 
+  logger.info(`Generating documents for Callout (${documentId}) contributions`);
   // extra loop but will do for now
   callout.contributions
     ?.map((contribution: Partial<CalloutContribution>) => {
@@ -68,5 +74,8 @@ export const baseHandler = async (
     })
     .join('\n');
 
+  logger.info(
+    `Documents for Callout (${documentId}) generated. # of documents ${result.length}`
+  );
   return result;
 };

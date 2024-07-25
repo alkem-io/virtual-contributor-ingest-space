@@ -1,13 +1,13 @@
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
+import { Logger } from 'winston';
 import { MimeType, Callout } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { MimeTypeDocumentMap } from '../document.type';
-import logger from '..//logger';
 import { SpreadSheetLoader, DocLoader } from '../loaders';
 import { AlkemioCliClient } from 'src/graphql-client/AlkemioCliClient';
 
@@ -73,6 +73,7 @@ const fileLoaderFactories: {
 
 export const linkCollectionHandler = async (
   callout: Partial<Callout>,
+  logger: Logger,
   alkemioClient: AlkemioCliClient | null
 ): Promise<Document[]> => {
   if (!callout.contributions?.length || !alkemioClient) {
@@ -123,10 +124,11 @@ export const linkCollectionHandler = async (
 
     try {
       download = await downloadDocument(link.uri, path, alkemioClient.apiToken);
-    } catch (error: any) {
-      logger.error('Error downloading file:');
-      logger.error(error.message);
-      logger.error(error.stack);
+    } catch (error) {
+      logger.error({
+        ...(error as Error),
+        error: 'Error downloading file',
+      });
       download = false;
     }
 
@@ -147,12 +149,14 @@ export const linkCollectionHandler = async (
           };
           documents.push(doc);
         }
-      } catch (error: any) {
-        logger.error(
-          `${docInfo.mimeType} file ${documentId} - ${link.uri} failed to load.`
-        );
-        logger.error(error.message);
-        logger.error(error.stack);
+      } catch (error) {
+        logger.error({
+          ...(error as Error),
+          error: 'File failed to load',
+          mimeType: docInfo.mimeType,
+          file: documentId,
+          uri: link.uri,
+        });
       }
       fs.unlinkSync(path);
     }
