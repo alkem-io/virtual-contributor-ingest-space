@@ -125,8 +125,10 @@ export const linkCollectionHandler = async (
     try {
       download = await downloadDocument(link.uri, path, alkemioClient.apiToken);
     } catch (error) {
-      logger.error('Error downloading file:');
-      logger.error(error);
+      logger.error({
+        ...(error as Error),
+        error: 'Error downloading file',
+      });
       download = false;
     }
 
@@ -148,10 +150,13 @@ export const linkCollectionHandler = async (
           documents.push(doc);
         }
       } catch (error) {
-        logger.error(
-          `${docInfo.mimeType} file ${documentId} - ${link.uri} failed to load.`
-        );
-        logger.error(error);
+        logger.error({
+          ...(error as Error),
+          error: 'File failed to load',
+          mimeType: docInfo.mimeType,
+          file: documentId,
+          uri: link.uri,
+        });
       }
       fs.unlinkSync(path);
     }

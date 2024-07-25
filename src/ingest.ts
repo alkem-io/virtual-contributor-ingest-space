@@ -22,16 +22,16 @@ export default async (
 
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
   const key = process.env.AZURE_OPENAI_API_KEY;
-  const depolyment = process.env.EMBEDDINGS_DEPLOYMENT_NAME;
+  const deployment = process.env.EMBEDDINGS_DEPLOYMENT_NAME;
 
-  if (!endpoint || !key || !depolyment) {
-    logger.error(
-      `AI configuration missing from ENV or incomplete. Confige presence is:
-        AZURE_OPENAI_ENDPOINT:       ${!!endpoint}
-        AZURE_OPENAI_API_KEY:        ${!!key}
-        EMBEDDINGS_DEPLOYMENT_NAME1: ${!!depolyment}
-      `
-    );
+  if (!endpoint || !key || !deployment) {
+    logger.error({
+      error:
+        'AI configuration missing from ENV or incomplete. Config presence is',
+      AZURE_OPENAI_ENDPOINT: !!endpoint,
+      AZURE_OPENAI_API_KEY: key ? '[REDACTED]' : 'MISSING',
+      EMBEDDINGS_DEPLOYMENT_NAME1: !!deployment,
+    });
     return false;
   }
 
@@ -97,26 +97,25 @@ export default async (
       logger.info(
         `Generating embeddings for batch ${i}; Batch size is: ${batch.length}`
       );
-      const response = await openAi.getEmbeddings(depolyment, batch);
+      const response = await openAi.getEmbeddings(deployment, batch);
       data = [...data, ...response.data];
       logger.info('Embeddings generates');
     } catch (error) {
-      logger.error('Embeeddings generation error error.');
-      logger.error(error);
-      logger.error(
-        `Metadatas for batch are: ${JSON.stringify(metadataBatches[i])}`
-      );
+      logger.error({
+        ...(error as Error),
+        error: 'Embeddings generation error',
+        metadata: JSON.stringify(metadataBatches[i]),
+      });
     }
   }
 
   if (data.length !== documents.length) {
-    logger.error('Embeddings generation faied.');
     logger.error(
-      `Generated embeddings for ${
+      `Embeddings generation failed for ${
         data.length
-      } docuemnts. Missing embeddings for ${
+      } documents. Missing embeddings for ${
         documents.length - data.length
-      } docuemnts.`
+      } documents.`
     );
     return false;
   }
@@ -153,11 +152,11 @@ export default async (
         `Batch ${i} of size ${embeddingsBatches[i].length} added to collection ${name}`
       );
     } catch (error) {
-      logger.error('Error adding to collection. Halting...');
-      logger.error(error);
-      logger.error(
-        `Metadatas for batch are: ${JSON.stringify(metadataBatches[i])}`
-      );
+      logger.error({
+        ...(error as Error),
+        error: 'Error adding to collection. Halting...',
+        metadata: JSON.stringify(metadataBatches[i]),
+      });
       return false;
     }
   }
