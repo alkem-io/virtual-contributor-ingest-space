@@ -2,7 +2,13 @@ import winston from 'winston';
 
 const logger = winston.createLogger({
   level: (process.env.LOGGING_LEVEL || 'debug').toLowerCase(),
-  format: winston.format.json(),
+  // format: winston.format.json(),
+  format: winston.format.combine(
+    winston.format.errors({ stack: true }),
+    winston.format.json(),
+    winston.format.prettyPrint()
+  ),
+
   defaultMeta: { service: 'space-ingest' },
   transports: [
     //
