@@ -1,4 +1,4 @@
-import { SpaceIngestionPurpose } from './space.ingestion.purpose';
+import { SpaceIngestionPurpose } from './event.bus/events/ingest.space.result';
 import { Document } from 'langchain/document';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { OpenAIClient, AzureKeyCredential, EmbeddingItem } from '@azure/openai';

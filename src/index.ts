@@ -1,14 +1,18 @@
 import amqplib from 'amqplib';
 import { Document } from 'langchain/document';
 
-import { SpaceIngestionPurpose } from './space.ingestion.purpose';
+import {
+  IngestSpaceResult,
+  SpaceIngestionPurpose,
+  SpaceIngestionResult,
+} from './event.bus/events/ingest.space.result';
 import { CalloutVisibility, Callout, Space } from './generated/graphql';
 
 import logger from './logger';
 import ingest from './ingest';
 import generateDocument from './generate.document';
 import { handleCallout } from './callout.handlers';
-import { AlkemioCliClient } from './graphql-client/AlkemioCliClient';
+import { AlkemioCliClient } from './graphql.client/AlkemioCliClient';
 
 // recursive function
 // first invocation is with [rootSpace]
@@ -116,10 +120,19 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
   const connectionString = `amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@${RABBITMQ_HOST}:${RABBITMQ_PORT}`;
 
   const conn = await amqplib.connect(connectionString);
+
   const queue = RABBITMQ_QUEUE ?? 'ingest-space';
 
   const channel = await conn.createChannel();
   await channel.assertQueue(queue);
+  await channel.assertQueue('virtual-contributor-ingest-space-result');
+
+  await channel.assertExchange('event-bus', 'direct');
+  await channel.bindQueue(
+    'virtual-contributor-ingest-space-result',
+    'event-bus',
+    'IngestSpaceResult'
+  );
 
   // important! handle message in a sequemce instead of paralell; for some reason
   // _spamming_ the queue with messages results in all sorts of random exceptions;
@@ -137,15 +150,36 @@ export const main = async (spaceId: string, purpose: SpaceIngestionPurpose) => {
         //maybe share them in a package
         //publish a confifrmation
         const decoded = JSON.parse(JSON.parse(msg.content.toString()));
+        logger.info(JSON.stringify(decoded));
         logger.info(`Ingest invoked for space: ${decoded.spaceId}`);
         const result = await main(decoded.spaceId, decoded.purpose);
         // add rety mechanism as well
         // do auto ack of the messages in order to be able to scale the service
         // channel.ack(msg);
+        const resultMsg = new IngestSpaceResult(
+          decoded.spaceId,
+          decoded.purpose,
+          decoded.personaServiceId,
+          Date.now()
+        );
+
         if (result) {
+          resultMsg.result = SpaceIngestionResult.SUCCESS;
+          channel.publish(
+            'event-bus',
+            'IngestSpaceResult',
+            Buffer.from(JSON.stringify(resultMsg))
+          );
           logger.info('Ingestion completed successfully.');
         } else {
           logger.error('Ingestion failed.');
+          resultMsg.result = SpaceIngestionResult.FAILURE;
+          resultMsg.error = 'error';
+          channel.publish(
+            'event-bus',
+            'IngestSpaceResult',
+            Buffer.from(JSON.stringify(resultMsg))
+          );
         }
       } else {
         logger.error('Consumer cancelled by server');

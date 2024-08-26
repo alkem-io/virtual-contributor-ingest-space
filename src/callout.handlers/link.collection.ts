@@ -9,7 +9,7 @@ import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { MimeTypeDocumentMap } from '../document.type';
 import { SpreadSheetLoader, DocLoader } from '../loaders';
-import { AlkemioCliClient } from 'src/graphql-client/AlkemioCliClient';
+import { AlkemioCliClient } from 'src/graphql.client/AlkemioCliClient';
 
 const downloadDocument = async (
   uri: string,
