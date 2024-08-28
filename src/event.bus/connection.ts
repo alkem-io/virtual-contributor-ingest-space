@@ -49,7 +49,7 @@ export class Connection {
       port: this.getEnvValue('RABBITMQ_PORT'),
       incomingQueue: this.getEnvValue('RABBITMQ_INGEST_SPACE_QUEUE'),
       outgoingQueue: this.getEnvValue('RABBITMQ_INGEST_SPACE_RESULT_QUEUE'),
-      exchange: this.getEnvValue('RABBITMQ_EXCHANGE'),
+      exchange: this.getEnvValue('RABBITMQ_EVENT_BUS_EXCHANGE'),
     };
   }
 
