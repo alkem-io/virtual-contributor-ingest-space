@@ -3,7 +3,7 @@ import { Callout, CalloutType } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import { baseHandler } from './base';
 import { linkCollectionHandler } from './link.collection';
-import { AlkemioCliClient } from 'src/graphql-client/AlkemioCliClient';
+import { AlkemioCliClient } from 'src/graphql.client/AlkemioCliClient';
 
 const handlersMap: Record<
   CalloutType,
