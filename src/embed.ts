@@ -1,4 +1,4 @@
-import { SpaceIngestionPurpose } from './event.bus/events/ingest.space.result';
+import { SpaceIngestionPurpose } from './event.bus/events/ingest.space';
 import { Document } from 'langchain/document';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { OpenAIClient, AzureKeyCredential, EmbeddingItem } from '@azure/openai';
@@ -152,12 +152,8 @@ export default async (
         `Batch ${i} of size ${embeddingsBatches[i].length} added to collection ${name}`
       );
     } catch (error) {
-      logger.error({
-        ...(error as Error),
-        error: 'Error adding to collection. Halting...',
-        metadata: JSON.stringify(metadataBatches[i]),
-      });
-      return false;
+      logger.error(error);
+      throw error;
     }
   }
   return true;

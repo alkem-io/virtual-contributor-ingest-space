@@ -1,12 +1,18 @@
-export enum SpaceIngestionPurpose {
-  KNOWLEDGE = 'knowledge',
-  CONTEXT = 'context',
-}
+import { SpaceIngestionPurpose } from './ingest.space';
 
 export enum SpaceIngestionResult {
   SUCCESS = 'success',
   FAILURE = 'failure',
 }
+
+export enum ErrorCode {
+  VECTOR_INSERT = 'vector_insert',
+}
+
+type IngestError = {
+  code?: ErrorCode;
+  message: string;
+};
 
 export class IngestSpaceResult {
   constructor(
@@ -14,7 +20,7 @@ export class IngestSpaceResult {
     public readonly purpose: SpaceIngestionPurpose,
     public readonly personaServiceId: string,
     public readonly timestamp: number,
-    public result?: SpaceIngestionResult,
-    public error?: string
+    public result: SpaceIngestionResult = SpaceIngestionResult.SUCCESS,
+    public error?: IngestError
   ) {}
 }
