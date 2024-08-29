@@ -9,9 +9,6 @@ import { embedSpace } from './space.embed/embed.space';
   const connection = await Connection.get();
 
   connection.consume(async (event: IngestSpace) => {
-    //TODO create event class matching the one from Server
-    //maybe share them in a package
-    //publish a confifrmation
     logger.info(`Ingest invoked for space: ${event.spaceId}`);
     const resultEvent = await embedSpace(event);
     // add rety mechanism as well
