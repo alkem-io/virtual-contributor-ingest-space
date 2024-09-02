@@ -20,14 +20,17 @@ const setResultError = (
 ) => {
   result.error = { code, message };
   result.result = SpaceIngestionResult.FAILURE;
+  // this shenanigan is here to ensure the Timestamp is in UTC timezone
+  result.timestamp = new Date(
+    new Date().toLocaleString('en', { timeZone: 'UTC' })
+  ).getTime();
   return result;
 };
 export const embedSpace = async (event: IngestSpace) => {
   const resultEvent = new IngestSpaceResult(
     event.spaceId,
     event.purpose,
-    event.personaServiceId,
-    Date.now()
+    event.personaServiceId
   );
 
   const spaceId = event.spaceId;
@@ -85,6 +88,9 @@ export const embedSpace = async (event: IngestSpace) => {
       message: 'An error occured while embedding.',
     };
   }
-
+  // this shenanigan is here to ensure the Timestamp is in UTC timezone
+  resultEvent.timestamp = new Date(
+    new Date().toLocaleString('en', { timeZone: 'UTC' })
+  ).getTime();
   return resultEvent;
 };
