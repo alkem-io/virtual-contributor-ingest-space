@@ -19,7 +19,7 @@ export class IngestSpaceResult {
     public readonly spaceId: string,
     public readonly purpose: SpaceIngestionPurpose,
     public readonly personaServiceId: string,
-    public readonly timestamp: number,
+    public timestamp?: number,
     public result: SpaceIngestionResult = SpaceIngestionResult.SUCCESS,
     public error?: IngestError
   ) {}
