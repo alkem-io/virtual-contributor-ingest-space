@@ -71,6 +71,7 @@ export const embedSpace = async (event: IngestSpace) => {
   try {
     embeddingResult = await embed(space.id, documents, purpose);
   } catch (error) {
+    console.log(error);
     return setResultError(
       resultEvent,
       'Failed to insert embeddings.',

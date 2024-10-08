@@ -1,5 +1,5 @@
 import { Logger } from 'winston';
-import { Callout, CalloutContribution } from '../generated/graphql';
+import { Callout } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import generateDocument from '../generate.document';
 
@@ -49,15 +49,16 @@ export const baseHandler = async (
   ];
 
   logger.info(`Generating documents for Callout (${documentId}) contributions`);
-  // extra loop but will do for now
-  callout.contributions
-    ?.map((contribution: Partial<CalloutContribution>) => {
-      let docLike;
-      if (!!contribution.link) {
-        docLike = contribution.link;
-      } else if (!!contribution.post) {
-        docLike = contribution.post;
-      }
+
+  for (const contribution of callout.contributions || []) {
+    let docLike;
+    if (!!contribution.link) {
+      docLike = contribution.link;
+    } else if (!!contribution.post) {
+      docLike = contribution.post;
+    }
+
+    if (docLike) {
       const { pageContent, documentId, source, type, title } =
         generateDocument(docLike);
       result.push(
@@ -71,8 +72,8 @@ export const baseHandler = async (
           },
         })
       );
-    })
-    .join('\n');
+    }
+  }
 
   logger.info(
     `Documents for Callout (${documentId}) generated. # of documents ${result.length}`

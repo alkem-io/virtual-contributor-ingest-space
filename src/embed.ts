@@ -7,6 +7,7 @@ import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
 import { DocumentType } from './document.type';
 import { BATCH_SIZE, CHUNK_OVERLAP, CHUNK_SIZE } from './constants';
+import { summarize } from './summarize';
 
 const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
   Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
@@ -63,6 +64,19 @@ export default async (
         doc.metadata.documentId
       }) of type ${doc.metadata.type}; # of chunks: ${splitted.length}`
     );
+    if (doc.metadata.documentId === 'd6d95bc5-a0a0-4c1c-b8bd-c5c04d5ee17b') {
+      try {
+        await summarize(doc, splitted);
+      } catch (err) {
+        console.log(err);
+        return false;
+        throw err;
+      }
+
+      console.log('\n\n\n');
+      console.log(doc.pageContent);
+      console.log('\n\n\n');
+    }
 
     splitted.forEach((chunk, chunkIndex) => {
       ids.push(
