@@ -51,9 +51,9 @@ export const baseHandler = async (
   logger.info(`Generating documents for Callout (${documentId}) contributions`);
   for (const contribution of callout.contributions || []) {
     let docLike;
-    if (!!contribution.link) {
+    if (contribution.link) {
       docLike = contribution.link;
-    } else if (!!contribution.post) {
+    } else if (contribution.post) {
       docLike = contribution.post;
     }
     if (docLike) {
