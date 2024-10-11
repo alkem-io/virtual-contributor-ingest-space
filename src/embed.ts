@@ -113,7 +113,14 @@ export default async (
       );
       const response = await openAi.getEmbeddings(deployment, batch);
       data = [...data, ...response.data];
-      logger.info('Embeddings generates');
+      logger.debug(
+        `Generated embeddings ${
+          response.data.length
+        }; Embeddings length are: ${Array.from(
+          new Set(response.data.map(({ embedding }) => embedding.length))
+        )}`
+      );
+      logger.info('Embeddings generated.');
     } catch (error) {
       logger.error({
         ...(error as Error),

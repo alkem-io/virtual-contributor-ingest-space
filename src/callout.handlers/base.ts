@@ -74,7 +74,6 @@ export const baseHandler = async (
       );
     }
   }
-
   logger.info(
     `Documents for Callout (${documentId}) generated. # of documents ${result.length}`
   );
