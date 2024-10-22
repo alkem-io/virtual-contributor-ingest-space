@@ -5,8 +5,9 @@ const logger = winston.createLogger({
   // format: winston.format.json(),
   format: winston.format.combine(
     winston.format.errors({ stack: true }),
-    winston.format.json(),
-    winston.format.prettyPrint()
+    // winston.format.json(),
+    winston.format.simple()
+    // winston.format.prettyPrint()
   ),
 
   defaultMeta: { service: 'space-ingest' },
