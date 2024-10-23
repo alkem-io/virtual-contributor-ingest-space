@@ -49,6 +49,7 @@ export const baseHandler = async (
   ];
 
   logger.info(`Generating documents for Callout (${documentId}) contributions`);
+
   for (const contribution of callout.contributions || []) {
     let docLike;
     if (contribution.link) {
@@ -56,6 +57,7 @@ export const baseHandler = async (
     } else if (contribution.post) {
       docLike = contribution.post;
     }
+
     if (docLike) {
       const { pageContent, documentId, source, type, title } =
         generateDocument(docLike);

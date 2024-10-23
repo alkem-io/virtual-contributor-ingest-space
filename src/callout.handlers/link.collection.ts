@@ -56,7 +56,9 @@ const downloadDocument = async (
 };
 
 const fileLoaderFactories: {
-  [key in MimeType]?: (path: string) => BaseDocumentLoader;
+  [key in MimeType]?: (
+    path: string
+  ) => BaseDocumentLoader | PDFLoader | DocxLoader;
 } = {
   [MimeType.Pdf]: (path: string) => new PDFLoader(path, { splitPages: false }),
 
