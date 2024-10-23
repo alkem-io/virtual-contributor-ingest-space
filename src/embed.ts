@@ -103,7 +103,7 @@ export default async (
 
   metadatas.push({
     documentId: spaceID,
-    soruce: space.profile.url,
+    source: space.profile.url,
     type: 'bodyOfKnowledgeSummary',
     title: space.profile?.displayName,
   });

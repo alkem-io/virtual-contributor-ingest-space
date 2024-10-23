@@ -6,8 +6,12 @@ import {
 import { Document } from 'langchain/document';
 import { buildGraph } from './graph';
 const systemMessage = SystemMessagePromptTemplate.fromTemplate(
-  `You are tasked with summarizing text documents that might include conversation transcripts, articles, novels and other.
-   In your summary preserve as much information as possible, including references, names of the participants, titles, dates, etc.`
+  `In your summary preserve as much information as possible, including:
+   - References and connections between documents
+   - Names of participants and their roles
+   - Titles, dates, and temporal relationships
+   - Key concepts and their relationships within the body of knowledge
+   Focus on maintaining the coherence of information across document boundaries.`
 );
 
 const summarizePrompt = ChatPromptTemplate.fromMessages([
