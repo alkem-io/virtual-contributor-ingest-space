@@ -7,6 +7,10 @@ import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
 import { DocumentType } from './document.type';
 import { BATCH_SIZE, CHUNK_OVERLAP, CHUNK_SIZE } from './constants';
+import { summarizeDocument } from './summarize/document';
+import { summariseBodyOfKnowledge } from './summarize/body.of.knowledge';
+import { summaryLength } from './summarize/graph';
+import { Space, Profile } from '@alkemio/client-lib';
 
 const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
   Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
@@ -14,10 +18,11 @@ const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
   );
 
 export default async (
-  spaceID: string,
+  space: Pick<Space, 'id'> & { profile: Pick<Profile, 'displayName' | 'url'> },
   docs: Document[],
   purpose: SpaceIngestionPurpose
 ) => {
+  const spaceID = space.id;
   logger.defaultMeta.spaceId = spaceID;
 
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
@@ -46,6 +51,8 @@ export default async (
   const documents: string[] = [];
   const metadatas: Array<Metadata> = [];
 
+  const summaries: string[] = [];
+
   logger.info(`Splitting documents for space: ${spaceID}`);
 
   for (let docIndex = 0; docIndex < docs.length; docIndex++) {
@@ -69,9 +76,37 @@ export default async (
         `${chunk.metadata.documentId}-${chunk.metadata.type}-chunk${chunkIndex}`
       );
       documents.push(chunk.pageContent);
-      metadatas.push({ ...chunk.metadata, chunkIndex });
+      metadatas.push({ ...chunk.metadata, embeddingType: 'chunk', chunkIndex });
     });
+
+    if (doc.pageContent.length > summaryLength) {
+      try {
+        const documentSummary = await summarizeDocument(splitted);
+        ids.push(`${doc.metadata.documentId}-${doc.metadata.type}-summary`);
+        documents.push(documentSummary);
+        metadatas.push({ ...doc.metadata, embeddingType: 'summary' });
+
+        summaries.push(documentSummary);
+      } catch (err) {
+        logger.error(err);
+      }
+    } else {
+      summaries.push(doc.pageContent);
+    }
   }
+
+  const bokDescriptions = new Document({ pageContent: summaries.join('\n') });
+  const bokChunks = await splitter.splitDocuments([bokDescriptions]);
+  const bokSummary = await summariseBodyOfKnowledge(bokChunks);
+  ids.push('body-of-knowledge-summary');
+  documents.push(bokSummary);
+
+  metadatas.push({
+    documentId: spaceID,
+    source: space.profile.url,
+    type: 'bodyOfKnowledgeSummary',
+    title: space.profile?.displayName,
+  });
 
   logger.info('Connecting to Chroma...');
   const client = dbConnect();
