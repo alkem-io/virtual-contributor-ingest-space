@@ -26,6 +26,7 @@ const setResultError = (
   ).getTime();
   return result;
 };
+
 export const embedSpace = async (event: IngestSpace) => {
   const resultEvent = new IngestSpaceResult(
     event.spaceId,
@@ -69,7 +70,7 @@ export const embedSpace = async (event: IngestSpace) => {
   );
   let embeddingResult = false;
   try {
-    embeddingResult = await embed(space.id, documents, purpose);
+    embeddingResult = await embed(space, documents, purpose);
   } catch (error) {
     logger.error(error);
     return setResultError(

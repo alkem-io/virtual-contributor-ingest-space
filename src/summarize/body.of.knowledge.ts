@@ -1,26 +1,24 @@
-import { ChatPromptTemplate } from '@langchain/core/prompts';
+import {
+  SystemMessagePromptTemplate,
+  HumanMessagePromptTemplate,
+  ChatPromptTemplate,
+} from '@langchain/core/prompts';
 import { Document } from 'langchain/document';
 import { buildGraph } from './graph';
 
+const systemMessage = SystemMessagePromptTemplate.fromTemplate(
+  'You are tasked with concising summaries based entirely on the user input. While doing so preserve as much information as possible like names, references titles, dates, etc.'
+);
+
 const summarizePrompt = ChatPromptTemplate.fromMessages([
-  [
-    'system',
-    `You are tasked with concising summaries send by a user based entierly on the user input. While doing so
-     preserve as much information as possible like names, references titles, dates, etc.`,
-  ],
-  [
-    'human',
-    'Write a detailed summary, no more than {summaryLength} characters of the following: {context}',
-  ],
+  systemMessage,
+  HumanMessagePromptTemplate.fromTemplate(
+    'Write a detailed summary, no more than {summaryLength} characters of the following: {context}'
+  ),
 ]);
 const refinePrompt = ChatPromptTemplate.fromMessages([
-  [
-    'system',
-    `You are tasked with concising summaries send by a user based entierly on the user input. While doing so
-     preserve as much information as possible like names, references titles, dates, etc.`,
-  ],
-  [
-    'human',
+  systemMessage,
+  HumanMessagePromptTemplate.fromTemplate(
     `Produce a final detailed summary, no more than {summaryLength} characters.
      Existing summary up to this point:
 
@@ -28,8 +26,8 @@ const refinePrompt = ChatPromptTemplate.fromMessages([
 
      New context: {context}
 
-     Given the new context, refine the original summary.`,
-  ],
+     Given the new context, refine the original summary.`
+  ),
 ]);
 
 export const summariseBodyOfKnowledge = async (chunks: Document[]) => {

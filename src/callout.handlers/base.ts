@@ -52,9 +52,9 @@ export const baseHandler = async (
 
   for (const contribution of callout.contributions || []) {
     let docLike;
-    if (!!contribution.link) {
+    if (contribution.link) {
       docLike = contribution.link;
-    } else if (!!contribution.post) {
+    } else if (contribution.post) {
       docLike = contribution.post;
     }
 

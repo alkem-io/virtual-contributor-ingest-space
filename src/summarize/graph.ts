@@ -3,10 +3,20 @@ import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { Document } from 'langchain/document';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 
-export const summaryLength = parseInt(process.env.SUMMARY_LENGTH || '10000');
+export const summaryLength = parseInt(
+  process.env.SUMMARY_LENGTH || '10000',
+  10
+);
 
 const apiKey = process.env.AZURE_MISTRAL_API_KEY;
 const endpoint = process.env.AZURE_MISTRAL_ENDPOINT;
+
+if (!apiKey) {
+  throw new Error('AZURE_MISTRAL_API_KEY environment variable is not set.');
+}
+if (!endpoint) {
+  throw new Error('AZURE_MISTRAL_ENDPOINT environment variable is not set.');
+}
 
 const model = new ChatMistralAI({
   apiKey,
