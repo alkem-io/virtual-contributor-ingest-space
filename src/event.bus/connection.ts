@@ -1,9 +1,9 @@
 import amqlib, { Connection as AmqlibConnection, Channel } from 'amqplib';
 import logger from '../logger';
-import { IngestSpace } from './events/ingest.space';
-import { IngestSpaceResult } from './events/ingest.space.result';
+import { IngestBodyOfKnowledge } from './events/ingest.body.of.knowledge';
+import { IngestBodyOfKnowledgeResult } from './events/ingest.body.of.knowledge.result';
 
-type ConsumeCallback = (event: IngestSpace) => void | Promise<void>;
+type ConsumeCallback = (event: IngestBodyOfKnowledge) => void | Promise<void>;
 
 type ConnectionConfig = {
   host: string;
@@ -102,7 +102,7 @@ export class Connection {
     }
   }
 
-  async send(message: IngestSpaceResult) {
+  async send(message: IngestBodyOfKnowledgeResult) {
     try {
       if (!this.channel) {
         await this.connect();
@@ -126,10 +126,14 @@ export class Connection {
           if (!msg) {
             return logger.error('Invalid incoming message');
           }
-          const { spaceId, purpose, personaServiceId } = JSON.parse(
-            JSON.parse(msg.content.toString())
+          const { bodyOfKnowledgeId, type, purpose, personaServiceId } =
+            JSON.parse(JSON.parse(msg.content.toString()));
+          const event = new IngestBodyOfKnowledge(
+            bodyOfKnowledgeId,
+            type,
+            purpose,
+            personaServiceId
           );
-          const event = new IngestSpace(spaceId, purpose, personaServiceId);
 
           handler(event);
         }

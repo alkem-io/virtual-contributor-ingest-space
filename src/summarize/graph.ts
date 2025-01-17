@@ -3,6 +3,9 @@ import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { Document } from 'langchain/document';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 
+import { traceable } from 'langsmith/traceable';
+import { wrapSDK } from 'langsmith/wrappers';
+
 export const summaryLength = parseInt(
   process.env.SUMMARY_LENGTH || '10000',
   10
@@ -18,11 +21,13 @@ if (!endpoint) {
   throw new Error('AZURE_MISTRAL_ENDPOINT environment variable is not set.');
 }
 
-const model = new ChatMistralAI({
-  apiKey,
-  endpoint,
-  maxRetries: 1,
-});
+const model = wrapSDK(
+  new ChatMistralAI({
+    apiKey,
+    endpoint,
+    maxRetries: 1,
+  })
+);
 
 export const buildGraph = (
   summarizePrompt: ChatPromptTemplate,

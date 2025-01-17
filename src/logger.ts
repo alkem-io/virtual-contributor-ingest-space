@@ -38,4 +38,9 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
+export const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  return String(error);
+};
+
 export default logger;

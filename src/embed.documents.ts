@@ -1,4 +1,3 @@
-import { SpaceIngestionPurpose } from './event.bus/events/ingest.space';
 import { Document } from 'langchain/document';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { OpenAIClient, AzureKeyCredential, EmbeddingItem } from '@azure/openai';
@@ -10,20 +9,21 @@ import { BATCH_SIZE, CHUNK_OVERLAP, CHUNK_SIZE } from './constants';
 import { summarizeDocument } from './summarize/document';
 import { summariseBodyOfKnowledge } from './summarize/body.of.knowledge';
 import { summaryLength } from './summarize/graph';
-import { Space, Profile } from '@alkemio/client-lib';
+import { IngestionPurpose } from './event.bus/events/ingest.body.of.knowledge';
+import { BodyOfKnowledgeReadResult } from './data.readers/types';
 
 const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
   Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
     arr.slice(i * size, i * size + size)
   );
 
-export default async (
-  space: Pick<Space, 'id'> & { profile: Pick<Profile, 'displayName' | 'url'> },
+export const embedDocuments = async (
+  bodyOfKnowledge: BodyOfKnowledgeReadResult,
   docs: Document[],
-  purpose: SpaceIngestionPurpose
+  purpose: IngestionPurpose
 ) => {
-  const spaceID = space.id;
-  logger.defaultMeta.spaceId = spaceID;
+  const bokID = bodyOfKnowledge.id;
+  logger.defaultMeta.bodyOfKnowledgeId = bokID;
 
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
   const key = process.env.AZURE_OPENAI_API_KEY;
@@ -45,7 +45,7 @@ export default async (
     chunkOverlap: CHUNK_OVERLAP,
   });
 
-  const name = `${spaceID}-${purpose}`;
+  const name = `${bokID}-${purpose}`;
   logger.info(name);
   const ids: string[] = [];
   const documents: string[] = [];
@@ -53,7 +53,7 @@ export default async (
 
   const summaries: string[] = [];
 
-  logger.info(`Splitting documents for space: ${spaceID}`);
+  logger.info(`Splitting documents for space: ${bokID}`);
 
   for (let docIndex = 0; docIndex < docs.length; docIndex++) {
     const doc = docs[docIndex];
@@ -102,10 +102,10 @@ export default async (
   documents.push(bokSummary);
 
   metadatas.push({
-    documentId: spaceID,
-    source: space.profile.url,
+    documentId: bokID,
+    source: bodyOfKnowledge.profile.url,
     type: 'bodyOfKnowledgeSummary',
-    title: space.profile?.displayName,
+    title: bodyOfKnowledge.profile?.displayName,
   });
 
   logger.info('Connecting to Chroma...');

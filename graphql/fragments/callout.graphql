@@ -1,0 +1,50 @@
+fragment CalloutFields on Callout {
+  id
+  nameID
+  type
+  visibility
+  comments {
+    messagesCount
+    messages {
+      sender {
+        ... on User {
+          profile {
+            url
+            displayName
+          }
+        }
+        ... on VirtualContributor {
+          profile {
+            url
+            displayName
+          }
+        }
+      }
+      message
+      timestamp
+    }
+  }
+  framing {
+    id
+    profile {
+      ...ProfileFields
+    }
+  }
+  contributions {
+    post {
+      id
+      nameID
+      profile {
+        ...ProfileFields
+      }
+    }
+    link {
+      id
+      uri
+      profile {
+        ...ProfileNoTagsetFields
+      }
+
+    }
+  }
+}
