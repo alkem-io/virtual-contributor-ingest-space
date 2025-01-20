@@ -17,7 +17,9 @@ export const embedKnowledgeBase = async (
     knowledgeBase = await alkemioClient.ingestKnowledgeBase(knowledgeBaseId);
   } catch (error) {
     logger.error(error);
-    throw new Error('GraphQL connection failed.');
+    throw new Error(
+      `GraphQL connection failed while fetching knowledge base ${knowledgeBaseId}: ${error}`
+    );
   }
 
   if (!knowledgeBase) {

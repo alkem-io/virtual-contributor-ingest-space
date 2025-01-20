@@ -5,10 +5,12 @@ import {
   IngestBodyOfKnowledgeResult,
   IngestionResult,
 } from './event.bus/events/ingest.body.of.knowledge.result';
-import { IngestBodyOfKnowledge } from 'src/event.bus/events/ingest.body.of.knowledge';
 import { embedSpace } from './data.readers/space';
-import { embedKnowledgeBase } from './data.readers/konwledge.base';
-import { BodyOfKnowledgeType } from './event.bus/events/ingest.body.of.knowledge';
+import { embedKnowledgeBase } from './data.readers/knowledge.base';
+import {
+  IngestBodyOfKnowledge,
+  BodyOfKnowledgeType,
+} from './event.bus/events/ingest.body.of.knowledge';
 import { ReadResult } from './data.readers/types';
 import { embedDocuments } from './embed.documents';
 

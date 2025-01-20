@@ -1,12 +1,11 @@
 import { Document } from 'langchain/document';
 
-import { CalloutVisibility, Callout, Space } from '../generated/graphql';
+import { Space } from '../generated/graphql';
 
-import logger from '../logger';
 import generateDocument from '../generate.document';
-import { handleCallout } from '../callout.handlers';
 import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
 import { processCallouts } from '../process.callouts';
+
 // recursive function
 // first invocation is with [rootSpace]
 // second invocation is with rootSpace.subspaces
@@ -33,7 +32,7 @@ export const processSpaceTree = async (
       })
     );
     const calloutDocs = await processCallouts(
-      subspace.collaboration?.calloutsSet.callouts || [],
+      subspace.collaboration?.calloutsSet?.callouts || [],
       alkemioClient
     );
     documents.push(...calloutDocs);

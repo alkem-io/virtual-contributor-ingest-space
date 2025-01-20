@@ -19,7 +19,11 @@ export const embedSpace = async (
     space = await alkemioClient.ingestSpace(spaceId);
   } catch (error) {
     logger.error(error);
-    throw new Error('GraphQL connection failed.');
+    throw new Error(
+      `GraphQL connection failed for space ${spaceId}: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
 
   if (!space) {

@@ -3,7 +3,6 @@ import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { Document } from 'langchain/document';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 
-import { traceable } from 'langsmith/traceable';
 import { wrapSDK } from 'langsmith/wrappers';
 
 export const summaryLength = parseInt(
