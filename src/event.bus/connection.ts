@@ -47,8 +47,12 @@ export class Connection {
       user: this.getEnvValue('RABBITMQ_USER'),
       password: this.getEnvValue('RABBITMQ_PASSWORD'),
       port: this.getEnvValue('RABBITMQ_PORT'),
-      incomingQueue: this.getEnvValue('RABBITMQ_INGEST_SPACE_QUEUE'),
-      outgoingQueue: this.getEnvValue('RABBITMQ_INGEST_SPACE_RESULT_QUEUE'),
+      incomingQueue: this.getEnvValue(
+        'RABBITMQ_INGEST_BODY_OF_KNOWLEDGE_QUEUE'
+      ),
+      outgoingQueue: this.getEnvValue(
+        'RABBITMQ_INGEST_BODY_OF_KNOWLEDGE_RESULT_QUEUE'
+      ),
       exchange: this.getEnvValue('RABBITMQ_EVENT_BUS_EXCHANGE'),
     };
   }
