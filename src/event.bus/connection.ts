@@ -132,7 +132,7 @@ export class Connection {
           }
           try {
             const { bodyOfKnowledgeId, type, purpose, personaServiceId } =
-              JSON.parse(msg.content.toString());
+              JSON.parse(JSON.parse(msg.content.toString()));
             const event = new IngestBodyOfKnowledge(
               bodyOfKnowledgeId,
               type,
