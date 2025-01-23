@@ -70,8 +70,14 @@ export class AlkemioCliClient {
 
   public async ingestSpace(spaceID: string) {
     const result = await this.sdkClient.spaceIngest({ spaceID });
-
     return result.data.lookup.space;
+  }
+
+  public async ingestKnowledgeBase(knowledgeBaseID: string) {
+    const result = await this.sdkClient.knowledgeBaseIngest({
+      knowledgeBaseID,
+    });
+    return result.data.lookup.knowledgeBase;
   }
 
   public async document(documentID: string) {

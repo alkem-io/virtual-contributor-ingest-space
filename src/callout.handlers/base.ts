@@ -38,6 +38,7 @@ export const baseHandler = async (
 
   const result: Document[] = [
     new Document({
+      id: documentId,
       pageContent,
       metadata: {
         documentId,
@@ -63,6 +64,7 @@ export const baseHandler = async (
         generateDocument(docLike);
       result.push(
         new Document({
+          id: documentId,
           pageContent,
           metadata: {
             documentId,

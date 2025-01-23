@@ -1,21 +1,17 @@
 import logger from './logger';
 import { Connection } from './event.bus/connection';
-import { IngestSpace } from './event.bus/events/ingest.space';
-import { embedSpace } from './space.embed/embed.space';
+import { IngestBodyOfKnowledge } from './event.bus/events/ingest.body.of.knowledge';
+import { embedBodyOfKnowledge } from './embed.body.of.knowledge';
 
 (async () => {
   logger.info('Ingest Space ready. Waiting for RPC messages...');
 
   const connection = await Connection.get();
 
-  connection.consume(async (event: IngestSpace) => {
-    logger.info(`Ingest invoked for space: ${event.spaceId}`);
-    const resultEvent = await embedSpace(event);
-    // add rety mechanism as well
-    // do auto ack of the messages in order to be able to scale the service
-    // channel.ack(msg);
+  connection.consume(async (event: IngestBodyOfKnowledge) => {
+    const resultEvent = await embedBodyOfKnowledge(event);
 
     connection.send(resultEvent);
-    logger.info(`Ingest completed for space: ${event.spaceId}`);
+    logger.info(`Ingest completed for space: ${event.bodyOfKnowledgeId}`);
   });
 })();
