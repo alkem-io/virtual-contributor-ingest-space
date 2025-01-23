@@ -1,0 +1,15 @@
+query knowledgeBaseIngest($knowledgeBaseID: UUID!){
+  lookup {
+    knowledgeBase(ID: $knowledgeBaseID) {
+      id
+      profile {
+        ...ProfileFields
+      }
+      calloutsSet {
+        callouts {
+          ...CalloutFields
+        }
+      }
+    }
+  }
+}

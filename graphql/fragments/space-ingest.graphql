@@ -3,27 +3,7 @@ fragment SpaceIngest on Space {
   nameID
   type
   profile {
-    description
-    displayName
-    tagline
-    url
-    location {
-      city
-      country
-      postalCode
-    }
-    tagset {
-      tags
-    }
-    references {
-      description
-      name
-      uri
-    }
-    visuals {
-      uri
-      name
-    }
+    ...ProfileFields
   }
   context {
     vision
@@ -32,54 +12,9 @@ fragment SpaceIngest on Space {
   }
 
   collaboration {
-    callouts {
-      id
-      nameID
-      type
-      visibility
-      comments {
-        messagesCount
-        messages {
-          sender {
-            ... on User {
-              profile {
-                url
-                displayName
-              }
-            }
-            ... on VirtualContributor {
-              profile {
-                url
-                displayName
-              }
-            }
-          }
-          message
-          timestamp
-        }
-      }
-      framing {
-        id
-        profile {
-          ...ProfileFields
-        }
-      }
-      contributions {
-        post {
-          id
-          nameID
-          profile {
-            ...ProfileFields
-          }
-        }
-        link {
-          id
-          uri
-          profile {
-            ...ProfileNoTagsetFields
-          }
-
-        }
+    calloutsSet {
+      callouts {
+        ...CalloutFields
       }
     }
   }

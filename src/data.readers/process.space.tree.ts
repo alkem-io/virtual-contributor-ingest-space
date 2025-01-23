@@ -1,11 +1,11 @@
 import { Document } from 'langchain/document';
 
-import { CalloutVisibility, Callout, Space } from '../generated/graphql';
+import { Space } from '../generated/graphql';
 
-import logger from '../logger';
 import generateDocument from '../generate.document';
-import { handleCallout } from '../callout.handlers';
 import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
+import { processCallouts } from '../process.callouts';
+
 // recursive function
 // first invocation is with [rootSpace]
 // second invocation is with rootSpace.subspaces
@@ -21,6 +21,7 @@ export const processSpaceTree = async (
       generateDocument(subspace);
     documents.push(
       new Document({
+        id: documentId,
         pageContent,
         metadata: {
           documentId,
@@ -30,21 +31,11 @@ export const processSpaceTree = async (
         },
       })
     );
-
-    for (let j = 0; j < (subspace.collaboration?.callouts || []).length; j++) {
-      const callout = (subspace.collaboration?.callouts || [])[j];
-      if (callout && callout.visibility === CalloutVisibility.Published) {
-        const document = await handleCallout(
-          callout as Partial<Callout>,
-          logger,
-          alkemioClient
-        );
-        // empty doc - nothing to do here
-        if (document) {
-          documents.push(...document);
-        }
-      }
-    }
+    const calloutDocs = await processCallouts(
+      subspace.collaboration?.calloutsSet?.callouts || [],
+      alkemioClient
+    );
+    documents.push(...calloutDocs);
 
     // incoke recursively for the subspaces of the rootSpace
     const subspacesDocs = await processSpaceTree(
