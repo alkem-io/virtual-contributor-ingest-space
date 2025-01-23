@@ -2,7 +2,6 @@ import { Document } from 'langchain/document';
 
 import { Space } from '../generated/graphql';
 
-import logger from '../logger';
 import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
 import { processSpaceTree } from './process.space.tree';
 import { IngestBodyOfKnowledge } from 'src/event.bus/events/ingest.body.of.knowledge';
@@ -14,23 +13,7 @@ export const embedSpace = async (
 ): Promise<ReadResult> => {
   const spaceId = event.bodyOfKnowledgeId;
   // make sure the service user has sufficient priviliges
-  let space;
-  try {
-    space = await alkemioClient.ingestSpace(spaceId);
-  } catch (error) {
-    logger.error(error);
-    throw new Error(
-      `GraphQL connection failed for space ${spaceId}: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-  }
-
-  if (!space) {
-    logger.error(`Space ${spaceId} not found.`);
-    throw new Error(`Space ${spaceId} not found.`);
-  }
-
+  const space = await alkemioClient.ingestSpace(spaceId);
   const documents: Document[] = await processSpaceTree(
     [space as Partial<Space>],
     alkemioClient

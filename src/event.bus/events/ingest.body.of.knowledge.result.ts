@@ -23,7 +23,9 @@ export class IngestBodyOfKnowledgeResult {
     public readonly type: BodyOfKnowledgeType,
     public readonly purpose: IngestionPurpose,
     public readonly personaServiceId: string,
-    public timestamp?: number,
+    public timestamp: number = new Date(
+      new Date().toLocaleString('en', { timeZone: 'UTC' })
+    ).getTime(),
     public result: IngestionResult = IngestionResult.SUCCESS,
     public error?: IngestError
   ) {}

@@ -53,7 +53,7 @@ export const embedDocuments = async (
 
   const summaries: string[] = [];
 
-  logger.info(`Splitting documents for space: ${bokID}`);
+  logger.info(`Splitting documents for body of knowledge: ${bokID}`);
 
   for (let docIndex = 0; docIndex < docs.length; docIndex++) {
     const doc = docs[docIndex];

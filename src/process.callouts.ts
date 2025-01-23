@@ -10,8 +10,8 @@ export const processCallouts = async (
 ): Promise<Document[]> => {
   const documents: Document[] = [];
 
-  for (const callout of callouts ?? []) {
-    if (callout && callout.visibility === CalloutVisibility.Published) {
+  for (const callout of callouts) {
+    if (callout.visibility === CalloutVisibility.Published) {
       const document = await handleCallout(
         callout as Partial<Callout>,
         logger,
