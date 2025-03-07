@@ -1,5 +1,6 @@
 import { Reference, Visual } from './generated/graphql';
 import { DocumentType, mapType } from './document.type';
+import { parse } from 'node-html-parser';
 
 interface GeneratedDocument {
   documentId: string;
@@ -10,49 +11,62 @@ interface GeneratedDocument {
 }
 
 //TODO type this pls
-export default (docLike: any): GeneratedDocument => {
-  const {
-    id: documentId,
-    type,
-    profile: {
-      references,
-      tagset,
-      url: source,
-      description,
-      tagline,
-      displayName,
-      location,
-      visuals,
-      type: profileType,
-    },
-    context,
-  } = docLike;
+export const generateDocument = (docLike: any): GeneratedDocument => {
+  const { id: documentId, type } = docLike;
 
-  const { vision, impact, who } = context || {};
+  const {
+    references,
+    tagset,
+    url: source,
+    description,
+    tagline,
+    displayName,
+    location,
+    visuals,
+    type: profileType,
+    who,
+    why,
+  } = docLike.profile || docLike.about.profile || {};
+
+  // const { vision, impact, who } = context || {};
+
   const { city, country, postalCode } = location || {};
 
   let pageContent = `Name: ${displayName}`;
   if (tagline) pageContent = `${pageContent}\nTagline: ${tagline}`;
   if (tagset?.tags.length)
     pageContent = `${pageContent}\nTags: ${tagset?.tags.join(', ')}`;
-  if (description) pageContent = `${pageContent}\nDescription: ${description}`;
-  if (impact) pageContent = `${pageContent}\nImpact: ${impact}`;
-  if (vision) pageContent = `${pageContent}\nVision: ${vision}`;
+  if (description) {
+    try {
+      const descriptionRoot = parse(description);
+      pageContent = `${pageContent}\nDescription: ${descriptionRoot.structuredText}`;
+    } catch (error) {
+      console.error('Error parsing HTML description:', error);
+      pageContent = `${pageContent}\nDescription: ${description}`; // Fallback to raw description
+    }
+  }
+  if (why) pageContent = `${pageContent}\nWhy: ${why}`;
   if (who) pageContent = `${pageContent}\nWho: ${who}`;
 
-  const processedVisuals = visuals
-    .map((visual: Visual) => `\t${visual.name}: ${visual.uri}`)
-    .join('\n');
+  let processedVisuals = '';
+  (visuals || []).forEach((visual: Visual) => {
+    if (visual.uri) {
+      processedVisuals += `\t${visual.name}: ${visual.uri}`;
+    }
+  });
+
   if (processedVisuals)
-    pageContent = `${pageContent}\nVisuals: ${processedVisuals}`;
+    pageContent = `${pageContent}\nVisuals:\n${processedVisuals}`;
 
   if (postalCode || city || country)
     pageContent = `${pageContent}\nLocation: ${postalCode} ${city} ${country}`;
 
-  const processedRefs = references.map(
-    ({ description, name, uri }: Reference) =>
-      `\tReference name: ${name}\n\tReference description: ${description}\n\tUri: ${uri}\n`
-  );
+  const processedRefs = (references || [])
+    .map(
+      ({ description, name, uri }: Reference) =>
+        `\tReference name: ${name}\n\tReference description: ${description}\n\tUri: ${uri}\n`
+    )
+    .join('\n');
   if (processedRefs)
     pageContent = `${pageContent}\nReferences:\n${processedRefs}`;
 
