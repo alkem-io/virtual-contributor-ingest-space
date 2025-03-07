@@ -44,7 +44,7 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
   if (who) pageContent = `${pageContent}\nWho: ${who}`;
 
   let processedVisuals = '';
-  visuals.forEach((visual: Visual) => {
+  (visuals || []).forEach((visual: Visual) => {
     if (visual.uri) {
       processedVisuals += `\t${visual.name}: ${visual.uri}`;
     }
@@ -56,7 +56,7 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
   if (postalCode || city || country)
     pageContent = `${pageContent}\nLocation: ${postalCode} ${city} ${country}`;
 
-  const processedRefs = references
+  const processedRefs = (references || [])
     .map(
       ({ description, name, uri }: Reference) =>
         `\tReference name: ${name}\n\tReference description: ${description}\n\tUri: ${uri}\n`
