@@ -1,9 +1,9 @@
-import generateDocument from '../generate.document';
 import { Document } from 'langchain/document';
 import { IngestBodyOfKnowledge } from '../event.bus/events/ingest.body.of.knowledge';
 import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
 import { processCallouts } from '../process.callouts';
 import { Callout } from '../generated/graphql';
+import { generateDocument } from '../generate.document';
 
 export const embedKnowledgeBase = async (
   event: IngestBodyOfKnowledge,

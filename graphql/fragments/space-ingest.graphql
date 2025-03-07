@@ -2,13 +2,13 @@ fragment SpaceIngest on Space {
   id
   nameID
   type
-  profile {
-    ...ProfileFields
-  }
-  context {
-    vision
-    impact
+  about {
+    id
+    profile {
+      ...ProfileFields
+    }
     who
+    why
   }
 
   collaboration {

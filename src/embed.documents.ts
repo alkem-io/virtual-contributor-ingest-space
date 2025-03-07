@@ -103,9 +103,13 @@ export const embedDocuments = async (
 
   metadatas.push({
     documentId: bokID,
-    source: bodyOfKnowledge.profile.url,
+    source:
+      bodyOfKnowledge.profile?.url || bodyOfKnowledge.about?.profile.url || '',
     type: 'bodyOfKnowledgeSummary',
-    title: bodyOfKnowledge.profile?.displayName,
+    title:
+      bodyOfKnowledge.profile?.displayName ||
+      bodyOfKnowledge.about?.profile.displayName ||
+      '',
   });
 
   logger.info('Connecting to Chroma...');

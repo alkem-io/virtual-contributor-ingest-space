@@ -2,7 +2,7 @@ import { Document } from 'langchain/document';
 
 import { Space } from '../generated/graphql';
 
-import generateDocument from '../generate.document';
+import { generateDocument } from '../generate.document';
 import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
 import { processCallouts } from '../process.callouts';
 

@@ -1,7 +1,7 @@
 import { Logger } from 'winston';
 import { Callout } from '../generated/graphql';
 import { Document } from 'langchain/document';
-import generateDocument from '../generate.document';
+import { generateDocument } from '../generate.document';
 
 export const baseHandler = async (
   callout: Partial<Callout>,
