@@ -37,8 +37,13 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
   if (tagset?.tags.length)
     pageContent = `${pageContent}\nTags: ${tagset?.tags.join(', ')}`;
   if (description) {
-    const descriptionRoot = parse(description);
-    pageContent = `${pageContent}\nDescription: ${descriptionRoot.structuredText}`;
+    try {
+      const descriptionRoot = parse(description);
+      pageContent = `${pageContent}\nDescription: ${descriptionRoot.structuredText}`;
+    } catch (error) {
+      console.error('Error parsing HTML description:', error);
+      pageContent = `${pageContent}\nDescription: ${description}`; // Fallback to raw description
+    }
   }
   if (why) pageContent = `${pageContent}\nWhy: ${why}`;
   if (who) pageContent = `${pageContent}\nWho: ${who}`;
@@ -66,7 +71,6 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
     pageContent = `${pageContent}\nReferences:\n${processedRefs}`;
 
   pageContent = `${pageContent}\nURL: ${source}`;
-  console.log(pageContent);
   return {
     documentId,
     source,
