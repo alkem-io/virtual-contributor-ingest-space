@@ -38,6 +38,7 @@ export type Scalars = {
   Markdown: any;
   MessageID: any;
   NameID: string;
+  SearchCursor: any;
   UUID: string;
   Upload: import('graphql-upload').FileUpload;
   WhiteboardContent: any;
@@ -558,6 +559,8 @@ export enum AgentType {
 }
 
 export type AiPersona = {
+  /** The ID of the AiPersonaService. */
+  aiPersonaServiceID?: Maybe<Scalars['String']>;
   /** The authorization rules for the entity */
   authorization?: Maybe<Authorization>;
   /** A overview of knowledge provided by this AI Persona. */
@@ -601,6 +604,7 @@ export enum AiPersonaEngine {
   Expert = 'EXPERT',
   GenericOpenai = 'GENERIC_OPENAI',
   Guidance = 'GUIDANCE',
+  LibraFlow = 'LIBRA_FLOW',
   OpenaiAssistant = 'OPENAI_ASSISTANT',
 }
 
@@ -623,6 +627,8 @@ export type AiPersonaService = {
   dataAccessMode: AiPersonaDataAccessMode;
   /** The AI Persona Engine being used by this AI Persona. */
   engine: AiPersonaEngine;
+  /** The ExternalConfig for this Virtual. */
+  externalConfig?: Maybe<ExternalConfig>;
   /** The ID of the entity */
   id: Scalars['UUID'];
   /** The prompt used by this Virtual Persona */
@@ -783,9 +789,11 @@ export enum AuthorizationCredential {
   GlobalAnonymous = 'GLOBAL_ANONYMOUS',
   GlobalCommunityRead = 'GLOBAL_COMMUNITY_READ',
   GlobalLicenseManager = 'GLOBAL_LICENSE_MANAGER',
+  GlobalPlatformManager = 'GLOBAL_PLATFORM_MANAGER',
   GlobalRegistered = 'GLOBAL_REGISTERED',
   GlobalSpacesReader = 'GLOBAL_SPACES_READER',
   GlobalSupport = 'GLOBAL_SUPPORT',
+  GlobalSupportManager = 'GLOBAL_SUPPORT_MANAGER',
   OrganizationAdmin = 'ORGANIZATION_ADMIN',
   OrganizationAssociate = 'ORGANIZATION_ASSOCIATE',
   OrganizationOwner = 'ORGANIZATION_OWNER',
@@ -831,6 +839,7 @@ export enum AuthorizationPolicyType {
   CalloutsSet = 'CALLOUTS_SET',
   CalloutContribution = 'CALLOUT_CONTRIBUTION',
   CalloutFraming = 'CALLOUT_FRAMING',
+  Classification = 'CLASSIFICATION',
   Collaboration = 'COLLABORATION',
   Communication = 'COMMUNICATION',
   Community = 'COMMUNITY',
@@ -909,6 +918,7 @@ export enum AuthorizationPrivilege {
   PlatformSettingsAdmin = 'PLATFORM_SETTINGS_ADMIN',
   Read = 'READ',
   ReadAbout = 'READ_ABOUT',
+  ReadLicense = 'READ_LICENSE',
   ReadUsers = 'READ_USERS',
   ReadUserPii = 'READ_USER_PII',
   ReadUserSettings = 'READ_USER_SETTINGS',
@@ -991,6 +1001,8 @@ export type Callout = {
   activity: Scalars['Float'];
   /** The authorization rules for the entity */
   authorization?: Maybe<Authorization>;
+  /** The comments for this Callout. */
+  classification?: Maybe<Classification>;
   /** The comments for this Callout. */
   comments?: Maybe<Room>;
   /** The Contribution Defaults for this Callout. */
@@ -1101,21 +1113,6 @@ export type CalloutFraming = {
   whiteboard?: Maybe<Whiteboard>;
 };
 
-export type CalloutGroup = {
-  /** The explation text to clarify the Group. */
-  description: Scalars['Markdown'];
-  /** The display name for the Group */
-  displayName: CalloutGroupName;
-};
-
-export enum CalloutGroupName {
-  Community = 'COMMUNITY',
-  Contribute = 'CONTRIBUTE',
-  Home = 'HOME',
-  Knowledge = 'KNOWLEDGE',
-  Subspaces = 'SUBSPACES',
-}
-
 export type CalloutPostCreated = {
   /** The identifier of the Callout on which the post was created. */
   calloutID: Scalars['String'];
@@ -1153,8 +1150,6 @@ export type CalloutsSet = {
   callouts: Array<Callout>;
   /** The date at which the entity was created. */
   createdDate?: Maybe<Scalars['DateTime']>;
-  /** The set of CalloutGroups in use in this CalloutsSet. */
-  groups: Array<CalloutGroup>;
   /** The ID of the entity */
   id: Scalars['UUID'];
   /** The tagset templates on this CalloutsSet. */
@@ -1167,11 +1162,10 @@ export type CalloutsSet = {
 
 export type CalloutsSetCalloutsArgs = {
   IDs?: InputMaybe<Array<Scalars['UUID']>>;
-  groups?: InputMaybe<Array<Scalars['String']>>;
+  classificationTagsets?: InputMaybe<Array<TagsetArgs>>;
   limit?: InputMaybe<Scalars['Float']>;
   shuffle?: InputMaybe<Scalars['Boolean']>;
   sortByActivity?: InputMaybe<Scalars['Boolean']>;
-  tagsets?: InputMaybe<Array<TagsetArgs>>;
   types?: InputMaybe<Array<CalloutType>>;
 };
 
@@ -1192,6 +1186,25 @@ export type ChatGuidanceInput = {
   language?: InputMaybe<Scalars['String']>;
   /** The question that is being asked. */
   question: Scalars['String'];
+};
+
+export type Classification = {
+  /** The authorization rules for the entity */
+  authorization?: Maybe<Authorization>;
+  /** The date at which the entity was created. */
+  createdDate?: Maybe<Scalars['DateTime']>;
+  /** The ID of the entity */
+  id: Scalars['UUID'];
+  /** The default or named tagset. */
+  tagset?: Maybe<Tagset>;
+  /** The classification tagsets. */
+  tagsets?: Maybe<Array<Tagset>>;
+  /** The date at which the entity was last updated. */
+  updatedDate?: Maybe<Scalars['DateTime']>;
+};
+
+export type ClassificationTagsetArgs = {
+  tagsetName: TagsetReservedName;
 };
 
 export type Collaboration = {
@@ -1327,8 +1340,6 @@ export type Community = Groupable & {
   group: UserGroup;
   /** Groups of users related to a Community. */
   groups: Array<UserGroup>;
-  /** The guidelines for members of this Community. */
-  guidelines: CommunityGuidelines;
   /** The ID of the entity */
   id: Scalars['UUID'];
   /** The RoleSet for this Community. */
@@ -1519,14 +1530,21 @@ export type ConversionVcSpaceToVcKnowledgeBaseInput = {
   virtualContributorID: Scalars['UUID'];
 };
 
-export type ConvertSubspaceToSpaceInput = {
-  /** The subspace to be promoted to be a new Space. Note: the original Subspace will no longer exist after the conversion.  */
-  subspaceID: Scalars['UUID'];
+export type ConvertSpaceL1ToSpaceL0Input = {
+  /** The Space L1 to be promoted to be a new Space L0.  */
+  spaceL1ID: Scalars['UUID'];
 };
 
-export type ConvertSubsubspaceToSubspaceInput = {
-  /** The subsubspace to be promoted. Note: the original Opportunity will no longer exist after the conversion.  */
-  subsubspaceID: Scalars['UUID'];
+export type ConvertSpaceL1ToSpaceL2Input = {
+  /** The Space L1 to be the parent of the Space L1 when it is moved to be L2.  */
+  parentSpaceL1ID: Scalars['UUID'];
+  /** The Space L1 to be moved to be a child of another Space L. Both the L1 Space and the parent Space must be in the same L0 Space.  */
+  spaceL1ID: Scalars['UUID'];
+};
+
+export type ConvertSpaceL2ToSpaceL1Input = {
+  /** The Space L2 to be promoted.  */
+  spaceL2ID: Scalars['UUID'];
 };
 
 export type CreateAiPersonaInput = {
@@ -1541,7 +1559,7 @@ export type CreateAiPersonaServiceInput = {
   bodyOfKnowledgeType?: InputMaybe<AiPersonaBodyOfKnowledgeType>;
   dataAccessMode?: InputMaybe<AiPersonaDataAccessMode>;
   engine?: InputMaybe<AiPersonaEngine>;
-  externalConfig?: InputMaybe<ExternalConfig>;
+  externalConfig?: InputMaybe<ExternalConfigInput>;
   prompt?: InputMaybe<Array<Scalars['String']>>;
 };
 
@@ -1589,13 +1607,12 @@ export type CreateCalloutContributionPolicyInput = {
 };
 
 export type CreateCalloutData = {
+  classification?: Maybe<CreateClassificationData>;
   contributionDefaults?: Maybe<CreateCalloutContributionDefaultsData>;
   contributionPolicy?: Maybe<CreateCalloutContributionPolicyData>;
   /** Controls if the comments are enabled for this Callout. Defaults to false. */
   enableComments?: Maybe<Scalars['Boolean']>;
   framing: CreateCalloutFramingData;
-  /** Set Callout Group for this Callout. */
-  groupName?: Maybe<Scalars['String']>;
   /** A readable identifier, unique within the containing scope. */
   nameID?: Maybe<Scalars['NameID']>;
   /** Send notification if this flag is true and visibility is PUBLISHED. Defaults to false. */
@@ -1621,13 +1638,12 @@ export type CreateCalloutFramingInput = {
 };
 
 export type CreateCalloutInput = {
+  classification?: InputMaybe<CreateClassificationInput>;
   contributionDefaults?: InputMaybe<CreateCalloutContributionDefaultsInput>;
   contributionPolicy?: InputMaybe<CreateCalloutContributionPolicyInput>;
   /** Controls if the comments are enabled for this Callout. Defaults to false. */
   enableComments?: InputMaybe<Scalars['Boolean']>;
   framing: CreateCalloutFramingInput;
-  /** Set Callout Group for this Callout. */
-  groupName?: InputMaybe<Scalars['String']>;
   /** A readable identifier, unique within the containing scope. */
   nameID?: InputMaybe<Scalars['NameID']>;
   /** Send notification if this flag is true and visibility is PUBLISHED. Defaults to false. */
@@ -1642,13 +1658,12 @@ export type CreateCalloutInput = {
 
 export type CreateCalloutOnCalloutsSetInput = {
   calloutsSetID: Scalars['UUID'];
+  classification?: InputMaybe<CreateClassificationInput>;
   contributionDefaults?: InputMaybe<CreateCalloutContributionDefaultsInput>;
   contributionPolicy?: InputMaybe<CreateCalloutContributionPolicyInput>;
   /** Controls if the comments are enabled for this Callout. Defaults to false. */
   enableComments?: InputMaybe<Scalars['Boolean']>;
   framing: CreateCalloutFramingInput;
-  /** Set Callout Group for this Callout. */
-  groupName?: InputMaybe<Scalars['String']>;
   /** A readable identifier, unique within the containing scope. */
   nameID?: InputMaybe<Scalars['NameID']>;
   /** Send notification if this flag is true and visibility is PUBLISHED. Defaults to false. */
@@ -1669,6 +1684,14 @@ export type CreateCalloutsSetData = {
 export type CreateCalloutsSetInput = {
   /** The Callouts to add to this Collaboration. */
   calloutsData?: InputMaybe<Array<CreateCalloutInput>>;
+};
+
+export type CreateClassificationData = {
+  tagsets: Array<CreateTagsetData>;
+};
+
+export type CreateClassificationInput = {
+  tagsets: Array<CreateTagsetInput>;
 };
 
 export type CreateCollaborationData = {
@@ -2070,9 +2093,11 @@ export enum CredentialType {
   GlobalAnonymous = 'GLOBAL_ANONYMOUS',
   GlobalCommunityRead = 'GLOBAL_COMMUNITY_READ',
   GlobalLicenseManager = 'GLOBAL_LICENSE_MANAGER',
+  GlobalPlatformManager = 'GLOBAL_PLATFORM_MANAGER',
   GlobalRegistered = 'GLOBAL_REGISTERED',
   GlobalSpacesReader = 'GLOBAL_SPACES_READER',
   GlobalSupport = 'GLOBAL_SUPPORT',
+  GlobalSupportManager = 'GLOBAL_SUPPORT_MANAGER',
   OrganizationAdmin = 'ORGANIZATION_ADMIN',
   OrganizationAssociate = 'ORGANIZATION_ASSOCIATE',
   OrganizationOwner = 'ORGANIZATION_OWNER',
@@ -2266,9 +2291,20 @@ export type ExploreSpacesInput = {
 
 export type ExternalConfig = {
   /** The API key for the external LLM provider. */
+  apiKey?: Maybe<Scalars['String']>;
+  /** The assistant ID backing the service in OpenAI`s assistant API */
+  assistantId?: Maybe<Scalars['String']>;
+  /** The OpenAI model to use for the service */
+  model: OpenAiModel;
+};
+
+export type ExternalConfigInput = {
+  /** The API key for the external LLM provider. */
   apiKey?: InputMaybe<Scalars['String']>;
-  /** The assistent ID backing the service in OpenAI`s assistant API */
+  /** The assistant ID backing the service in OpenAI`s assistant API */
   assistantId?: InputMaybe<Scalars['String']>;
+  /** The OpenAI model to use for the service */
+  model?: OpenAiModel;
 };
 
 export type FileStorageConfig = {
@@ -2376,25 +2412,24 @@ export type Groupable = {
   groups?: Maybe<Array<UserGroup>>;
 };
 
+export type ISearchCategoryResult = {
+  /** Provide this with your next search query to fetch the next set of results. */
+  cursor?: Maybe<Scalars['SearchCursor']>;
+  /** The ranked search results for this category, sorted by relevance */
+  results: Array<SearchResult>;
+  /** The total number of search results. Not implemented yet. */
+  total: Scalars['Float'];
+};
+
 export type ISearchResults = {
   /** The search results for Callouts. */
-  calloutResults: Array<SearchResult>;
-  /** The total number of results for Callouts. */
-  calloutResultsCount: Scalars['Float'];
+  calloutResults: ISearchCategoryResult;
   /** The search results for contributions (Posts, Whiteboards etc). */
-  contributionResults: Array<SearchResult>;
-  /** The total number of search results for contributions (Posts, Whiteboards etc). */
-  contributionResultsCount: Scalars['Float'];
+  contributionResults: ISearchCategoryResult;
   /** The search results for contributors (Users, Organizations). */
-  contributorResults: Array<SearchResult>;
-  /** The total number of search results for contributors (Users, Organizations). */
-  contributorResultsCount: Scalars['Float'];
-  /** The search results for Groups. */
-  groupResults: Array<SearchResult>;
+  contributorResults: ISearchCategoryResult;
   /** The search results for Spaces / Subspaces. */
-  journeyResults: Array<SearchResult>;
-  /** The total number of results for Spaces / Subspaces. */
-  journeyResultsCount: Scalars['Float'];
+  spaceResults: ISearchCategoryResult;
 };
 
 /** An in-app notification type. To not be queried directly */
@@ -2498,7 +2533,7 @@ export type InnovationFlow = {
   authorization?: Maybe<Authorization>;
   /** The date at which the entity was created. */
   createdDate?: Maybe<Scalars['DateTime']>;
-  /** The currently selected state for this Flow. */
+  /** The currently selected State in this Flow. */
   currentState: InnovationFlowState;
   /** The ID of the entity */
   id: Scalars['UUID'];
@@ -2638,7 +2673,7 @@ export type Invitation = {
   /** The type of contributor that is invited. */
   contributorType: RoleSetContributorType;
   /** The User who triggered the invitation. */
-  createdBy: User;
+  createdBy?: Maybe<User>;
   createdDate: Scalars['DateTime'];
   /** An additional role to assign to the Contributor, in addition to the entry Role. */
   extraRole?: Maybe<RoleName>;
@@ -2663,21 +2698,13 @@ export type InvitationEventInput = {
 };
 
 export type InviteForEntryRoleOnRoleSetInput = {
-  /** An additional role to assign to the Contributors, in addition to the entry Role. */
+  /** An additional role to assign in addition to the entry Role. */
   extraRole?: InputMaybe<RoleName>;
   /** The identifiers for the contributors being invited. */
-  invitedContributors: Array<Scalars['UUID']>;
+  invitedContributorIDs: Array<Scalars['UUID']>;
+  invitedUserEmails: Array<Scalars['String']>;
   roleSetID: Scalars['UUID'];
-  welcomeMessage?: InputMaybe<Scalars['String']>;
-};
-
-export type InviteNewContributorForRoleOnRoleSetInput = {
-  email: Scalars['String'];
-  firstName?: InputMaybe<Scalars['String']>;
-  lastName?: InputMaybe<Scalars['String']>;
-  /** An additional role to assign to the Contributors, in addition to the entry Role. */
-  roleSetExtraRole?: InputMaybe<RoleName>;
-  roleSetID: Scalars['UUID'];
+  /** The welcome message to send */
   welcomeMessage?: InputMaybe<Scalars['String']>;
 };
 
@@ -3469,6 +3496,8 @@ export type MoveCalloutContributionInput = {
 };
 
 export type Mutation = {
+  /** Adds an Iframe Allowed URL to the Platform Settings */
+  addIframeAllowedURL: Array<Scalars['String']>;
   /** Add a reaction to a message from the specified Room. */
   addReactionToMessageInRoom: Reaction;
   /** Ensure all community members are registered for communications. */
@@ -3533,10 +3562,12 @@ export type Mutation = {
   beginVerifiedCredentialRequestInteraction: AgentBeginVerifiedCredentialRequestOutput;
   /** Deletes collections nameID-... */
   cleanupCollections: MigrateEmbeddings;
-  /** Creates a new Space by converting an existing Challenge. */
-  convertChallengeToSpace: Space;
-  /** Creates a new Challenge by converting an existing Opportunity. */
-  convertOpportunityToChallenge: Space;
+  /** Move an L1 Space up in the hierarchy, to be a L0 Space. */
+  convertSpaceL1ToSpaceL0: Space;
+  /** Move an L1 Space down in the hierarchy within the same L0 Space, to be a L2 Space.       Restrictions: the Space L1 must remain within the same L0 Space.       Roles: all user, organization and virtual contributor role assignments are removed, with       the exception of Admin role assignments for Users. */
+  convertSpaceL1ToSpaceL2: Space;
+  /** Move an L2 Space up in the hierarchy, to be a L1 Space. */
+  convertSpaceL2ToSpaceL1: Space;
   /** Convert a VC of type ALKEMIO_SPACE to be of type KNOWLEDGE_BASE. All Callouts from the Space currently being used are moved to the Knowledge Base. Note: only allowed for VCs using a Space within the same Account. */
   convertVirtualContributorToUseKnowledgeBase: VirtualContributor;
   /** Create a new Callout on the CalloutsSet. */
@@ -3633,14 +3664,16 @@ export type Mutation = {
   grantCredentialToOrganization: Organization;
   /** Grants an authorization credential to a User. */
   grantCredentialToUser: User;
-  /** Invite an existing Contributor to join the specified RoleSet in the Entry Role. */
-  inviteContributorsEntryRoleOnRoleSet: Array<Invitation>;
-  /** Invite a User to join the platform and the specified RoleSet as a member. */
-  inviteUserToPlatformAndRoleSet: PlatformInvitation;
+  /** Invite new Contributors or users by email to join the specified RoleSet in the Entry Role. */
+  inviteForEntryRoleOnRoleSet: Array<RoleSetInvitationResult>;
   /** Join the specified RoleSet using the entry Role, without going through an approval process. */
   joinRoleSet: RoleSet;
   /** Reset the License with Entitlements on the specified Account. */
   licenseResetOnAccount: Account;
+  /** Mark multiple notifications as read. */
+  markNotificationsAsRead: Scalars['Boolean'];
+  /** Mark multiple notifications as unread. */
+  markNotificationsAsUnread: Scalars['Boolean'];
   /** Sends a message on the specified User`s behalf and returns the room id */
   messageUser: Scalars['String'];
   /** Moves the specified Contribution to another Callout. */
@@ -3651,6 +3684,8 @@ export type Mutation = {
   refreshVirtualContributorBodyOfKnowledge: Scalars['Boolean'];
   /** Empties the CommunityGuidelines. */
   removeCommunityGuidelinesContent: CommunityGuidelines;
+  /** Removes an Iframe Allowed URL from the Platform Settings */
+  removeIframeAllowedURL: Array<Scalars['String']>;
   /** Removes a message. */
   removeMessageOnRoom: Scalars['MessageID'];
   /** Removes a User from a Role on the Platform. */
@@ -3713,6 +3748,8 @@ export type Mutation = {
   updateCalloutVisibility: Callout;
   /** Update the sortOrder field of the supplied Callouts to increase as per the order that they are provided in. */
   updateCalloutsSortOrder: Array<Callout>;
+  /** Updates a Tagset on a Classification. */
+  updateClassificationTagset: Tagset;
   /** Updates the Collaboration, including InnovationFlow states, from the specified Collaboration Template. */
   updateCollaborationFromTemplate: Collaboration;
   /** Updates the CommunityGuidelines. */
@@ -3793,6 +3830,10 @@ export type Mutation = {
   uploadFileOnStorageBucket: Scalars['String'];
   /** Uploads and sets an image for the specified Visual. */
   uploadImageOnVisual: Visual;
+};
+
+export type MutationAddIframeAllowedUrlArgs = {
+  whitelistedURL: Scalars['String'];
 };
 
 export type MutationAddReactionToMessageInRoomArgs = {
@@ -3896,12 +3937,16 @@ export type MutationBeginVerifiedCredentialRequestInteractionArgs = {
   types: Array<Scalars['String']>;
 };
 
-export type MutationConvertChallengeToSpaceArgs = {
-  convertData: ConvertSubspaceToSpaceInput;
+export type MutationConvertSpaceL1ToSpaceL0Args = {
+  convertData: ConvertSpaceL1ToSpaceL0Input;
 };
 
-export type MutationConvertOpportunityToChallengeArgs = {
-  convertData: ConvertSubsubspaceToSubspaceInput;
+export type MutationConvertSpaceL1ToSpaceL2Args = {
+  convertData: ConvertSpaceL1ToSpaceL2Input;
+};
+
+export type MutationConvertSpaceL2ToSpaceL1Args = {
+  convertData: ConvertSpaceL2ToSpaceL1Input;
 };
 
 export type MutationConvertVirtualContributorToUseKnowledgeBaseArgs = {
@@ -4088,12 +4133,8 @@ export type MutationGrantCredentialToUserArgs = {
   grantCredentialData: GrantAuthorizationCredentialInput;
 };
 
-export type MutationInviteContributorsEntryRoleOnRoleSetArgs = {
+export type MutationInviteForEntryRoleOnRoleSetArgs = {
   invitationData: InviteForEntryRoleOnRoleSetInput;
-};
-
-export type MutationInviteUserToPlatformAndRoleSetArgs = {
-  invitationData: InviteNewContributorForRoleOnRoleSetInput;
 };
 
 export type MutationJoinRoleSetArgs = {
@@ -4102,6 +4143,14 @@ export type MutationJoinRoleSetArgs = {
 
 export type MutationLicenseResetOnAccountArgs = {
   resetData: AccountLicenseResetInput;
+};
+
+export type MutationMarkNotificationsAsReadArgs = {
+  notificationIds: Array<Scalars['String']>;
+};
+
+export type MutationMarkNotificationsAsUnreadArgs = {
+  notificationIds: Array<Scalars['String']>;
 };
 
 export type MutationMessageUserArgs = {
@@ -4118,6 +4167,10 @@ export type MutationRefreshVirtualContributorBodyOfKnowledgeArgs = {
 
 export type MutationRemoveCommunityGuidelinesContentArgs = {
   communityGuidelinesData: RemoveCommunityGuidelinesContentInput;
+};
+
+export type MutationRemoveIframeAllowedUrlArgs = {
+  whitelistedURL: Scalars['String'];
 };
 
 export type MutationRemoveMessageOnRoomArgs = {
@@ -4234,6 +4287,10 @@ export type MutationUpdateCalloutVisibilityArgs = {
 
 export type MutationUpdateCalloutsSortOrderArgs = {
   sortOrderData: UpdateCalloutsSortOrderInput;
+};
+
+export type MutationUpdateClassificationTagsetArgs = {
+  updateData: UpdateClassificationSelectTagsetValueInput;
 };
 
 export type MutationUpdateCollaborationFromTemplateArgs = {
@@ -4449,6 +4506,34 @@ export enum NotificationEventType {
   PlatformUserRegistered = 'PLATFORM_USER_REGISTERED',
   PlatformUserRemoved = 'PLATFORM_USER_REMOVED',
   SpaceCreated = 'SPACE_CREATED',
+}
+
+export enum OpenAiModel {
+  Babbage_002 = 'BABBAGE_002',
+  DallE_2 = 'DALL_E_2',
+  DallE_3 = 'DALL_E_3',
+  Davinci_002 = 'DAVINCI_002',
+  Gpt_3_5Turbo = 'GPT_3_5_TURBO',
+  Gpt_4 = 'GPT_4',
+  Gpt_4O = 'GPT_4O',
+  Gpt_4OAudioPreview = 'GPT_4O_AUDIO_PREVIEW',
+  Gpt_4OMini = 'GPT_4O_MINI',
+  Gpt_4OMiniAudioPreview = 'GPT_4O_MINI_AUDIO_PREVIEW',
+  Gpt_4OMiniRealtimePreview = 'GPT_4O_MINI_REALTIME_PREVIEW',
+  Gpt_4ORealtimePreview = 'GPT_4O_REALTIME_PREVIEW',
+  Gpt_4_5Preview = 'GPT_4_5_PREVIEW',
+  Gpt_4Turbo = 'GPT_4_TURBO',
+  O1 = 'O1',
+  O1Mini = 'O1_MINI',
+  O3Mini = 'O3_MINI',
+  OmniModerationLatest = 'OMNI_MODERATION_LATEST',
+  TextEmbedding_3Large = 'TEXT_EMBEDDING_3_LARGE',
+  TextEmbedding_3Small = 'TEXT_EMBEDDING_3_SMALL',
+  TextEmbeddingAda_002 = 'TEXT_EMBEDDING_ADA_002',
+  TextModerationLatest = 'TEXT_MODERATION_LATEST',
+  Tts_1 = 'TTS_1',
+  Tts_1Hd = 'TTS_1_HD',
+  Whisper_1 = 'WHISPER_1',
 }
 
 export type Organization = Contributor &
@@ -5168,12 +5253,8 @@ export type RelayPaginatedSpace = {
   levelZeroSpaceID: Scalars['String'];
   /** The License operating on this Space. */
   license: License;
-  /** Metrics about activity within this Space. */
-  metrics?: Maybe<Array<Nvp>>;
   /** A name identifier of the entity, unique within a given scope. */
   nameID: Scalars['NameID'];
-  /** The Space provider. */
-  provider: Contributor;
   /** The settings for this Space. */
   settings: SpaceSettings;
   /** The StorageAggregator in use by this Space */
@@ -5317,8 +5398,10 @@ export enum RoleName {
   GlobalAdmin = 'GLOBAL_ADMIN',
   GlobalCommunityReader = 'GLOBAL_COMMUNITY_READER',
   GlobalLicenseManager = 'GLOBAL_LICENSE_MANAGER',
+  GlobalPlatformManager = 'GLOBAL_PLATFORM_MANAGER',
   GlobalSpacesReader = 'GLOBAL_SPACES_READER',
   GlobalSupport = 'GLOBAL_SUPPORT',
+  GlobalSupportManager = 'GLOBAL_SUPPORT_MANAGER',
   Lead = 'LEAD',
   Member = 'MEMBER',
   Owner = 'OWNER',
@@ -5434,6 +5517,20 @@ export enum RoleSetContributorType {
   Organization = 'ORGANIZATION',
   User = 'USER',
   Virtual = 'VIRTUAL',
+}
+
+export type RoleSetInvitationResult = {
+  invitation?: Maybe<Invitation>;
+  platformInvitation?: Maybe<PlatformInvitation>;
+  type: RoleSetInvitationResultType;
+};
+
+export enum RoleSetInvitationResultType {
+  AlreadyInvitedToPlatformAndRoleSet = 'ALREADY_INVITED_TO_PLATFORM_AND_ROLE_SET',
+  AlreadyInvitedToRoleSet = 'ALREADY_INVITED_TO_ROLE_SET',
+  InvitationToParentNotAuthorized = 'INVITATION_TO_PARENT_NOT_AUTHORIZED',
+  InvitedToPlatformAndRoleSet = 'INVITED_TO_PLATFORM_AND_ROLE_SET',
+  InvitedToRoleSet = 'INVITED_TO_ROLE_SET',
 }
 
 export enum RoleSetRoleImplicit {
@@ -5614,18 +5711,38 @@ export type RoomSendMessageReplyInput = {
   threadID: Scalars['MessageID'];
 };
 
+/** The category in which to search. A category may include a couple of entity types, e.g. "responses" include posts, whiteboard, etc. */
+export enum SearchCategory {
+  CollaborationTools = 'COLLABORATION_TOOLS',
+  Contributors = 'CONTRIBUTORS',
+  Responses = 'RESPONSES',
+  Spaces = 'SPACES',
+}
+
+export type SearchFilterInput = {
+  /** Include this category in the search results. */
+  category: SearchCategory;
+  /** The cursor after which we want results (offset) - pass this from your previous search to request additional results. Useful for paginating results. */
+  cursor?: InputMaybe<Scalars['SearchCursor']>;
+  /** How many results per category to return. Useful for paginating results. */
+  size?: InputMaybe<Scalars['Float']>;
+  /** Which types to include. Defaults to all in the category. */
+  types?: InputMaybe<Array<SearchResultType>>;
+};
+
 export type SearchInput = {
+  /** Return results that satisfy these conditions. */
+  filters?: InputMaybe<Array<SearchFilterInput>>;
   /** Restrict the search to only the specified Space. Default is all Spaces. */
   searchInSpaceFilter?: InputMaybe<Scalars['UUID']>;
   /** Expand the search to includes Tagsets with the provided names. Max 2. */
   tagsetNames?: InputMaybe<Array<Scalars['String']>>;
   /** The terms to be searched for within this Space. Max 5. */
   terms: Array<Scalars['String']>;
-  /** Restrict the search to only the specified entity types. Values allowed: space, subspace, user, group, organization, callout. Default is all. */
-  typesFilter?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type SearchResult = {
+  /** The identifier of the search result. Does not represent the entity in Alkemio. */
   id: Scalars['UUID'];
   /** The score for this search result; more matches means a higher score. */
   score: Scalars['Float'];
@@ -5638,6 +5755,7 @@ export type SearchResult = {
 export type SearchResultCallout = SearchResult & {
   /** The Callout that was found. */
   callout: Callout;
+  /** The identifier of the search result. Does not represent the entity in Alkemio. */
   id: Scalars['UUID'];
   /** The score for this search result; more matches means a higher score. */
   score: Scalars['Float'];
@@ -5650,6 +5768,7 @@ export type SearchResultCallout = SearchResult & {
 };
 
 export type SearchResultOrganization = SearchResult & {
+  /** The identifier of the search result. Does not represent the entity in Alkemio. */
   id: Scalars['UUID'];
   /** The Organization that was found. */
   organization: Organization;
@@ -5664,6 +5783,7 @@ export type SearchResultOrganization = SearchResult & {
 export type SearchResultPost = SearchResult & {
   /** The Callout of the Post. */
   callout: Callout;
+  /** The identifier of the search result. Does not represent the entity in Alkemio. */
   id: Scalars['UUID'];
   /** The Post that was found. */
   post: Post;
@@ -5678,6 +5798,7 @@ export type SearchResultPost = SearchResult & {
 };
 
 export type SearchResultSpace = SearchResult & {
+  /** The identifier of the search result. Does not represent the entity in Alkemio. */
   id: Scalars['UUID'];
   /** The parent of this Space, if any. */
   parentSpace?: Maybe<Space>;
@@ -5691,20 +5812,19 @@ export type SearchResultSpace = SearchResult & {
   type: SearchResultType;
 };
 
+/** The different types of available search results. */
 export enum SearchResultType {
   Callout = 'CALLOUT',
-  Challenge = 'CHALLENGE',
-  Opportunity = 'OPPORTUNITY',
   Organization = 'ORGANIZATION',
   Post = 'POST',
   Space = 'SPACE',
   Subspace = 'SUBSPACE',
   User = 'USER',
-  Usergroup = 'USERGROUP',
   Whiteboard = 'WHITEBOARD',
 }
 
 export type SearchResultUser = SearchResult & {
+  /** The identifier of the search result. Does not represent the entity in Alkemio. */
   id: Scalars['UUID'];
   /** The score for this search result; more matches means a higher score. */
   score: Scalars['Float'];
@@ -5714,18 +5834,6 @@ export type SearchResultUser = SearchResult & {
   type: SearchResultType;
   /** The User that was found. */
   user: User;
-};
-
-export type SearchResultUserGroup = SearchResult & {
-  id: Scalars['UUID'];
-  /** The score for this search result; more matches means a higher score. */
-  score: Scalars['Float'];
-  /** The terms that were matched for this result */
-  terms: Array<Scalars['String']>;
-  /** The type of returned result for this search. */
-  type: SearchResultType;
-  /** The User Group that was found. */
-  userGroup: UserGroup;
 };
 
 export enum SearchVisibility {
@@ -5777,12 +5885,8 @@ export type Space = {
   levelZeroSpaceID: Scalars['String'];
   /** The License operating on this Space. */
   license: License;
-  /** Metrics about activity within this Space. */
-  metrics?: Maybe<Array<Nvp>>;
   /** A name identifier of the entity, unique within a given scope. */
   nameID: Scalars['NameID'];
-  /** The Space provider. */
-  provider: Contributor;
   /** The settings for this Space. */
   settings: SpaceSettings;
   /** The StorageAggregator in use by this Space */
@@ -5818,16 +5922,43 @@ export type SpaceAbout = {
   authorization?: Maybe<Authorization>;
   /** The date at which the entity was created. */
   createdDate?: Maybe<Scalars['DateTime']>;
+  /** The guidelines for members of this Community. */
+  guidelines: CommunityGuidelines;
   /** The ID of the entity */
   id: Scalars['UUID'];
+  /** Is the content of this Space visible to non-Members?. */
+  isContentPublic: Scalars['Boolean'];
+  /** The membership information for this Space. */
+  membership: SpaceAboutMembership;
+  /** Metrics about activity within this Space. */
+  metrics?: Maybe<Array<Nvp>>;
   /** The Profile for the Space. */
   profile: Profile;
+  /** The Space provider (host). */
+  provider: Contributor;
   /** The date at which the entity was last updated. */
   updatedDate?: Maybe<Scalars['DateTime']>;
   /** Who should get involved in this challenge */
   who?: Maybe<Scalars['Markdown']>;
   /** The goal that is being pursued */
   why?: Maybe<Scalars['Markdown']>;
+};
+
+export type SpaceAboutMembership = {
+  /** The Form used for Applications to this Space. */
+  applicationForm: Form;
+  /** The identifier of the Community within the Space. */
+  communityID: Scalars['UUID'];
+  /** The Lead Organizations that are associated with this Space. */
+  leadOrganizations: Array<Organization>;
+  /** The Lead Users that are associated with this Space. */
+  leadUsers: Array<User>;
+  /** The membership status of the currently logged in user. */
+  myMembershipStatus?: Maybe<CommunityMembershipStatus>;
+  /** The privileges granted to the current user based on the Space membership policy. */
+  myPrivileges?: Maybe<Array<AuthorizationPrivilege>>;
+  /** The identifier of the RoleSet within the Space. */
+  roleSetID: Scalars['UUID'];
 };
 
 export type SpaceFilterInput = {
@@ -6025,6 +6156,8 @@ export type Subscription = {
   calloutPostCreated: CalloutPostCreated;
   /** Receive updates on Discussions */
   forumDiscussionUpdated: Discussion;
+  /** New in-app notification received for the currently authenticated user. */
+  inAppNotificationReceived: InAppNotification;
   /** Received on verified credentials change */
   profileVerifiedCredential: ProfileCredentialVerified;
   /** Receive Room event */
@@ -6084,13 +6217,12 @@ export type Tagset = {
 
 export type TagsetArgs = {
   /** Return only Callouts that match one of the tagsets and any of the tags in them. */
-  name: Scalars['String'];
+  name: TagsetReservedName;
   /** A list of tags to include. */
-  tags: Array<Scalars['String']>;
+  tags?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export enum TagsetReservedName {
-  CalloutGroup = 'CALLOUT_GROUP',
   Capabilities = 'CAPABILITIES',
   Default = 'DEFAULT',
   FlowState = 'FLOW_STATE',
@@ -6324,7 +6456,7 @@ export type UpdateAiPersonaServiceInput = {
   bodyOfKnowledgeID?: InputMaybe<Scalars['UUID']>;
   bodyOfKnowledgeType?: InputMaybe<AiPersonaBodyOfKnowledgeType>;
   engine?: InputMaybe<AiPersonaEngine>;
-  externalConfig?: InputMaybe<ExternalConfig>;
+  externalConfig?: InputMaybe<ExternalConfigInput>;
   prompt?: InputMaybe<Array<Scalars['String']>>;
 };
 
@@ -6368,6 +6500,7 @@ export type UpdateCalloutContributionPolicyInput = {
 
 export type UpdateCalloutEntityInput = {
   ID: Scalars['UUID'];
+  classification?: InputMaybe<UpdateClassificationInput>;
   contributionDefaults?: InputMaybe<UpdateCalloutContributionDefaultsInput>;
   contributionPolicy?: InputMaybe<UpdateCalloutContributionPolicyInput>;
   framing?: InputMaybe<UpdateCalloutFramingInput>;
@@ -6408,6 +6541,16 @@ export type UpdateCalloutsSortOrderInput = {
   /** The IDs of the callouts to update the sort order on */
   calloutIDs: Array<Scalars['UUID']>;
   calloutsSetID: Scalars['UUID'];
+};
+
+export type UpdateClassificationInput = {
+  tagsets?: InputMaybe<Array<UpdateTagsetInput>>;
+};
+
+export type UpdateClassificationSelectTagsetValueInput = {
+  classificationID: Scalars['UUID'];
+  selectedValue: Scalars['String'];
+  tagsetName: Scalars['String'];
 };
 
 export type UpdateCollaborationFromTemplateInput = {
@@ -6987,6 +7130,8 @@ export type User = Contributor & {
 };
 
 export type UserAuthenticationResult = {
+  /** When the Kratos Account for the user last logged in */
+  authenticatedAt?: Maybe<Scalars['DateTime']>;
   /** When the Kratos Account for the user was created */
   createdAt?: Maybe<Scalars['DateTime']>;
   /** The Authentication Method used for this User. One of email, linkedin, microsoft, or unknown */
@@ -7427,8 +7572,6 @@ export type ResolversTypes = {
   CalloutContributionPolicy: ResolverTypeWrapper<CalloutContributionPolicy>;
   CalloutContributionType: CalloutContributionType;
   CalloutFraming: ResolverTypeWrapper<CalloutFraming>;
-  CalloutGroup: ResolverTypeWrapper<CalloutGroup>;
-  CalloutGroupName: CalloutGroupName;
   CalloutPostCreated: ResolverTypeWrapper<CalloutPostCreated>;
   CalloutState: CalloutState;
   CalloutType: CalloutType;
@@ -7437,6 +7580,7 @@ export type ResolversTypes = {
   CalloutsSetType: CalloutsSetType;
   ChatGuidanceAnswerRelevanceInput: ChatGuidanceAnswerRelevanceInput;
   ChatGuidanceInput: ChatGuidanceInput;
+  Classification: ResolverTypeWrapper<Classification>;
   Collaboration: ResolverTypeWrapper<Collaboration>;
   Communication: ResolverTypeWrapper<Communication>;
   CommunicationAdminEnsureAccessInput: CommunicationAdminEnsureAccessInput;
@@ -7470,8 +7614,9 @@ export type ResolversTypes = {
   ContributorRolePolicy: ResolverTypeWrapper<ContributorRolePolicy>;
   ContributorRoles: ResolverTypeWrapper<ContributorRoles>;
   ConversionVcSpaceToVcKnowledgeBaseInput: ConversionVcSpaceToVcKnowledgeBaseInput;
-  ConvertSubspaceToSpaceInput: ConvertSubspaceToSpaceInput;
-  ConvertSubsubspaceToSubspaceInput: ConvertSubsubspaceToSubspaceInput;
+  ConvertSpaceL1ToSpaceL0Input: ConvertSpaceL1ToSpaceL0Input;
+  ConvertSpaceL1ToSpaceL2Input: ConvertSpaceL1ToSpaceL2Input;
+  ConvertSpaceL2ToSpaceL1Input: ConvertSpaceL2ToSpaceL1Input;
   CreateAiPersonaInput: CreateAiPersonaInput;
   CreateAiPersonaServiceInput: CreateAiPersonaServiceInput;
   CreateCalendarEventOnCalendarInput: CreateCalendarEventOnCalendarInput;
@@ -7486,6 +7631,8 @@ export type ResolversTypes = {
   CreateCalloutOnCalloutsSetInput: CreateCalloutOnCalloutsSetInput;
   CreateCalloutsSetData: ResolverTypeWrapper<CreateCalloutsSetData>;
   CreateCalloutsSetInput: CreateCalloutsSetInput;
+  CreateClassificationData: ResolverTypeWrapper<CreateClassificationData>;
+  CreateClassificationInput: CreateClassificationInput;
   CreateCollaborationData: ResolverTypeWrapper<CreateCollaborationData>;
   CreateCollaborationInput: CreateCollaborationInput;
   CreateCollaborationOnSpaceInput: CreateCollaborationOnSpaceInput;
@@ -7561,7 +7708,8 @@ export type ResolversTypes = {
   Document: ResolverTypeWrapper<Document>;
   Emoji: ResolverTypeWrapper<Scalars['Emoji']>;
   ExploreSpacesInput: ExploreSpacesInput;
-  ExternalConfig: ExternalConfig;
+  ExternalConfig: ResolverTypeWrapper<ExternalConfig>;
+  ExternalConfigInput: ExternalConfigInput;
   FileStorageConfig: ResolverTypeWrapper<FileStorageConfig>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
   Form: ResolverTypeWrapper<Form>;
@@ -7574,6 +7722,7 @@ export type ResolversTypes = {
   GrantAuthorizationCredentialInput: GrantAuthorizationCredentialInput;
   GrantOrganizationAuthorizationCredentialInput: GrantOrganizationAuthorizationCredentialInput;
   Groupable: ResolversTypes['Community'] | ResolversTypes['Organization'];
+  ISearchCategoryResult: ResolverTypeWrapper<ISearchCategoryResult>;
   ISearchResults: ResolverTypeWrapper<ISearchResults>;
   InAppNotification:
     | ResolversTypes['InAppNotificationCalloutPublished']
@@ -7597,7 +7746,6 @@ export type ResolversTypes = {
   Invitation: ResolverTypeWrapper<Invitation>;
   InvitationEventInput: InvitationEventInput;
   InviteForEntryRoleOnRoleSetInput: InviteForEntryRoleOnRoleSetInput;
-  InviteNewContributorForRoleOnRoleSetInput: InviteNewContributorForRoleOnRoleSetInput;
   JSON: ResolverTypeWrapper<Scalars['JSON']>;
   JoinAsEntryRoleOnRoleSetInput: JoinAsEntryRoleOnRoleSetInput;
   KnowledgeBase: ResolverTypeWrapper<KnowledgeBase>;
@@ -7638,6 +7786,7 @@ export type ResolversTypes = {
   NVP: ResolverTypeWrapper<Nvp>;
   NameID: ResolverTypeWrapper<Scalars['NameID']>;
   NotificationEventType: NotificationEventType;
+  OpenAIModel: OpenAiModel;
   Organization: ResolverTypeWrapper<Organization>;
   OrganizationAuthorizationResetInput: OrganizationAuthorizationResetInput;
   OrganizationFilterInput: OrganizationFilterInput;
@@ -7690,6 +7839,8 @@ export type ResolversTypes = {
   RoleName: RoleName;
   RoleSet: ResolverTypeWrapper<RoleSet>;
   RoleSetContributorType: RoleSetContributorType;
+  RoleSetInvitationResult: ResolverTypeWrapper<RoleSetInvitationResult>;
+  RoleSetInvitationResultType: RoleSetInvitationResultType;
   RoleSetRoleImplicit: RoleSetRoleImplicit;
   RoleSetType: RoleSetType;
   RolesOrganizationInput: RolesOrganizationInput;
@@ -7708,26 +7859,28 @@ export type ResolversTypes = {
   RoomRemoveReactionToMessageInput: RoomRemoveReactionToMessageInput;
   RoomSendMessageInput: RoomSendMessageInput;
   RoomSendMessageReplyInput: RoomSendMessageReplyInput;
+  SearchCategory: SearchCategory;
+  SearchCursor: ResolverTypeWrapper<Scalars['SearchCursor']>;
+  SearchFilterInput: SearchFilterInput;
   SearchInput: SearchInput;
   SearchResult:
     | ResolversTypes['SearchResultCallout']
     | ResolversTypes['SearchResultOrganization']
     | ResolversTypes['SearchResultPost']
     | ResolversTypes['SearchResultSpace']
-    | ResolversTypes['SearchResultUser']
-    | ResolversTypes['SearchResultUserGroup'];
+    | ResolversTypes['SearchResultUser'];
   SearchResultCallout: ResolverTypeWrapper<SearchResultCallout>;
   SearchResultOrganization: ResolverTypeWrapper<SearchResultOrganization>;
   SearchResultPost: ResolverTypeWrapper<SearchResultPost>;
   SearchResultSpace: ResolverTypeWrapper<SearchResultSpace>;
   SearchResultType: SearchResultType;
   SearchResultUser: ResolverTypeWrapper<SearchResultUser>;
-  SearchResultUserGroup: ResolverTypeWrapper<SearchResultUserGroup>;
   SearchVisibility: SearchVisibility;
   Sentry: ResolverTypeWrapper<Sentry>;
   ServiceMetadata: ResolverTypeWrapper<ServiceMetadata>;
   Space: ResolverTypeWrapper<Space>;
   SpaceAbout: ResolverTypeWrapper<SpaceAbout>;
+  SpaceAboutMembership: ResolverTypeWrapper<SpaceAboutMembership>;
   SpaceFilterInput: SpaceFilterInput;
   SpaceLevel: SpaceLevel;
   SpacePendingMembershipInfo: ResolverTypeWrapper<SpacePendingMembershipInfo>;
@@ -7783,6 +7936,8 @@ export type ResolversTypes = {
   UpdateCalloutPublishInfoInput: UpdateCalloutPublishInfoInput;
   UpdateCalloutVisibilityInput: UpdateCalloutVisibilityInput;
   UpdateCalloutsSortOrderInput: UpdateCalloutsSortOrderInput;
+  UpdateClassificationInput: UpdateClassificationInput;
+  UpdateClassificationSelectTagsetValueInput: UpdateClassificationSelectTagsetValueInput;
   UpdateCollaborationFromTemplateInput: UpdateCollaborationFromTemplateInput;
   UpdateCommunityGuidelinesEntityInput: UpdateCommunityGuidelinesEntityInput;
   UpdateContributionCalloutsSortOrderInput: UpdateContributionCalloutsSortOrderInput;
@@ -7949,11 +8104,11 @@ export type ResolversParentTypes = {
   CalloutContributionDefaults: CalloutContributionDefaults;
   CalloutContributionPolicy: CalloutContributionPolicy;
   CalloutFraming: CalloutFraming;
-  CalloutGroup: CalloutGroup;
   CalloutPostCreated: CalloutPostCreated;
   CalloutsSet: CalloutsSet;
   ChatGuidanceAnswerRelevanceInput: ChatGuidanceAnswerRelevanceInput;
   ChatGuidanceInput: ChatGuidanceInput;
+  Classification: Classification;
   Collaboration: Collaboration;
   Communication: Communication;
   CommunicationAdminEnsureAccessInput: CommunicationAdminEnsureAccessInput;
@@ -7984,8 +8139,9 @@ export type ResolversParentTypes = {
   ContributorRolePolicy: ContributorRolePolicy;
   ContributorRoles: ContributorRoles;
   ConversionVcSpaceToVcKnowledgeBaseInput: ConversionVcSpaceToVcKnowledgeBaseInput;
-  ConvertSubspaceToSpaceInput: ConvertSubspaceToSpaceInput;
-  ConvertSubsubspaceToSubspaceInput: ConvertSubsubspaceToSubspaceInput;
+  ConvertSpaceL1ToSpaceL0Input: ConvertSpaceL1ToSpaceL0Input;
+  ConvertSpaceL1ToSpaceL2Input: ConvertSpaceL1ToSpaceL2Input;
+  ConvertSpaceL2ToSpaceL1Input: ConvertSpaceL2ToSpaceL1Input;
   CreateAiPersonaInput: CreateAiPersonaInput;
   CreateAiPersonaServiceInput: CreateAiPersonaServiceInput;
   CreateCalendarEventOnCalendarInput: CreateCalendarEventOnCalendarInput;
@@ -8000,6 +8156,8 @@ export type ResolversParentTypes = {
   CreateCalloutOnCalloutsSetInput: CreateCalloutOnCalloutsSetInput;
   CreateCalloutsSetData: CreateCalloutsSetData;
   CreateCalloutsSetInput: CreateCalloutsSetInput;
+  CreateClassificationData: CreateClassificationData;
+  CreateClassificationInput: CreateClassificationInput;
   CreateCollaborationData: CreateCollaborationData;
   CreateCollaborationInput: CreateCollaborationInput;
   CreateCollaborationOnSpaceInput: CreateCollaborationOnSpaceInput;
@@ -8074,6 +8232,7 @@ export type ResolversParentTypes = {
   Emoji: Scalars['Emoji'];
   ExploreSpacesInput: ExploreSpacesInput;
   ExternalConfig: ExternalConfig;
+  ExternalConfigInput: ExternalConfigInput;
   FileStorageConfig: FileStorageConfig;
   Float: Scalars['Float'];
   Form: Form;
@@ -8086,6 +8245,7 @@ export type ResolversParentTypes = {
   Groupable:
     | ResolversParentTypes['Community']
     | ResolversParentTypes['Organization'];
+  ISearchCategoryResult: ISearchCategoryResult;
   ISearchResults: ISearchResults;
   InAppNotification:
     | ResolversParentTypes['InAppNotificationCalloutPublished']
@@ -8105,7 +8265,6 @@ export type ResolversParentTypes = {
   Invitation: Invitation;
   InvitationEventInput: InvitationEventInput;
   InviteForEntryRoleOnRoleSetInput: InviteForEntryRoleOnRoleSetInput;
-  InviteNewContributorForRoleOnRoleSetInput: InviteNewContributorForRoleOnRoleSetInput;
   JSON: Scalars['JSON'];
   JoinAsEntryRoleOnRoleSetInput: JoinAsEntryRoleOnRoleSetInput;
   KnowledgeBase: KnowledgeBase;
@@ -8183,6 +8342,7 @@ export type ResolversParentTypes = {
   RevokeOrganizationAuthorizationCredentialInput: RevokeOrganizationAuthorizationCredentialInput;
   Role: Role;
   RoleSet: RoleSet;
+  RoleSetInvitationResult: RoleSetInvitationResult;
   RolesOrganizationInput: RolesOrganizationInput;
   RolesResult: RolesResult;
   RolesResultCommunity: RolesResultCommunity;
@@ -8199,24 +8359,25 @@ export type ResolversParentTypes = {
   RoomRemoveReactionToMessageInput: RoomRemoveReactionToMessageInput;
   RoomSendMessageInput: RoomSendMessageInput;
   RoomSendMessageReplyInput: RoomSendMessageReplyInput;
+  SearchCursor: Scalars['SearchCursor'];
+  SearchFilterInput: SearchFilterInput;
   SearchInput: SearchInput;
   SearchResult:
     | ResolversParentTypes['SearchResultCallout']
     | ResolversParentTypes['SearchResultOrganization']
     | ResolversParentTypes['SearchResultPost']
     | ResolversParentTypes['SearchResultSpace']
-    | ResolversParentTypes['SearchResultUser']
-    | ResolversParentTypes['SearchResultUserGroup'];
+    | ResolversParentTypes['SearchResultUser'];
   SearchResultCallout: SearchResultCallout;
   SearchResultOrganization: SearchResultOrganization;
   SearchResultPost: SearchResultPost;
   SearchResultSpace: SearchResultSpace;
   SearchResultUser: SearchResultUser;
-  SearchResultUserGroup: SearchResultUserGroup;
   Sentry: Sentry;
   ServiceMetadata: ServiceMetadata;
   Space: Space;
   SpaceAbout: SpaceAbout;
+  SpaceAboutMembership: SpaceAboutMembership;
   SpaceFilterInput: SpaceFilterInput;
   SpacePendingMembershipInfo: SpacePendingMembershipInfo;
   SpaceSettings: SpaceSettings;
@@ -8262,6 +8423,8 @@ export type ResolversParentTypes = {
   UpdateCalloutPublishInfoInput: UpdateCalloutPublishInfoInput;
   UpdateCalloutVisibilityInput: UpdateCalloutVisibilityInput;
   UpdateCalloutsSortOrderInput: UpdateCalloutsSortOrderInput;
+  UpdateClassificationInput: UpdateClassificationInput;
+  UpdateClassificationSelectTagsetValueInput: UpdateClassificationSelectTagsetValueInput;
   UpdateCollaborationFromTemplateInput: UpdateCollaborationFromTemplateInput;
   UpdateCommunityGuidelinesEntityInput: UpdateCommunityGuidelinesEntityInput;
   UpdateContributionCalloutsSortOrderInput: UpdateContributionCalloutsSortOrderInput;
@@ -8860,6 +9023,11 @@ export type AiPersonaResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['AiPersona'] = ResolversParentTypes['AiPersona']
 > = {
+  aiPersonaServiceID?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
   authorization?: Resolver<
     Maybe<ResolversTypes['Authorization']>,
     ParentType,
@@ -8945,6 +9113,11 @@ export type AiPersonaServiceResolvers<
     ContextType
   >;
   engine?: Resolver<ResolversTypes['AiPersonaEngine'], ParentType, ContextType>;
+  externalConfig?: Resolver<
+    Maybe<ResolversTypes['ExternalConfig']>,
+    ParentType,
+    ContextType
+  >;
   id?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
   prompt?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   updatedDate?: Resolver<
@@ -9247,6 +9420,11 @@ export type CalloutResolvers<
     ParentType,
     ContextType
   >;
+  classification?: Resolver<
+    Maybe<ResolversTypes['Classification']>,
+    ParentType,
+    ContextType
+  >;
   comments?: Resolver<Maybe<ResolversTypes['Room']>, ParentType, ContextType>;
   contributionDefaults?: Resolver<
     ResolversTypes['CalloutContributionDefaults'],
@@ -9417,19 +9595,6 @@ export type CalloutFramingResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type CalloutGroupResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['CalloutGroup'] = ResolversParentTypes['CalloutGroup']
-> = {
-  description?: Resolver<ResolversTypes['Markdown'], ParentType, ContextType>;
-  displayName?: Resolver<
-    ResolversTypes['CalloutGroupName'],
-    ParentType,
-    ContextType
-  >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type CalloutPostCreatedResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['CalloutPostCreated'] = ResolversParentTypes['CalloutPostCreated']
@@ -9461,11 +9626,6 @@ export type CalloutsSetResolvers<
     ParentType,
     ContextType
   >;
-  groups?: Resolver<
-    Array<ResolversTypes['CalloutGroup']>,
-    ParentType,
-    ContextType
-  >;
   id?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
   tagsetTemplates?: Resolver<
     Maybe<Array<ResolversTypes['TagsetTemplate']>>,
@@ -9473,6 +9633,40 @@ export type CalloutsSetResolvers<
     ContextType
   >;
   type?: Resolver<ResolversTypes['CalloutsSetType'], ParentType, ContextType>;
+  updatedDate?: Resolver<
+    Maybe<ResolversTypes['DateTime']>,
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ClassificationResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Classification'] = ResolversParentTypes['Classification']
+> = {
+  authorization?: Resolver<
+    Maybe<ResolversTypes['Authorization']>,
+    ParentType,
+    ContextType
+  >;
+  createdDate?: Resolver<
+    Maybe<ResolversTypes['DateTime']>,
+    ParentType,
+    ContextType
+  >;
+  id?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
+  tagset?: Resolver<
+    Maybe<ResolversTypes['Tagset']>,
+    ParentType,
+    ContextType,
+    RequireFields<ClassificationTagsetArgs, 'tagsetName'>
+  >;
+  tagsets?: Resolver<
+    Maybe<Array<ResolversTypes['Tagset']>>,
+    ParentType,
+    ContextType
+  >;
   updatedDate?: Resolver<
     Maybe<ResolversTypes['DateTime']>,
     ParentType,
@@ -9640,11 +9834,6 @@ export type CommunityResolvers<
   >;
   groups?: Resolver<
     Array<ResolversTypes['UserGroup']>,
-    ParentType,
-    ContextType
-  >;
-  guidelines?: Resolver<
-    ResolversTypes['CommunityGuidelines'],
     ParentType,
     ContextType
   >;
@@ -9894,6 +10083,11 @@ export type CreateCalloutDataResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['CreateCalloutData'] = ResolversParentTypes['CreateCalloutData']
 > = {
+  classification?: Resolver<
+    Maybe<ResolversTypes['CreateClassificationData']>,
+    ParentType,
+    ContextType
+  >;
   contributionDefaults?: Resolver<
     Maybe<ResolversTypes['CreateCalloutContributionDefaultsData']>,
     ParentType,
@@ -9911,11 +10105,6 @@ export type CreateCalloutDataResolvers<
   >;
   framing?: Resolver<
     ResolversTypes['CreateCalloutFramingData'],
-    ParentType,
-    ContextType
-  >;
-  groupName?: Resolver<
-    Maybe<ResolversTypes['String']>,
     ParentType,
     ContextType
   >;
@@ -9963,6 +10152,18 @@ export type CreateCalloutsSetDataResolvers<
 > = {
   calloutsData?: Resolver<
     Maybe<Array<ResolversTypes['CreateCalloutData']>>,
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CreateClassificationDataResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['CreateClassificationData'] = ResolversParentTypes['CreateClassificationData']
+> = {
+  tagsets?: Resolver<
+    Array<ResolversTypes['CreateTagsetData']>,
     ParentType,
     ContextType
   >;
@@ -10302,6 +10503,20 @@ export interface EmojiScalarConfig
   name: 'Emoji';
 }
 
+export type ExternalConfigResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ExternalConfig'] = ResolversParentTypes['ExternalConfig']
+> = {
+  apiKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  assistantId?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  model?: Resolver<ResolversTypes['OpenAIModel'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type FileStorageConfigResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['FileStorageConfig'] = ResolversParentTypes['FileStorageConfig']
@@ -10414,52 +10629,45 @@ export type GroupableResolvers<
   >;
 };
 
+export type ISearchCategoryResultResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ISearchCategoryResult'] = ResolversParentTypes['ISearchCategoryResult']
+> = {
+  cursor?: Resolver<
+    Maybe<ResolversTypes['SearchCursor']>,
+    ParentType,
+    ContextType
+  >;
+  results?: Resolver<
+    Array<ResolversTypes['SearchResult']>,
+    ParentType,
+    ContextType
+  >;
+  total?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ISearchResultsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ISearchResults'] = ResolversParentTypes['ISearchResults']
 > = {
   calloutResults?: Resolver<
-    Array<ResolversTypes['SearchResult']>,
-    ParentType,
-    ContextType
-  >;
-  calloutResultsCount?: Resolver<
-    ResolversTypes['Float'],
+    ResolversTypes['ISearchCategoryResult'],
     ParentType,
     ContextType
   >;
   contributionResults?: Resolver<
-    Array<ResolversTypes['SearchResult']>,
-    ParentType,
-    ContextType
-  >;
-  contributionResultsCount?: Resolver<
-    ResolversTypes['Float'],
+    ResolversTypes['ISearchCategoryResult'],
     ParentType,
     ContextType
   >;
   contributorResults?: Resolver<
-    Array<ResolversTypes['SearchResult']>,
+    ResolversTypes['ISearchCategoryResult'],
     ParentType,
     ContextType
   >;
-  contributorResultsCount?: Resolver<
-    ResolversTypes['Float'],
-    ParentType,
-    ContextType
-  >;
-  groupResults?: Resolver<
-    Array<ResolversTypes['SearchResult']>,
-    ParentType,
-    ContextType
-  >;
-  journeyResults?: Resolver<
-    Array<ResolversTypes['SearchResult']>,
-    ParentType,
-    ContextType
-  >;
-  journeyResultsCount?: Resolver<
-    ResolversTypes['Float'],
+  spaceResults?: Resolver<
+    ResolversTypes['ISearchCategoryResult'],
     ParentType,
     ContextType
   >;
@@ -10820,7 +11028,7 @@ export type InvitationResolvers<
     ParentType,
     ContextType
   >;
-  createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  createdBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   createdDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   extraRole?: Resolver<
     Maybe<ResolversTypes['RoleName']>,
@@ -11792,6 +12000,12 @@ export type MutationResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']
 > = {
+  addIframeAllowedURL?: Resolver<
+    Array<ResolversTypes['String']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationAddIframeAllowedUrlArgs, 'whitelistedURL'>
+  >;
   addReactionToMessageInRoom?: Resolver<
     ResolversTypes['Reaction'],
     ParentType,
@@ -12013,17 +12227,23 @@ export type MutationResolvers<
     ParentType,
     ContextType
   >;
-  convertChallengeToSpace?: Resolver<
+  convertSpaceL1ToSpaceL0?: Resolver<
     ResolversTypes['Space'],
     ParentType,
     ContextType,
-    RequireFields<MutationConvertChallengeToSpaceArgs, 'convertData'>
+    RequireFields<MutationConvertSpaceL1ToSpaceL0Args, 'convertData'>
   >;
-  convertOpportunityToChallenge?: Resolver<
+  convertSpaceL1ToSpaceL2?: Resolver<
     ResolversTypes['Space'],
     ParentType,
     ContextType,
-    RequireFields<MutationConvertOpportunityToChallengeArgs, 'convertData'>
+    RequireFields<MutationConvertSpaceL1ToSpaceL2Args, 'convertData'>
+  >;
+  convertSpaceL2ToSpaceL1?: Resolver<
+    ResolversTypes['Space'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationConvertSpaceL2ToSpaceL1Args, 'convertData'>
   >;
   convertVirtualContributorToUseKnowledgeBase?: Resolver<
     ResolversTypes['VirtualContributor'],
@@ -12320,20 +12540,11 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationGrantCredentialToUserArgs, 'grantCredentialData'>
   >;
-  inviteContributorsEntryRoleOnRoleSet?: Resolver<
-    Array<ResolversTypes['Invitation']>,
+  inviteForEntryRoleOnRoleSet?: Resolver<
+    Array<ResolversTypes['RoleSetInvitationResult']>,
     ParentType,
     ContextType,
-    RequireFields<
-      MutationInviteContributorsEntryRoleOnRoleSetArgs,
-      'invitationData'
-    >
-  >;
-  inviteUserToPlatformAndRoleSet?: Resolver<
-    ResolversTypes['PlatformInvitation'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationInviteUserToPlatformAndRoleSetArgs, 'invitationData'>
+    RequireFields<MutationInviteForEntryRoleOnRoleSetArgs, 'invitationData'>
   >;
   joinRoleSet?: Resolver<
     ResolversTypes['RoleSet'],
@@ -12346,6 +12557,18 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationLicenseResetOnAccountArgs, 'resetData'>
+  >;
+  markNotificationsAsRead?: Resolver<
+    ResolversTypes['Boolean'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationMarkNotificationsAsReadArgs, 'notificationIds'>
+  >;
+  markNotificationsAsUnread?: Resolver<
+    ResolversTypes['Boolean'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationMarkNotificationsAsUnreadArgs, 'notificationIds'>
   >;
   messageUser?: Resolver<
     ResolversTypes['String'],
@@ -12381,6 +12604,12 @@ export type MutationResolvers<
       MutationRemoveCommunityGuidelinesContentArgs,
       'communityGuidelinesData'
     >
+  >;
+  removeIframeAllowedURL?: Resolver<
+    Array<ResolversTypes['String']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationRemoveIframeAllowedUrlArgs, 'whitelistedURL'>
   >;
   removeMessageOnRoom?: Resolver<
     ResolversTypes['MessageID'],
@@ -12574,6 +12803,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationUpdateCalloutsSortOrderArgs, 'sortOrderData'>
+  >;
+  updateClassificationTagset?: Resolver<
+    ResolversTypes['Tagset'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateClassificationTagsetArgs, 'updateData'>
   >;
   updateCollaborationFromTemplate?: Resolver<
     ResolversTypes['Collaboration'],
@@ -13738,13 +13973,7 @@ export type RelayPaginatedSpaceResolvers<
     ContextType
   >;
   license?: Resolver<ResolversTypes['License'], ParentType, ContextType>;
-  metrics?: Resolver<
-    Maybe<Array<ResolversTypes['NVP']>>,
-    ParentType,
-    ContextType
-  >;
   nameID?: Resolver<ResolversTypes['NameID'], ParentType, ContextType>;
-  provider?: Resolver<ResolversTypes['Contributor'], ParentType, ContextType>;
   settings?: Resolver<ResolversTypes['SpaceSettings'], ParentType, ContextType>;
   storageAggregator?: Resolver<
     ResolversTypes['StorageAggregator'],
@@ -14002,6 +14231,28 @@ export type RoleSetResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type RoleSetInvitationResultResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['RoleSetInvitationResult'] = ResolversParentTypes['RoleSetInvitationResult']
+> = {
+  invitation?: Resolver<
+    Maybe<ResolversTypes['Invitation']>,
+    ParentType,
+    ContextType
+  >;
+  platformInvitation?: Resolver<
+    Maybe<ResolversTypes['PlatformInvitation']>,
+    ParentType,
+    ContextType
+  >;
+  type?: Resolver<
+    ResolversTypes['RoleSetInvitationResultType'],
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type RolesResultResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['RolesResult'] = ResolversParentTypes['RolesResult']
@@ -14143,6 +14394,11 @@ export type RoomMessageReactionEventSubscriptionResultResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export interface SearchCursorScalarConfig
+  extends GraphQLScalarTypeConfig<ResolversTypes['SearchCursor'], any> {
+  name: 'SearchCursor';
+}
+
 export type SearchResultResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['SearchResult'] = ResolversParentTypes['SearchResult']
@@ -14152,8 +14408,7 @@ export type SearchResultResolvers<
     | 'SearchResultOrganization'
     | 'SearchResultPost'
     | 'SearchResultSpace'
-    | 'SearchResultUser'
-    | 'SearchResultUserGroup',
+    | 'SearchResultUser',
     ParentType,
     ContextType
   >;
@@ -14235,18 +14490,6 @@ export type SearchResultUserResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type SearchResultUserGroupResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['SearchResultUserGroup'] = ResolversParentTypes['SearchResultUserGroup']
-> = {
-  id?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
-  score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  terms?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  type?: Resolver<ResolversTypes['SearchResultType'], ParentType, ContextType>;
-  userGroup?: Resolver<ResolversTypes['UserGroup'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type SentryResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['Sentry'] = ResolversParentTypes['Sentry']
@@ -14303,13 +14546,7 @@ export type SpaceResolvers<
     ContextType
   >;
   license?: Resolver<ResolversTypes['License'], ParentType, ContextType>;
-  metrics?: Resolver<
-    Maybe<Array<ResolversTypes['NVP']>>,
-    ParentType,
-    ContextType
-  >;
   nameID?: Resolver<ResolversTypes['NameID'], ParentType, ContextType>;
-  provider?: Resolver<ResolversTypes['Contributor'], ParentType, ContextType>;
   settings?: Resolver<ResolversTypes['SpaceSettings'], ParentType, ContextType>;
   storageAggregator?: Resolver<
     ResolversTypes['StorageAggregator'],
@@ -14366,8 +14603,29 @@ export type SpaceAboutResolvers<
     ParentType,
     ContextType
   >;
+  guidelines?: Resolver<
+    ResolversTypes['CommunityGuidelines'],
+    ParentType,
+    ContextType
+  >;
   id?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
+  isContentPublic?: Resolver<
+    ResolversTypes['Boolean'],
+    ParentType,
+    ContextType
+  >;
+  membership?: Resolver<
+    ResolversTypes['SpaceAboutMembership'],
+    ParentType,
+    ContextType
+  >;
+  metrics?: Resolver<
+    Maybe<Array<ResolversTypes['NVP']>>,
+    ParentType,
+    ContextType
+  >;
   profile?: Resolver<ResolversTypes['Profile'], ParentType, ContextType>;
+  provider?: Resolver<ResolversTypes['Contributor'], ParentType, ContextType>;
   updatedDate?: Resolver<
     Maybe<ResolversTypes['DateTime']>,
     ParentType,
@@ -14375,6 +14633,32 @@ export type SpaceAboutResolvers<
   >;
   who?: Resolver<Maybe<ResolversTypes['Markdown']>, ParentType, ContextType>;
   why?: Resolver<Maybe<ResolversTypes['Markdown']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type SpaceAboutMembershipResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['SpaceAboutMembership'] = ResolversParentTypes['SpaceAboutMembership']
+> = {
+  applicationForm?: Resolver<ResolversTypes['Form'], ParentType, ContextType>;
+  communityID?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
+  leadOrganizations?: Resolver<
+    Array<ResolversTypes['Organization']>,
+    ParentType,
+    ContextType
+  >;
+  leadUsers?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
+  myMembershipStatus?: Resolver<
+    Maybe<ResolversTypes['CommunityMembershipStatus']>,
+    ParentType,
+    ContextType
+  >;
+  myPrivileges?: Resolver<
+    Maybe<Array<ResolversTypes['AuthorizationPrivilege']>>,
+    ParentType,
+    ContextType
+  >;
+  roleSetID?: Resolver<ResolversTypes['UUID'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -14648,6 +14932,12 @@ export type SubscriptionResolvers<
     ParentType,
     ContextType,
     RequireFields<SubscriptionForumDiscussionUpdatedArgs, 'forumID'>
+  >;
+  inAppNotificationReceived?: SubscriptionResolver<
+    ResolversTypes['InAppNotification'],
+    'inAppNotificationReceived',
+    ParentType,
+    ContextType
   >;
   profileVerifiedCredential?: SubscriptionResolver<
     ResolversTypes['ProfileCredentialVerified'],
@@ -15244,6 +15534,11 @@ export type UserAuthenticationResultResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['UserAuthenticationResult'] = ResolversParentTypes['UserAuthenticationResult']
 > = {
+  authenticatedAt?: Resolver<
+    Maybe<ResolversTypes['DateTime']>,
+    ParentType,
+    ContextType
+  >;
   createdAt?: Resolver<
     Maybe<ResolversTypes['DateTime']>,
     ParentType,
@@ -15631,9 +15926,9 @@ export type Resolvers<ContextType = any> = {
   CalloutContributionDefaults?: CalloutContributionDefaultsResolvers<ContextType>;
   CalloutContributionPolicy?: CalloutContributionPolicyResolvers<ContextType>;
   CalloutFraming?: CalloutFramingResolvers<ContextType>;
-  CalloutGroup?: CalloutGroupResolvers<ContextType>;
   CalloutPostCreated?: CalloutPostCreatedResolvers<ContextType>;
   CalloutsSet?: CalloutsSetResolvers<ContextType>;
+  Classification?: ClassificationResolvers<ContextType>;
   Collaboration?: CollaborationResolvers<ContextType>;
   Communication?: CommunicationResolvers<ContextType>;
   CommunicationAdminMembershipResult?: CommunicationAdminMembershipResultResolvers<ContextType>;
@@ -15657,6 +15952,7 @@ export type Resolvers<ContextType = any> = {
   CreateCalloutData?: CreateCalloutDataResolvers<ContextType>;
   CreateCalloutFramingData?: CreateCalloutFramingDataResolvers<ContextType>;
   CreateCalloutsSetData?: CreateCalloutsSetDataResolvers<ContextType>;
+  CreateClassificationData?: CreateClassificationDataResolvers<ContextType>;
   CreateCollaborationData?: CreateCollaborationDataResolvers<ContextType>;
   CreateCommunityGuidelinesData?: CreateCommunityGuidelinesDataResolvers<ContextType>;
   CreateInnovationFlowData?: CreateInnovationFlowDataResolvers<ContextType>;
@@ -15676,12 +15972,14 @@ export type Resolvers<ContextType = any> = {
   Discussion?: DiscussionResolvers<ContextType>;
   Document?: DocumentResolvers<ContextType>;
   Emoji?: GraphQLScalarType;
+  ExternalConfig?: ExternalConfigResolvers<ContextType>;
   FileStorageConfig?: FileStorageConfigResolvers<ContextType>;
   Form?: FormResolvers<ContextType>;
   FormQuestion?: FormQuestionResolvers<ContextType>;
   Forum?: ForumResolvers<ContextType>;
   Geo?: GeoResolvers<ContextType>;
   Groupable?: GroupableResolvers<ContextType>;
+  ISearchCategoryResult?: ISearchCategoryResultResolvers<ContextType>;
   ISearchResults?: ISearchResultsResolvers<ContextType>;
   InAppNotification?: InAppNotificationResolvers<ContextType>;
   InAppNotificationCalloutPublished?: InAppNotificationCalloutPublishedResolvers<ContextType>;
@@ -15754,6 +16052,7 @@ export type Resolvers<ContextType = any> = {
   RelayPaginatedSpacePageInfo?: RelayPaginatedSpacePageInfoResolvers<ContextType>;
   Role?: RoleResolvers<ContextType>;
   RoleSet?: RoleSetResolvers<ContextType>;
+  RoleSetInvitationResult?: RoleSetInvitationResultResolvers<ContextType>;
   RolesResult?: RolesResultResolvers<ContextType>;
   RolesResultCommunity?: RolesResultCommunityResolvers<ContextType>;
   RolesResultOrganization?: RolesResultOrganizationResolvers<ContextType>;
@@ -15762,17 +16061,18 @@ export type Resolvers<ContextType = any> = {
   RoomEventSubscriptionResult?: RoomEventSubscriptionResultResolvers<ContextType>;
   RoomMessageEventSubscriptionResult?: RoomMessageEventSubscriptionResultResolvers<ContextType>;
   RoomMessageReactionEventSubscriptionResult?: RoomMessageReactionEventSubscriptionResultResolvers<ContextType>;
+  SearchCursor?: GraphQLScalarType;
   SearchResult?: SearchResultResolvers<ContextType>;
   SearchResultCallout?: SearchResultCalloutResolvers<ContextType>;
   SearchResultOrganization?: SearchResultOrganizationResolvers<ContextType>;
   SearchResultPost?: SearchResultPostResolvers<ContextType>;
   SearchResultSpace?: SearchResultSpaceResolvers<ContextType>;
   SearchResultUser?: SearchResultUserResolvers<ContextType>;
-  SearchResultUserGroup?: SearchResultUserGroupResolvers<ContextType>;
   Sentry?: SentryResolvers<ContextType>;
   ServiceMetadata?: ServiceMetadataResolvers<ContextType>;
   Space?: SpaceResolvers<ContextType>;
   SpaceAbout?: SpaceAboutResolvers<ContextType>;
+  SpaceAboutMembership?: SpaceAboutMembershipResolvers<ContextType>;
   SpacePendingMembershipInfo?: SpacePendingMembershipInfoResolvers<ContextType>;
   SpaceSettings?: SpaceSettingsResolvers<ContextType>;
   SpaceSettingsCollaboration?: SpaceSettingsCollaborationResolvers<ContextType>;
@@ -16006,7 +16306,7 @@ export type SpaceDetailsFragment = {
 export type SpaceIngestFragment = {
   id: string;
   nameID: string;
-  type: SpaceType;
+  level: SpaceLevel;
   about: {
     id: string;
     who?: any | undefined;
@@ -16478,15 +16778,15 @@ export type SpaceIngestQuery = {
       | {
           id: string;
           nameID: string;
-          type: SpaceType;
+          level: SpaceLevel;
           subspaces: Array<{
             id: string;
             nameID: string;
-            type: SpaceType;
+            level: SpaceLevel;
             subspaces: Array<{
               id: string;
               nameID: string;
-              type: SpaceType;
+              level: SpaceLevel;
               about: {
                 id: string;
                 who?: any | undefined;
@@ -17019,7 +17319,7 @@ export const SpaceIngestFragmentDoc = gql`
   fragment SpaceIngest on Space {
     id
     nameID
-    type
+    level
     about {
       id
       profile {
