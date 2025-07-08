@@ -2,7 +2,6 @@ fragment CalloutFields on Callout {
   id
   nameID
   type
-  # visibility
   settings {
     visibility
   }
