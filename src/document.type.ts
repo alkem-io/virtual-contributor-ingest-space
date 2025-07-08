@@ -1,4 +1,5 @@
-import { CalloutType, MimeType, SpaceType } from './generated/graphql'; // '@alkemio/client-lib';
+import { } from '@alkemio/client-lib';
+import { CalloutType, MimeType, SpaceLevel } from './generated/graphql'; // '@alkemio/client-lib';
 
 export enum DocumentType {
   KNOWLEDGE = 'KNOWLEDGE',
@@ -17,15 +18,14 @@ export enum DocumentType {
 }
 
 export const typesMap: {
-  [key in SpaceType | CalloutType]?: DocumentType;
+  [key in SpaceLevel | CalloutType]?: DocumentType;
 } = {
-  [SpaceType.Knowledge]: DocumentType.KNOWLEDGE,
-  [SpaceType.BlankSlate]: DocumentType.SPACE,
-  [SpaceType.Challenge]: DocumentType.SUBSPACE,
-  [SpaceType.Opportunity]: DocumentType.SUBSPACE,
+  [SpaceLevel.L0]: DocumentType.SPACE,
+  [SpaceLevel.L1]: DocumentType.SUBSPACE,
+  [SpaceLevel.L2]: DocumentType.SUBSPACE,
 };
 
-export const mapType = (type: SpaceType | CalloutType): DocumentType => {
+export const mapType = (type: SpaceLevel | CalloutType): DocumentType => {
   const mapped = typesMap[type];
   if (mapped) {
     return mapped;
