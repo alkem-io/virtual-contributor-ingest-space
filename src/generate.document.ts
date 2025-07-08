@@ -12,7 +12,7 @@ interface GeneratedDocument {
 
 //TODO type this pls
 export const generateDocument = (docLike: any): GeneratedDocument => {
-  const { id: documentId, type } = docLike;
+  const { id: documentId, type, level } = docLike;
 
   const {
     references,
@@ -74,7 +74,7 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
   return {
     documentId,
     source,
-    type: mapType(type ?? profileType),
+    type: mapType(level ?? type ?? profileType),
     pageContent,
     title: displayName,
   };

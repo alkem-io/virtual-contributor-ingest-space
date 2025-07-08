@@ -2,7 +2,9 @@ fragment CalloutFields on Callout {
   id
   nameID
   type
-  visibility
+  settings {
+    visibility
+  }
   comments {
     messagesCount
     messages {
@@ -44,7 +46,6 @@ fragment CalloutFields on Callout {
       profile {
         ...ProfileNoTagsetFields
       }
-
     }
   }
 }

@@ -11,7 +11,7 @@ export const processCallouts = async (
   const documents: Document[] = [];
 
   for (const callout of callouts) {
-    if (callout.visibility === CalloutVisibility.Published) {
+    if (callout.settings?.visibility === CalloutVisibility.Published) {
       const document = await handleCallout(
         callout as Partial<Callout>,
         logger,
