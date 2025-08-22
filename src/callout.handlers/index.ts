@@ -1,9 +1,12 @@
 import { Logger } from 'winston';
-import { Callout, CalloutType } from '../generated/graphql';
+import { Callout } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import { baseHandler } from './base';
 import { linkCollectionHandler } from './link.collection';
 import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
+import { CalloutContributionType } from '@alkemio/client-lib';
+
+type CalloutType = CalloutContributionType | 'NONE';
 
 const handlersMap: Record<
   CalloutType,
@@ -13,11 +16,10 @@ const handlersMap: Record<
     alkemioClient: AlkemioCliClient | null
   ) => Promise<Document[]>
 > = {
-  [CalloutType.LinkCollection]: linkCollectionHandler,
-  [CalloutType.Post]: baseHandler,
-  [CalloutType.Whiteboard]: baseHandler,
-  [CalloutType.PostCollection]: baseHandler,
-  [CalloutType.WhiteboardCollection]: baseHandler,
+  [CalloutContributionType.Link]: linkCollectionHandler,
+  [CalloutContributionType.Post]: baseHandler,
+  [CalloutContributionType.Whiteboard]: baseHandler,
+  ['NONE']: baseHandler,
 };
 
 export const handleCallout = async (
@@ -25,9 +27,8 @@ export const handleCallout = async (
   logger: Logger,
   alkemioClient: AlkemioCliClient | null = null
 ): Promise<Document[]> => {
-  if (!callout.type) {
-    throw new Error('Callout type is not part of query.');
-  }
-  const handler = handlersMap[callout.type];
+  const calloutContributionTypes = callout.settings?.contribution.allowedTypes ?? []
+
+  const handler = handlersMap[calloutContributionTypes[0]];
   return handler(callout, logger, alkemioClient);
 };

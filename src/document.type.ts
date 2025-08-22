@@ -1,5 +1,4 @@
-import { } from '@alkemio/client-lib';
-import { CalloutType, MimeType, SpaceLevel } from './generated/graphql'; // '@alkemio/client-lib';
+import { CalloutFramingType, MimeType, SpaceLevel } from './generated/graphql'; // '@alkemio/client-lib';
 
 export enum DocumentType {
   KNOWLEDGE = 'KNOWLEDGE',
@@ -9,23 +8,22 @@ export enum DocumentType {
   PDF_FILE = 'PDF_FILE',
   SPREADSHEET = 'SPREADSHEET',
   DOCUMENT = 'DOCUMENT',
-  // copy CalloutType here
-  LINK_COLLECTION = 'LINK_COLLECTION',
-  POST = 'POST',
-  POST_COLLECTION = 'POST_COLLECTION',
+  // copy CalloutFramingType here
+  LINK = 'LINK',
+  MEMO = 'MEMO',
+  NONE = 'NONE',
   WHITEBOARD = 'WHITEBOARD',
-  WHITEBOARD_COLLECTION = 'WHITEBOARD_COLLECTION',
 }
 
 export const typesMap: {
-  [key in SpaceLevel | CalloutType]?: DocumentType;
+  [key in SpaceLevel | CalloutFramingType]?: DocumentType;
 } = {
   [SpaceLevel.L0]: DocumentType.SPACE,
   [SpaceLevel.L1]: DocumentType.SUBSPACE,
   [SpaceLevel.L2]: DocumentType.SUBSPACE,
 };
 
-export const mapType = (type: SpaceLevel | CalloutType): DocumentType => {
+export const mapType = (type: SpaceLevel | CalloutFramingType): DocumentType => {
   const mapped = typesMap[type];
   if (mapped) {
     return mapped;

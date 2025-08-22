@@ -7,7 +7,8 @@ export const baseHandler = async (
   callout: Partial<Callout>,
   logger: Logger
 ): Promise<Document[]> => {
-  const { id: documentId, type } = callout;
+  const { id: documentId, framing } = callout;
+  const type = framing?.type;
   logger.info(
     `Generating document for Callout (${documentId}) of type ${type}`
   );

@@ -1,9 +1,11 @@
 fragment CalloutFields on Callout {
   id
   nameID
-  type
   settings {
     visibility
+    contribution {
+      allowedTypes
+    }
   }
   comments {
     messagesCount
@@ -28,6 +30,7 @@ fragment CalloutFields on Callout {
   }
   framing {
     id
+    type
     profile {
       ...ProfileFields
     }
