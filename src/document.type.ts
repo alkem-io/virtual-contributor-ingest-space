@@ -13,6 +13,8 @@ export enum DocumentType {
   MEMO = 'MEMO',
   NONE = 'NONE',
   WHITEBOARD = 'WHITEBOARD',
+  COLLECTION = 'COLLECTION',
+  POST = 'POST',
 }
 
 export const typesMap: {
@@ -23,7 +25,9 @@ export const typesMap: {
   [SpaceLevel.L2]: DocumentType.SUBSPACE,
 };
 
-export const mapType = (type: SpaceLevel | CalloutFramingType): DocumentType => {
+export const mapType = (
+  type: SpaceLevel | CalloutFramingType
+): DocumentType => {
   const mapped = typesMap[type];
   if (mapped) {
     return mapped;

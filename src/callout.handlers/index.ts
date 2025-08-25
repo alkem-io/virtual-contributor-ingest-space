@@ -27,8 +27,10 @@ export const handleCallout = async (
   logger: Logger,
   alkemioClient: AlkemioCliClient | null = null
 ): Promise<Document[]> => {
-  const calloutContributionTypes = callout.settings?.contribution.allowedTypes ?? []
+  const calloutContributionTypes =
+    callout.settings?.contribution.allowedTypes ?? [];
 
-  const handler = handlersMap[calloutContributionTypes[0]];
-  return handler(callout, logger, alkemioClient);
+  const handler = handlersMap[calloutContributionTypes[0] ?? 'NONE'];
+  const res = await handler(callout, logger, alkemioClient);
+  return res;
 };
