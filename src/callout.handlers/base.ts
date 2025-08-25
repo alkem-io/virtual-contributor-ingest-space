@@ -2,12 +2,22 @@ import { Logger } from 'winston';
 import { Callout } from '../generated/graphql';
 import { Document } from 'langchain/document';
 import { generateDocument } from '../generate.document';
+import { DocumentType } from '../document.type';
 
 export const baseHandler = async (
   callout: Partial<Callout>,
   logger: Logger
 ): Promise<Document[]> => {
-  const { id: documentId, type } = callout;
+  const { id: documentId } = callout;
+  let type = DocumentType.POST;
+
+  const calloutContributionTypes =
+    callout.settings?.contribution.allowedTypes ?? [];
+
+  if (calloutContributionTypes.length) {
+    type = DocumentType.COLLECTION;
+  }
+
   logger.info(
     `Generating document for Callout (${documentId}) of type ${type}`
   );
