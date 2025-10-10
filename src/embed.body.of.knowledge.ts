@@ -33,7 +33,7 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
     event.bodyOfKnowledgeId,
     event.type,
     event.purpose,
-    event.personaServiceId
+    event.personaId
   );
 
   const purpose = event.purpose;

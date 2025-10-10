@@ -1,11 +1,11 @@
 import { Document } from 'langchain/document';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { OpenAIClient, AzureKeyCredential, EmbeddingItem } from '@azure/openai';
 import logger from './logger';
 import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
 import { DocumentType } from './document.type';
 import { BATCH_SIZE, CHUNK_OVERLAP, CHUNK_SIZE } from './constants';
+import { AzureOpenAIEmbeddingFunction } from './azure.embedding.function';
 import { summarizeDocument } from './summarize/document';
 import { summariseBodyOfKnowledge } from './summarize/body.of.knowledge';
 import { summaryLength } from './summarize/graph';
@@ -40,6 +40,12 @@ export const embedDocuments = async (
     return false;
   }
 
+  const embeddingFunction = new AzureOpenAIEmbeddingFunction(
+    endpoint,
+    key,
+    deployment
+  );
+
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: CHUNK_SIZE,
     chunkOverlap: CHUNK_OVERLAP,
@@ -66,8 +72,7 @@ export const embedDocuments = async (
     }
 
     logger.info(
-      `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${
-        doc.metadata.documentId
+      `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${doc.metadata.documentId
       }) of type ${doc.metadata.type}; # of chunks: ${splitted.length}`
     );
 
@@ -76,7 +81,11 @@ export const embedDocuments = async (
         `${chunk.metadata.documentId}-${chunk.metadata.type}-chunk${chunkIndex}`
       );
       documents.push(chunk.pageContent);
-      metadatas.push({ ...chunk.metadata, embeddingType: 'chunk', chunkIndex });
+      metadatas.push({
+        ...chunk.metadata,
+        embeddingType: 'chunk',
+        chunkIndex,
+      });
     });
 
     if (doc.pageContent.length > summaryLength) {
@@ -117,10 +126,20 @@ export const embedDocuments = async (
   const heartbeat = await client.heartbeat();
   logger.info(`Chroma heartbeat ${heartbeat}`);
 
-  logger.info('Generating embeddings...');
-  const openAi = new OpenAIClient(endpoint, new AzureKeyCredential(key));
+  try {
+    logger.info(`Deleting old collection: ${name}`);
+    await client.deleteCollection({ name });
+    logger.info(`Collection: ${name} deleted.`);
+  } catch (error) {
+    logger.info(`Collection '${name}' doesn't exist. First time ingestion.`);
+  }
 
-  let data: EmbeddingItem[] = [];
+  logger.info(`Creating collection: ${name}`);
+  const collection = await client.getOrCreateCollection({
+    name,
+    metadata: { createdAt: new Date().getTime() },
+    embeddingFunction,
+  });
 
   logger.info(`Total number of chunks: ${documents.length}`);
   logger.info('Batching documents...');
@@ -132,70 +151,16 @@ export const embedDocuments = async (
 
   for (let i = 0; i < docBatches.length; i++) {
     try {
-      const batch = docBatches[i];
       logger.info(
-        `Generating embeddings for batch ${i}; Batch size is: ${batch.length}`
+        `Adding batch ${i} to collection: ${name}; Batch size: ${docBatches[i].length}`
       );
-      const response = await openAi.getEmbeddings(deployment, batch);
-      data = [...data, ...response.data];
-      logger.debug(
-        `Generated embeddings ${
-          response.data.length
-        }; Embeddings length are: ${Array.from(
-          new Set(response.data.map(({ embedding }) => embedding.length))
-        )}`
-      );
-      logger.info('Embeddings generated.');
-    } catch (error) {
-      logger.error({
-        ...(error as Error),
-        error: 'Embeddings generation error',
-        metadata: JSON.stringify(metadataBatches[i]),
-      });
-    }
-  }
-
-  if (data.length !== documents.length) {
-    logger.error(
-      `Embeddings generation failed for ${
-        data.length
-      } documents. Missing embeddings for ${
-        documents.length - data.length
-      } documents.`
-    );
-    return false;
-  }
-
-  logger.info('Embedding generated');
-  logger.info(`Total number of generated embeddings: ${data.length}`);
-
-  try {
-    logger.info(`Deleting old collection: ${name}`);
-    await client.deleteCollection({ name });
-    logger.info(`Collection: ${name} deleted.`);
-  } catch (error) {
-    logger.info(`Collection '${name}' doesn't exist. First time ingestion.`);
-  }
-
-  const embeddingsBatches = batch(data, BATCH_SIZE);
-
-  for (let i = 0; i < embeddingsBatches.length; i++) {
-    try {
-      logger.info(`Creating collection: ${name}`);
-      const collection = await client.getOrCreateCollection({
-        name,
-        metadata: { createdAt: new Date().getTime() },
-      });
-
-      logger.info(`Adding to collection : ${name}`);
-      await collection.upsert({
+      await collection.add({
         ids: idsBatches[i],
         documents: docBatches[i],
         metadatas: metadataBatches[i],
-        embeddings: embeddingsBatches[i].map(({ embedding }) => embedding),
       });
       logger.info(
-        `Batch ${i} of size ${embeddingsBatches[i].length} added to collection ${name}`
+        `Batch ${i} of size ${docBatches[i].length} added to collection ${name}`
       );
     } catch (error) {
       logger.error(error);

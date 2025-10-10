@@ -131,13 +131,14 @@ export class Connection {
             return logger.error('Invalid incoming message');
           }
           try {
-            const { bodyOfKnowledgeId, type, purpose, personaServiceId } =
-              JSON.parse(msg.content.toString());
+            const { bodyOfKnowledgeId, type, purpose, personaId } = JSON.parse(
+              msg.content.toString()
+            );
             const event = new IngestBodyOfKnowledge(
               bodyOfKnowledgeId,
               type,
               purpose,
-              personaServiceId
+              personaId
             );
             handler(event);
           } catch (error) {
