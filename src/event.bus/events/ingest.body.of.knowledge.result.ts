@@ -22,11 +22,11 @@ export class IngestBodyOfKnowledgeResult {
     public readonly bodyOfKnowledgeId: string,
     public readonly type: BodyOfKnowledgeType,
     public readonly purpose: IngestionPurpose,
-    public readonly personaServiceId: string,
+    public readonly personaId: string,
     public timestamp: number = new Date(
       new Date().toLocaleString('en', { timeZone: 'UTC' })
     ).getTime(),
     public result: IngestionResult = IngestionResult.SUCCESS,
     public error?: IngestError
-  ) {}
+  ) { }
 }
