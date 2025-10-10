@@ -1,7 +1,7 @@
-import { EmbeddingFunction } from 'chromadb';
+import { IEmbeddingFunction } from 'chromadb';
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 
-export class AzureOpenAIEmbeddingFunction implements EmbeddingFunction {
+export class AzureOpenAIEmbeddingFunction implements IEmbeddingFunction {
   private client: OpenAIClient;
   private deployment: string;
 

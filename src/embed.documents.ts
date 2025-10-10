@@ -17,30 +17,6 @@ const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
     arr.slice(i * size, i * size + size)
   );
 
-const sanitizeMetadata = (metadata: any): Metadata => {
-  const sanitized: Metadata = {};
-
-  for (const [key, value] of Object.entries(metadata)) {
-    if (value === null || value === undefined) {
-      sanitized[key] = null;
-    } else if (
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean'
-    ) {
-      sanitized[key] = value;
-    } else if (typeof value === 'object') {
-      // Convert objects and arrays to JSON strings
-      sanitized[key] = JSON.stringify(value);
-    } else {
-      // Convert other types to strings
-      sanitized[key] = String(value);
-    }
-  }
-
-  return sanitized;
-};
-
 export const embedDocuments = async (
   bodyOfKnowledge: BodyOfKnowledgeReadResult,
   docs: Document[],
@@ -96,8 +72,7 @@ export const embedDocuments = async (
     }
 
     logger.info(
-      `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${
-        doc.metadata.documentId
+      `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${doc.metadata.documentId
       }) of type ${doc.metadata.type}; # of chunks: ${splitted.length}`
     );
 
@@ -106,13 +81,11 @@ export const embedDocuments = async (
         `${chunk.metadata.documentId}-${chunk.metadata.type}-chunk${chunkIndex}`
       );
       documents.push(chunk.pageContent);
-      metadatas.push(
-        sanitizeMetadata({
-          ...chunk.metadata,
-          embeddingType: 'chunk',
-          chunkIndex,
-        })
-      );
+      metadatas.push({
+        ...chunk.metadata,
+        embeddingType: 'chunk',
+        chunkIndex,
+      });
     });
 
     if (doc.pageContent.length > summaryLength) {
@@ -120,9 +93,7 @@ export const embedDocuments = async (
         const documentSummary = await summarizeDocument(splitted);
         ids.push(`${doc.metadata.documentId}-${doc.metadata.type}-summary`);
         documents.push(documentSummary);
-        metadatas.push(
-          sanitizeMetadata({ ...doc.metadata, embeddingType: 'summary' })
-        );
+        metadatas.push({ ...doc.metadata, embeddingType: 'summary' });
 
         summaries.push(documentSummary);
       } catch (err) {
@@ -139,20 +110,16 @@ export const embedDocuments = async (
   ids.push('body-of-knowledge-summary');
   documents.push(bokSummary);
 
-  metadatas.push(
-    sanitizeMetadata({
-      documentId: bokID,
-      source:
-        bodyOfKnowledge.profile?.url ||
-        bodyOfKnowledge.about?.profile.url ||
-        '',
-      type: 'bodyOfKnowledgeSummary',
-      title:
-        bodyOfKnowledge.profile?.displayName ||
-        bodyOfKnowledge.about?.profile.displayName ||
-        '',
-    })
-  );
+  metadatas.push({
+    documentId: bokID,
+    source:
+      bodyOfKnowledge.profile?.url || bodyOfKnowledge.about?.profile.url || '',
+    type: 'bodyOfKnowledgeSummary',
+    title:
+      bodyOfKnowledge.profile?.displayName ||
+      bodyOfKnowledge.about?.profile.displayName ||
+      '',
+  });
 
   logger.info('Connecting to Chroma...');
   const client = dbConnect();

@@ -15,11 +15,10 @@ export const dbConnect = () => {
   }
 
   const client = new ChromaClient({
-    ssl: false,
-    host,
-    port: parseInt(port, 10),
-    headers: {
-      Authorization: `Basic ${credentials}`,
+    path: `http://${process.env.VECTOR_DB_HOST}:${process.env.VECTOR_DB_PORT}`,
+    auth: {
+      credentials,
+      provider: 'basic',
     },
   });
 

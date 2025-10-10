@@ -54,7 +54,7 @@
     "@langchain/mistralai": "^0.1.1",
     "@types/graphql-upload": "^8.0.11",
     "amqplib": "^0.10.4",
-    "chromadb": "^3.0.17",
+    "chromadb": "^1.10.1",
     "file-type": "^19.0.0",
     "graphql": "^16.6.0",
     "graphql-upload": "^16.0.1",
