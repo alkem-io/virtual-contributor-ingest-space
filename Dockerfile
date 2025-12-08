@@ -1,16 +1,38 @@
-FROM node:22-alpine3.21
+# Stage 1: Build stage
+FROM node:22.16.0-alpine AS builder
 
-RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install
+# Install dependencies (including devDependencies for building)
+RUN npm ci
 
-COPY src/ ./src
-COPY tsconfig* ./
+COPY . .
 
-RUN npm run build
+ENV NODE_ENV=production
 
-CMD [ "npm", "run", "start"]
+# Build the application, then prune devDependencies
+RUN npm run build \
+    && npm prune --omit=dev \
+    && npm cache clean --force
+
+# Stage 2: Runtime stage
+FROM gcr.io/distroless/nodejs22-debian12:nonroot
+
+WORKDIR /usr/src/app
+
+# Copy built artifacts and production dependencies
+COPY --from=builder --chown=nonroot:nonroot /usr/src/app/dist ./dist
+COPY --from=builder --chown=nonroot:nonroot /usr/src/app/node_modules ./node_modules
+COPY --from=builder --chown=nonroot:nonroot /usr/src/app/package.json ./package.json
+
+# Set user to nonroot (distroless images have this user)
+USER nonroot
+
+# Environment variables
+ENV NODE_ENV=production
+
+# Run the application
+CMD ["dist/index.js"]
 
