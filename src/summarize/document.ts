@@ -3,8 +3,9 @@ import {
   HumanMessagePromptTemplate,
   ChatPromptTemplate,
 } from '@langchain/core/prompts';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import { buildGraph } from './graph';
+import logger from '../logger';
 const systemMessage = SystemMessagePromptTemplate.fromTemplate(
   `In your summary preserve as much information as possible, including:
    - References and connections between documents
@@ -34,7 +35,9 @@ const refinePrompt = ChatPromptTemplate.fromMessages([
 ]);
 
 export const summarizeDocument = async (chunks: Document[]) => {
+  logger.info(`Starting document summarization with ${chunks.length} chunks`);
   const graph = buildGraph(summarizePrompt, refinePrompt);
   const final = await graph.invoke({ chunks });
+  logger.info('Finished document summarization');
   return final.summary;
 };

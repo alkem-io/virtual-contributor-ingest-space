@@ -1,5 +1,5 @@
-import { Document } from 'langchain/document';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { Document } from '@langchain/core/documents';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import logger from './logger';
 import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
@@ -72,7 +72,8 @@ export const embedDocuments = async (
     }
 
     logger.info(
-      `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${doc.metadata.documentId
+      `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${
+        doc.metadata.documentId
       }) of type ${doc.metadata.type}; # of chunks: ${splitted.length}`
     );
 
@@ -90,7 +91,17 @@ export const embedDocuments = async (
 
     if (doc.pageContent.length > summaryLength) {
       try {
+        logger.info(
+          `Starting summarization for document ${docIndex + 1} (ID: ${
+            doc.metadata.documentId
+          })`
+        );
         const documentSummary = await summarizeDocument(splitted);
+        logger.info(
+          `Finished summarization for document ${docIndex + 1} (ID: ${
+            doc.metadata.documentId
+          })`
+        );
         ids.push(`${doc.metadata.documentId}-${doc.metadata.type}-summary`);
         documents.push(documentSummary);
         metadatas.push({ ...doc.metadata, embeddingType: 'summary' });
@@ -106,7 +117,9 @@ export const embedDocuments = async (
 
   const bokDescriptions = new Document({ pageContent: summaries.join('\n') });
   const bokChunks = await splitter.splitDocuments([bokDescriptions]);
+  logger.info('Starting body of knowledge summarization');
   const bokSummary = await summariseBodyOfKnowledge(bokChunks);
+  logger.info('Finished body of knowledge summarization');
   ids.push('body-of-knowledge-summary');
   documents.push(bokSummary);
 

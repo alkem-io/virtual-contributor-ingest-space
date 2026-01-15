@@ -1,4 +1,4 @@
-import amqlib, { Connection as AmqlibConnection, Channel } from 'amqplib';
+import amqlib, { ChannelModel, Channel } from 'amqplib';
 import logger from '../logger';
 import { IngestBodyOfKnowledge } from './events/ingest.body.of.knowledge';
 import { IngestBodyOfKnowledgeResult } from './events/ingest.body.of.knowledge.result';
@@ -16,7 +16,7 @@ type ConnectionConfig = {
 };
 
 export class Connection {
-  connection!: AmqlibConnection;
+  connection!: ChannelModel;
   channel!: Channel;
   private connected!: boolean;
   private config!: ConnectionConfig;
