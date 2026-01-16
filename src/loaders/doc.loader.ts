@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 
 export class DocLoader extends BaseDocumentLoader {
   filePath = '';

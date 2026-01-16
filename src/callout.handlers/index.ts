@@ -1,6 +1,6 @@
 import { Logger } from 'winston';
 import { Callout } from '../generated/graphql';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import { baseHandler } from './base';
 import { linkCollectionHandler } from './link.collection';
 import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
