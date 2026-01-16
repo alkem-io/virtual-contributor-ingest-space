@@ -1,6 +1,6 @@
 import { Callout, CalloutVisibility } from './generated/graphql';
 import { AlkemioCliClient } from './graphql.client/AlkemioCliClient';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import { handleCallout } from './callout.handlers';
 import logger from './logger';
 

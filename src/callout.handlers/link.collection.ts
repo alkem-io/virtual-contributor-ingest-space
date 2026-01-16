@@ -3,13 +3,14 @@ import https from 'https';
 import http from 'http';
 import { Logger } from 'winston';
 import { MimeType, Callout } from '../generated/graphql';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { MimeTypeDocumentMap } from '../document.type';
 import { SpreadSheetLoader, DocLoader } from '../loaders';
 import { AlkemioCliClient } from 'src/graphql.client/AlkemioCliClient';
+import { serializeError } from '../logger';
 
 const downloadDocument = async (
   uri: string,
@@ -128,8 +129,10 @@ export const linkCollectionHandler = async (
       download = await downloadDocument(link.uri, path, alkemioClient.apiToken);
     } catch (error) {
       logger.error({
-        ...(error as Error),
-        error: 'Error downloading file',
+        error: serializeError(error),
+        message: 'Error downloading file',
+        documentId,
+        uri: link.uri,
       });
       download = false;
     }
@@ -153,8 +156,8 @@ export const linkCollectionHandler = async (
         }
       } catch (error) {
         logger.error({
-          ...(error as Error),
-          error: 'File failed to load',
+          error: serializeError(error),
+          message: 'File failed to load',
           mimeType: docInfo.mimeType,
           file: documentId,
           uri: link.uri,

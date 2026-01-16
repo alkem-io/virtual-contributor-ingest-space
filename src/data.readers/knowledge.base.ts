@@ -1,4 +1,4 @@
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import { IngestBodyOfKnowledge } from '../event.bus/events/ingest.body.of.knowledge';
 import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
 import { processCallouts } from '../process.callouts';
