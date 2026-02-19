@@ -4,38 +4,76 @@ import {
   ChatPromptTemplate,
 } from '@langchain/core/prompts';
 import { Document } from '@langchain/core/documents';
-import { buildGraph } from './graph';
+import { buildGraph, modelMedium } from './graph';
 import logger from '../logger';
 
 const systemMessage = SystemMessagePromptTemplate.fromTemplate(
-  'You are tasked with concising summaries based entirely on the user input. While doing so preserve as much information as possible like names, references titles, dates, etc.'
+  `Create a structured high-level overview of an entire body of knowledge for semantic search retrieval.
+
+This summary helps determine if this body of knowledge is relevant to user queries.
+
+FORMAT:
+- Use markdown headers (### or **bold**) to organize by theme
+- Use bullet points for lists of entities, dates, and connections
+- Each section should contain specific, searchable facts
+
+REQUIREMENTS:
+- Capture overall scope, themes, and domains covered
+- Preserve key cross-cutting entities: participant names, organizations, major initiatives
+- Include temporal scope (date ranges, time periods)
+- Identify main topic areas and their relationships
+- Use searchable terminology
+
+FORBIDDEN:
+- No repetitive sentence patterns
+- No generic filler statements
+- No redundant information - each fact appears only once`
 );
 
 const summarizePrompt = ChatPromptTemplate.fromMessages([
   systemMessage,
   HumanMessagePromptTemplate.fromTemplate(
-    'Write a detailed summary, no more than {summaryLength} characters of the following: {context}'
+    `Create a structured overview of this body of knowledge using markdown headers and bullet points.
+Include only essential themes, entities, and connections - no filler or repetition.
+Maximum length: {maxSummaryLength} characters.
+
+This is a collection of summaries from individual documents:
+{context}
+
+Overview summary:`
   ),
 ]);
 const refinePrompt = ChatPromptTemplate.fromMessages([
   systemMessage,
   HumanMessagePromptTemplate.fromTemplate(
-    `Produce a final detailed summary, no more than {summaryLength} characters.
-     Existing summary up to this point:
+    `Refine this body of knowledge overview by integrating additional information.
+Maintain markdown structure with headers and bullet points.
+Maximum length: {maxSummaryLength} characters.
 
-     {currentSummary}
+Current overview:
+{currentSummary}
 
-     New context: {context}
+Additional document summaries:
+{context}
 
-     Given the new context, refine the original summary.`
+Instructions:
+1. Merge new themes into existing sections or create new sections as needed
+2. Remove any redundancy - never repeat the same fact or entity twice
+3. Add newly discovered entities, dates, or connections
+4. Keep all content specific and factual - no generic statements
+
+Refined overview:`
   ),
 ]);
 
-export const summariseBodyOfKnowledge = async (chunks: Document[]) => {
+export const summariseBodyOfKnowledge = async (
+  chunks: Document[],
+  model: typeof modelMedium = modelMedium
+) => {
   logger.info(
     `Starting body of knowledge summarization with ${chunks.length} chunks`
   );
-  const graph = buildGraph(summarizePrompt, refinePrompt);
+  const graph = buildGraph(summarizePrompt, refinePrompt, model);
   const final = await graph.invoke({ chunks });
   logger.info('Finished body of knowledge summarization');
   return final.summary;
