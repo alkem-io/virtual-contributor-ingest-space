@@ -8,7 +8,7 @@ import { BATCH_SIZE, CHUNK_OVERLAP, CHUNK_SIZE } from './constants';
 import { AzureOpenAIEmbeddingFunction } from './azure.embedding.function';
 import { summarizeDocument } from './summarize/document';
 import { summariseBodyOfKnowledge } from './summarize/body.of.knowledge';
-import { summaryLength } from './summarize/graph';
+import { summaryLength, modelMedium } from './summarize/graph';
 import { IngestionPurpose } from './event.bus/events/ingest.body.of.knowledge';
 import { BodyOfKnowledgeReadResult } from './data.readers/types';
 
@@ -20,7 +20,8 @@ const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
 export const embedDocuments = async (
   bodyOfKnowledge: BodyOfKnowledgeReadResult,
   docs: Document[],
-  purpose: IngestionPurpose
+  purpose: IngestionPurpose,
+  model: typeof modelMedium = modelMedium
 ) => {
   const bokID = bodyOfKnowledge.id;
   logger.defaultMeta.bodyOfKnowledgeId = bokID;
@@ -90,36 +91,72 @@ export const embedDocuments = async (
     });
 
     if (doc.pageContent.length > summaryLength) {
+      logger.info(
+        `Document ${docIndex + 1}/${docs.length} requires summarization: ` +
+          `${doc.pageContent.length} chars > ${summaryLength} char limit; ` +
+          `will process ${splitted.length} chunks`
+      );
+      const summaryStartTime = Date.now();
+
       try {
+        const documentSummary = await summarizeDocument(splitted, model);
+
+        const summaryDuration = (
+          (Date.now() - summaryStartTime) /
+          1000
+        ).toFixed(2);
         logger.info(
-          `Starting summarization for document ${docIndex + 1} (ID: ${
-            doc.metadata.documentId
-          })`
+          `Document ${docIndex + 1}/${docs.length} summary complete: ` +
+            `generated ${documentSummary.length} chars in ${summaryDuration}s`
         );
-        const documentSummary = await summarizeDocument(splitted);
-        logger.info(
-          `Finished summarization for document ${docIndex + 1} (ID: ${
-            doc.metadata.documentId
-          })`
-        );
+
         ids.push(`${doc.metadata.documentId}-${doc.metadata.type}-summary`);
         documents.push(documentSummary);
         metadatas.push({ ...doc.metadata, embeddingType: 'summary' });
 
         summaries.push(documentSummary);
       } catch (err) {
-        logger.error(err);
+        logger.error(
+          `Failed to summarize document ${docIndex + 1}/${docs.length} ` +
+            `(ID: ${doc.metadata.documentId}):`,
+          err
+        );
       }
     } else {
+      logger.info(
+        `Document ${docIndex + 1}/${docs.length} under length limit ` +
+          `(${doc.pageContent.length} chars), using full content`
+      );
       summaries.push(doc.pageContent);
     }
   }
 
+  const totalInputChars = docs.reduce((sum, doc) => sum + doc.pageContent.length, 0);
+  const totalChunkChars = documents.reduce((sum, doc) => sum + doc.length, 0);
+  logger.info(
+    `Character processing complete: ${totalInputChars} input chars processed into ${documents.length} chunks (${totalChunkChars} total chunk chars)`
+  );
+
+  logger.info(
+    `Creating body of knowledge summary from ${summaries.length} document(s); ` +
+      `combined content: ${summaries.join('\n').length} chars`
+  );
+
   const bokDescriptions = new Document({ pageContent: summaries.join('\n') });
   const bokChunks = await splitter.splitDocuments([bokDescriptions]);
-  logger.info('Starting body of knowledge summarization');
-  const bokSummary = await summariseBodyOfKnowledge(bokChunks);
-  logger.info('Finished body of knowledge summarization');
+
+  logger.info(
+    `Body of knowledge content split into ${bokChunks.length} chunks for summarization`
+  );
+
+  const bokStartTime = Date.now();
+  const bokSummary = await summariseBodyOfKnowledge(bokChunks, model);
+  const bokDuration = ((Date.now() - bokStartTime) / 1000).toFixed(2);
+
+  logger.info(
+    `Body of knowledge summary complete: ${bokSummary.length} chars generated in ${bokDuration}s`
+  );
+
   ids.push('body-of-knowledge-summary');
   documents.push(bokSummary);
 

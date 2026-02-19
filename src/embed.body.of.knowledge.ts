@@ -10,9 +10,11 @@ import { embedKnowledgeBase } from './data.readers/knowledge.base';
 import {
   IngestBodyOfKnowledge,
   BodyOfKnowledgeType,
+  SummarizationModel,
 } from './event.bus/events/ingest.body.of.knowledge';
 import { ReadResult } from './data.readers/types';
 import { embedDocuments } from './embed.documents';
+import { modelMedium, modelLarge } from './summarize/graph';
 
 export const setResultError = (
   result: IngestBodyOfKnowledgeResult,
@@ -37,12 +39,20 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
   );
 
   const purpose = event.purpose;
+  const model =
+    event.summarizationModel === SummarizationModel.MISTRAL_LARGE
+      ? modelLarge
+      : modelMedium;
 
   logger.defaultMeta.bodyOfKnowledgeId = event.bodyOfKnowledgeId;
   logger.defaultMeta.type = event.type;
 
+  const ingestionStartTime = Date.now();
   logger.info(
     `Ingestion started for ${event.type}: ${event.bodyOfKnowledgeId}`
+  );
+  logger.info(
+    `Using summarization model: ${event.summarizationModel || SummarizationModel.MISTRAL_MEDIUM}`
   );
   const alkemioClient = new AlkemioCliClient();
 
@@ -81,7 +91,8 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
     embeddingResult = await embedDocuments(
       result.bodyOfKnowledge,
       result.documents,
-      purpose
+      purpose,
+      model
     );
   } catch (error) {
     logger.error(error);
@@ -106,6 +117,9 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
   resultEvent.timestamp = new Date(
     new Date().toLocaleString('en', { timeZone: 'UTC' })
   ).getTime();
+
+  const totalDuration = ((Date.now() - ingestionStartTime) / 1000).toFixed(2);
+  logger.info(`Total ingestion time: ${totalDuration}s`);
 
   return resultEvent;
 };
