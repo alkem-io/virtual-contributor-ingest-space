@@ -12,6 +12,13 @@ import { embedBodyOfKnowledge } from './embed.body.of.knowledge';
     const resultEvent = await embedBodyOfKnowledge(event);
 
     connection.send(resultEvent);
-    logger.info(`Ingest completed for space: ${event.bodyOfKnowledgeId}`);
+    if (resultEvent.error) {
+      logger.error(
+        `Ingest ${resultEvent.result} for: ${event.bodyOfKnowledgeId} — ${resultEvent.error.message}`,
+        { errorCode: resultEvent.error.code }
+      );
+    } else {
+      logger.info(`Ingest ${resultEvent.result} for: ${event.bodyOfKnowledgeId}`);
+    }
   });
 })();

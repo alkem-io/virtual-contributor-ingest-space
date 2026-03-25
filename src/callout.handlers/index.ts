@@ -4,7 +4,7 @@ import { Document } from '@langchain/core/documents';
 import { baseHandler } from './base';
 import { linkCollectionHandler } from './link.collection';
 import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
-import { CalloutContributionType } from '@alkemio/client-lib';
+import { CalloutContributionType } from '../generated/graphql';
 
 type CalloutType = CalloutContributionType | 'NONE';
 
@@ -19,6 +19,7 @@ const handlersMap: Record<
   [CalloutContributionType.Link]: linkCollectionHandler,
   [CalloutContributionType.Post]: baseHandler,
   [CalloutContributionType.Whiteboard]: baseHandler,
+  [CalloutContributionType.Memo]: baseHandler,
   ['NONE']: baseHandler,
 };
 

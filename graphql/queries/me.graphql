@@ -2,7 +2,6 @@ query me {
   me {
     user {
       ...UserDetails
-      ...UserAgent
       __typename
     }
     __typename
@@ -16,8 +15,11 @@ fragment UserDetails on User {
   lastName
   email
   phone
-  accountUpn
-  agent {
+  account {
+    id
+    __typename
+  }
+  actor {
     credentials {
       type
       resourceID
@@ -75,20 +77,5 @@ fragment TagsetDetails on Tagset {
   tags
   allowedValues
   type
-  __typename
-}
-
-fragment UserAgent on User {
-  agent {
-    id
-    did
-    credentials {
-      id
-      resourceID
-      type
-      __typename
-    }
-    __typename
-  }
   __typename
 }

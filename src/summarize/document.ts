@@ -4,7 +4,8 @@ import {
   ChatPromptTemplate,
 } from '@langchain/core/prompts';
 import { Document } from '@langchain/core/documents';
-import { buildGraph, modelMedium } from './graph';
+import { buildGraph } from './graph';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import logger from '../logger';
 const systemMessage = SystemMessagePromptTemplate.fromTemplate(
   `Expert at creating structured, information-dense summaries for semantic search and vector retrieval.
@@ -33,7 +34,7 @@ const summarizePrompt = ChatPromptTemplate.fromMessages([
   HumanMessagePromptTemplate.fromTemplate(
     `Create a structured summary of the following content using markdown headers and bullet points.
 Include only essential facts and entities - no filler or repetition.
-Maximum length: {maxSummaryLength} characters.
+Target length: around {maxSummaryLength} characters. You may exceed this if needed to preserve important information.
 
 Content:
 {context}
@@ -46,7 +47,7 @@ const refinePrompt = ChatPromptTemplate.fromMessages([
   HumanMessagePromptTemplate.fromTemplate(
     `Refine this summary by integrating new information.
 Maintain markdown structure with headers and bullet points.
-Maximum length: {maxSummaryLength} characters.
+Target length: around {maxSummaryLength} characters. You may exceed this if needed to preserve important information.
 
 Current summary:
 {currentSummary}
@@ -66,11 +67,14 @@ Refined summary:`
 
 export const summarizeDocument = async (
   chunks: Document[],
-  model: typeof modelMedium = modelMedium
+  model: BaseChatModel
 ) => {
   logger.info(`Starting document summarization with ${chunks.length} chunks`);
   const graph = buildGraph(summarizePrompt, refinePrompt, model);
-  const final = await graph.invoke({ chunks });
+  const final = await graph.invoke(
+    { chunks },
+    { recursionLimit: chunks.length * 2 + 10 }
+  );
   logger.info('Finished document summarization');
   return final.summary;
 };

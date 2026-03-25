@@ -34,9 +34,8 @@ export const baseHandler = async (
       continue;
     }
 
-    const {
-      profile: { displayName: senderName, url: senderUrl },
-    } = message.sender;
+    const senderName = message.sender.profile?.displayName ?? 'Unknown';
+    const senderUrl = message.sender.profile?.url ?? '';
     const postedOn = new Date(message.timestamp).toLocaleString('en-US');
     processedMessages.push(
       `\t${senderName} with profile link ${senderUrl} said '${message.message}' on ${postedOn}`

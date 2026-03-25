@@ -4,7 +4,8 @@ import {
   ChatPromptTemplate,
 } from '@langchain/core/prompts';
 import { Document } from '@langchain/core/documents';
-import { buildGraph, modelMedium } from './graph';
+import { buildGraph } from './graph';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import logger from '../logger';
 
 const systemMessage = SystemMessagePromptTemplate.fromTemplate(
@@ -35,7 +36,7 @@ const summarizePrompt = ChatPromptTemplate.fromMessages([
   HumanMessagePromptTemplate.fromTemplate(
     `Create a structured overview of this body of knowledge using markdown headers and bullet points.
 Include only essential themes, entities, and connections - no filler or repetition.
-Maximum length: {maxSummaryLength} characters.
+Target length: around {maxSummaryLength} characters. You may exceed this if needed to preserve important information.
 
 This is a collection of summaries from individual documents:
 {context}
@@ -48,7 +49,7 @@ const refinePrompt = ChatPromptTemplate.fromMessages([
   HumanMessagePromptTemplate.fromTemplate(
     `Refine this body of knowledge overview by integrating additional information.
 Maintain markdown structure with headers and bullet points.
-Maximum length: {maxSummaryLength} characters.
+Target length: around {maxSummaryLength} characters. You may exceed this if needed to preserve important information.
 
 Current overview:
 {currentSummary}
@@ -68,13 +69,16 @@ Refined overview:`
 
 export const summariseBodyOfKnowledge = async (
   chunks: Document[],
-  model: typeof modelMedium = modelMedium
+  model: BaseChatModel
 ) => {
   logger.info(
     `Starting body of knowledge summarization with ${chunks.length} chunks`
   );
   const graph = buildGraph(summarizePrompt, refinePrompt, model);
-  const final = await graph.invoke({ chunks });
+  const final = await graph.invoke(
+    { chunks },
+    { recursionLimit: chunks.length * 2 + 10 }
+  );
   logger.info('Finished body of knowledge summarization');
   return final.summary;
 };

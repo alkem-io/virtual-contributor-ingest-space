@@ -5,10 +5,10 @@ import { dbConnect } from './db.connect';
 import { Metadata } from 'chromadb';
 import { DocumentType } from './document.type';
 import { BATCH_SIZE, CHUNK_OVERLAP, CHUNK_SIZE } from './constants';
-import { AzureOpenAIEmbeddingFunction } from './azure.embedding.function';
+import { OpenAIEmbeddingFunction } from '@chroma-core/openai';
 import { summarizeDocument } from './summarize/document';
 import { summariseBodyOfKnowledge } from './summarize/body.of.knowledge';
-import { summaryLength, modelMedium } from './summarize/graph';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { IngestionPurpose } from './event.bus/events/ingest.body.of.knowledge';
 import { BodyOfKnowledgeReadResult } from './data.readers/types';
 
@@ -21,31 +21,31 @@ export const embedDocuments = async (
   bodyOfKnowledge: BodyOfKnowledgeReadResult,
   docs: Document[],
   purpose: IngestionPurpose,
-  model: typeof modelMedium = modelMedium
+  model: BaseChatModel
 ) => {
   const bokID = bodyOfKnowledge.id;
   logger.defaultMeta.bodyOfKnowledgeId = bokID;
 
-  const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-  const key = process.env.AZURE_OPENAI_API_KEY;
-  const deployment = process.env.EMBEDDINGS_DEPLOYMENT_NAME;
+  const endpoint = process.env.EMBEDDINGS_ENDPOINT;
+  const key = process.env.EMBEDDINGS_API_KEY;
+  const embeddingsModel = process.env.EMBEDDINGS_MODEL_NAME;
 
-  if (!endpoint || !key || !deployment) {
+  if (!endpoint || !key || !embeddingsModel) {
     logger.error({
       error:
         'AI configuration missing from ENV or incomplete. Config presence is',
-      AZURE_OPENAI_ENDPOINT: !!endpoint,
-      AZURE_OPENAI_API_KEY: key ? '[REDACTED]' : 'MISSING',
-      EMBEDDINGS_DEPLOYMENT_NAME1: !!deployment,
+      EMBEDDINGS_ENDPOINT: !!endpoint,
+      EMBEDDINGS_API_KEY: key ? '[REDACTED]' : 'MISSING',
+      EMBEDDINGS_MODEL_NAME: !!embeddingsModel,
     });
     return false;
   }
 
-  const embeddingFunction = new AzureOpenAIEmbeddingFunction(
-    endpoint,
-    key,
-    deployment
-  );
+  const embeddingFunction = new OpenAIEmbeddingFunction({
+    apiBase: endpoint,
+    apiKey: key,
+    modelName: embeddingsModel,
+  });
 
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: CHUNK_SIZE,
@@ -69,13 +69,37 @@ export const embedDocuments = async (
     if (doc.metadata.type === DocumentType.SPREADSHEET) {
       splitted = [doc];
     } else {
-      splitted = await splitter.splitDocuments([doc]);
+      const rawChunks = await splitter.splitDocuments([doc]);
+      // Merge short chunks into the next chunk to avoid tiny fragments
+      const MIN_CHUNK_LENGTH = 200;
+      splitted = [];
+      let carry = '';
+      for (const chunk of rawChunks) {
+        if (carry) {
+          chunk.pageContent = `${carry}\n${chunk.pageContent}`;
+          carry = '';
+        }
+        if (chunk.pageContent.length < MIN_CHUNK_LENGTH && splitted.length === 0) {
+          // Short first chunk — carry forward to merge with next
+          carry = chunk.pageContent;
+        } else {
+          splitted.push(chunk);
+        }
+      }
+      // If carry is left (all chunks were short, or only one short chunk), push it
+      if (carry) {
+        if (splitted.length > 0) {
+          splitted[splitted.length - 1].pageContent += `\n${carry}`;
+        } else {
+          splitted = [new Document({ pageContent: carry, metadata: doc.metadata })];
+        }
+      }
     }
 
     logger.info(
-      `Splitted document ${docIndex + 1} / ${docs.length}; ID: (${
-        doc.metadata.documentId
-      }) of type ${doc.metadata.type}; # of chunks: ${splitted.length}`
+      `Document ${docIndex + 1}/${docs.length} [${doc.metadata.documentId}] ` +
+        `type=${doc.metadata.type}, length=${doc.pageContent.length} chars, ` +
+        `chunks=${splitted.length} [${splitted.map((c, i) => `${i}:${c.pageContent.length}`).join(', ')}]`
     );
 
     splitted.forEach((chunk, chunkIndex) => {
@@ -83,18 +107,22 @@ export const embedDocuments = async (
         `${chunk.metadata.documentId}-${chunk.metadata.type}-chunk${chunkIndex}`
       );
       documents.push(chunk.pageContent);
-      metadatas.push({
-        ...chunk.metadata,
-        embeddingType: 'chunk',
-        chunkIndex,
-      });
+      // Strip non-primitive metadata values (e.g. LangChain's `loc` object)
+      // ChromaDB only accepts string, number, boolean, or null
+      const cleanMeta: Record<string, string | number | boolean | null> = {};
+      for (const [k, v] of Object.entries({ ...chunk.metadata, embeddingType: 'chunk', chunkIndex })) {
+        if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+          cleanMeta[k] = v;
+        }
+      }
+      metadatas.push(cleanMeta);
     });
 
-    if (doc.pageContent.length > summaryLength) {
+    if (splitted.length > 3) {
+      // Document was fragmented into many chunks — summarize to preserve coherence
       logger.info(
         `Document ${docIndex + 1}/${docs.length} requires summarization: ` +
-          `${doc.pageContent.length} chars > ${summaryLength} char limit; ` +
-          `will process ${splitted.length} chunks`
+          `${splitted.length} chunks (>3 threshold)`
       );
       const summaryStartTime = Date.now();
 
@@ -112,7 +140,13 @@ export const embedDocuments = async (
 
         ids.push(`${doc.metadata.documentId}-${doc.metadata.type}-summary`);
         documents.push(documentSummary);
-        metadatas.push({ ...doc.metadata, embeddingType: 'summary' });
+        const summaryMeta: Record<string, string | number | boolean | null> = {};
+        for (const [k, v] of Object.entries({ ...doc.metadata, embeddingType: 'summary' })) {
+          if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+            summaryMeta[k] = v;
+          }
+        }
+        metadatas.push(summaryMeta);
 
         summaries.push(documentSummary);
       } catch (err) {
@@ -123,11 +157,13 @@ export const embedDocuments = async (
         );
       }
     } else {
+      // Few chunks — push each chunk separately to summaries for BoK input
       logger.info(
-        `Document ${docIndex + 1}/${docs.length} under length limit ` +
-          `(${doc.pageContent.length} chars), using full content`
+        `Document ${docIndex + 1}/${docs.length}: ${splitted.length} chunks, using chunks directly`
       );
-      summaries.push(doc.pageContent);
+      for (const chunk of splitted) {
+        summaries.push(chunk.pageContent);
+      }
     }
   }
 
@@ -212,8 +248,20 @@ export const embedDocuments = async (
       logger.info(
         `Batch ${i} of size ${docBatches[i].length} added to collection ${name}`
       );
-    } catch (error) {
-      logger.error(error);
+    } catch (error: any) {
+      logger.error(`Chroma add batch ${i} failed`, {
+        error: {
+          message: error?.message,
+          stack: error?.stack,
+          status: error?.status,
+          statusText: error?.statusText,
+          body: error?.body,
+          cause: error?.cause,
+        },
+        collection: name,
+        batchIndex: i,
+        batchSize: docBatches[i].length,
+      });
       throw error;
     }
   }

@@ -1,7 +1,8 @@
-import { AzureChatOpenAI } from '@langchain/openai';
+import { ChatMistralAI } from '@langchain/mistralai';
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { Document } from '@langchain/core/documents';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 import { wrapSDK } from 'langsmith/wrappers';
 import logger from '../logger';
@@ -21,66 +22,30 @@ const calculateProgressiveLength = (
   return Math.round(targetLength * Math.max(minRatio, progressRatio));
 };
 
-const apiKey = process.env.AZURE_MISTRAL_API_KEY;
-const endpoint = process.env.AZURE_MISTRAL_ENDPOINT;
-const fallbackDeploymentName = process.env.AZURE_MISTRAL_DEPLOYMENT_NAME;
-const mediumDeploymentName =
-  process.env.AZURE_MISTRAL_MEDIUM_DEPLOYMENT_NAME || fallbackDeploymentName;
-const largeDeploymentName =
-  process.env.AZURE_MISTRAL_LARGE_DEPLOYMENT_NAME || fallbackDeploymentName;
-const apiVersion = process.env.AZURE_MISTRAL_API_VERSION;
+const mistralApiKey = process.env.MISTRAL_API_KEY;
+const mistralSmallModelName = process.env.MISTRAL_SMALL_MODEL_NAME;
 
-if (!apiKey) {
-  throw new Error('AZURE_MISTRAL_API_KEY environment variable is not set.');
+if (!mistralApiKey) {
+  throw new Error('MISTRAL_API_KEY environment variable is not set.');
 }
-if (!endpoint) {
-  throw new Error('AZURE_MISTRAL_ENDPOINT environment variable is not set.');
-}
-if (!mediumDeploymentName) {
-  throw new Error(
-    'AZURE_MISTRAL_MEDIUM_DEPLOYMENT_NAME or AZURE_MISTRAL_DEPLOYMENT_NAME environment variable is not set.'
-  );
-}
-if (!largeDeploymentName) {
-  throw new Error(
-    'AZURE_MISTRAL_LARGE_DEPLOYMENT_NAME or AZURE_MISTRAL_DEPLOYMENT_NAME environment variable is not set.'
-  );
-}
-if (!apiVersion) {
-  throw new Error('AZURE_MISTRAL_API_VERSION environment variable is not set.');
+if (!mistralSmallModelName) {
+  throw new Error('MISTRAL_SMALL_MODEL_NAME environment variable is not set.');
 }
 
-logger.debug(`Initializing Azure Mistral AI with endpoint: ${endpoint}`);
-logger.debug(
-  `Medium: ${mediumDeploymentName}, Large: ${largeDeploymentName}, API Version: ${apiVersion}`
-);
-
-export const modelMedium = new AzureChatOpenAI({
-  azureOpenAIApiKey: apiKey,
-  azureOpenAIEndpoint: endpoint,
-  azureOpenAIApiDeploymentName: mediumDeploymentName,
-  azureOpenAIApiVersion: apiVersion,
+export const modelMistralSmall = new ChatMistralAI({
+  apiKey: mistralApiKey,
+  model: mistralSmallModelName,
   maxRetries: 1,
   temperature: 0,
-  maxTokens: 1500,
-  timeout: 60000,
+  maxTokens: 4096,
 });
 
-export const modelLarge = new AzureChatOpenAI({
-  azureOpenAIApiKey: apiKey,
-  azureOpenAIEndpoint: endpoint,
-  azureOpenAIApiDeploymentName: largeDeploymentName,
-  azureOpenAIApiVersion: apiVersion,
-  maxRetries: 1,
-  temperature: 0,
-  maxTokens: 1500,
-  timeout: 60000,
-});
+logger.debug(`Initialized Mistral Small model: ${mistralSmallModelName}`);
 
 export const buildGraph = (
   summarizePrompt: ChatPromptTemplate,
   refinePrompt: ChatPromptTemplate,
-  model: typeof modelMedium = modelMedium
+  model: BaseChatModel = modelMistralSmall
 ) => {
   const summaryChain = summarizePrompt.pipe(model);
   const refineChain = refinePrompt.pipe(model);

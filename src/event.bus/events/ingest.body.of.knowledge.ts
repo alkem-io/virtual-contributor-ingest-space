@@ -8,8 +8,7 @@ export enum BodyOfKnowledgeType {
 }
 
 export enum SummarizationModel {
-  MISTRAL_MEDIUM = 'mistral-medium',
-  MISTRAL_LARGE = 'mistral-large',
+  MISTRAL_SMALL = 'mistral-small',
 }
 
 export class IngestBodyOfKnowledge {
@@ -18,6 +17,6 @@ export class IngestBodyOfKnowledge {
     public readonly type: BodyOfKnowledgeType,
     public readonly purpose: IngestionPurpose,
     public readonly personaId: string,
-    public readonly summarizationModel: SummarizationModel = SummarizationModel.MISTRAL_MEDIUM
+    public readonly summarizationModel: SummarizationModel = SummarizationModel.MISTRAL_SMALL
   ) {}
 }

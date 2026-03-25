@@ -125,7 +125,7 @@ export class Connection {
   async consume(handler: ConsumeCallback) {
     this.channel.consume(
       this.config.incomingQueue,
-      msg => {
+      async msg => {
         {
           if (!msg) {
             return logger.error('Invalid incoming message');
@@ -141,7 +141,7 @@ export class Connection {
               personaId,
               summarizationModel
             );
-            handler(event);
+            await handler(event);
           } catch (error) {
             logger.error(error);
           }
