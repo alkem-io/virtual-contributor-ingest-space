@@ -31,8 +31,8 @@ add a GitHub Actions CI pipeline for lint/format/build/test gates.
 | Principle | Status | Notes |
 |-----------|--------|-------|
 | I. Message-Driven Architecture | PASS | Service triggered by RabbitMQ, publishes results to output queue. No HTTP endpoints. |
-| II. Data Pipeline Integrity | PASS | fetch → chunk → summarise/embed → store pipeline maintained. ChromaDB collection replaced atomically via `getOrCreateCollection` + delete/recreate pattern. |
-| III. Test Coverage (NON-NEGOTIABLE) | PASS | US3 adds Jest test suite with 90%+ coverage. Constitution requires tests for every module. |
+| II. Data Pipeline Integrity | PASS | fetch → chunk → summarise/embed → store pipeline maintained. ChromaDB collection uses delete-then-recreate pattern (not truly atomic — a brief window exists where the collection is absent; acceptable for single-consumer queue). |
+| III. Test Coverage (NON-NEGOTIABLE) | PASS | US3 adds Vitest test suite with 90%+ coverage. Constitution requires tests for every module. |
 | IV. Error Handling & Resilience | PASS | US2 adds structured error handling at every pipeline stage. Failure results published to output queue with error codes. |
 | V. Observability | PASS | US2 adds structured Winston logging with timing metrics, stage context, and error metadata. |
 | VI. Configuration Management | PASS | All AI provider config via env vars, validated at startup with fail-fast. Secrets not committed. |

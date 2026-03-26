@@ -50,14 +50,14 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 ### Tests for User Story 1
 
-- [ ] T006 [P] [US1] Write tests for Mistral model initialization and config validation in test/unit/summarize/graph.test.ts: test `modelMistralSmall` creation, `buildGraph` wiring, `calculateProgressiveLength` at various ratios, missing env var throws
-- [ ] T007 [P] [US1] Write tests for document-level summarization in test/unit/summarize/document.test.ts: test `summarizeDocument` invokes graph with correct prompts, returns summary content, handles chunk arrays of varying sizes
-- [ ] T008 [P] [US1] Write tests for body-of-knowledge summarization in test/unit/summarize/body.of.knowledge.test.ts: test `summariseBodyOfKnowledge` invokes graph, passes recursion limit, returns summary
-- [ ] T009 [P] [US1] Write tests for OpenAI-compatible embedding function in test/unit/azure.embedding.function.test.ts: test `OpenAICompatibleEmbeddingFunction.generate` calls OpenAI SDK, returns vectors, logs debug info, handles API errors
-- [ ] T010 [P] [US1] Write tests for ChromaDB connection in test/unit/db.connect.test.ts: test `dbConnect` creates client with correct host/port/headers, handles missing credentials
-- [ ] T011 [P] [US1] Write tests for embed.documents chunking and embedding pipeline in test/unit/embed.documents.test.ts: test short-chunk merging (<200 chars), summarization threshold (>3 chunks), metadata sanitization (strip non-primitives), progressive summary length, batch insertion to ChromaDB, missing config returns false
-- [ ] T012 [P] [US1] Write tests for document generation in test/unit/generate.document.test.ts: test `generateDocument` produces intro/body/context/references sections, handles missing optional fields, HTML description parsing, fallback on parse error
-- [ ] T013 [P] [US1] Write tests for constants in test/unit/constants.test.ts: test default values and env var overrides for CHUNK_SIZE, CHUNK_OVERLAP, BATCH_SIZE
+- [x] T006 [P] [US1] Write tests for Mistral model initialization and config validation in test/unit/summarize/graph.test.ts: test `modelMistralSmall` creation, `buildGraph` wiring, `calculateProgressiveLength` at various ratios, missing env var throws
+- [x] T007 [P] [US1] Write tests for document-level summarization in test/unit/summarize/document.test.ts: test `summarizeDocument` invokes graph with correct prompts, returns summary content, handles chunk arrays of varying sizes
+- [x] T008 [P] [US1] Write tests for body-of-knowledge summarization in test/unit/summarize/body.of.knowledge.test.ts: test `summariseBodyOfKnowledge` invokes graph, passes recursion limit, returns summary
+- [x] T009 [P] [US1] Write tests for OpenAI-compatible embedding function in test/unit/azure.embedding.function.test.ts: test `OpenAICompatibleEmbeddingFunction.generate` calls OpenAI SDK, returns vectors, logs debug info, handles API errors
+- [x] T010 [P] [US1] Write tests for ChromaDB connection in test/unit/db.connect.test.ts: test `dbConnect` creates client with correct host/port/headers, handles missing credentials
+- [x] T011 [P] [US1] Write tests for embed.documents chunking and embedding pipeline in test/unit/embed.documents.test.ts: test short-chunk merging (<200 chars), summarization threshold (>3 chunks), metadata sanitization (strip non-primitives), progressive summary length, batch insertion to ChromaDB, missing config returns false
+- [x] T012 [P] [US1] Write tests for document generation in test/unit/generate.document.test.ts: test `generateDocument` produces intro/body/context/references sections, handles missing optional fields, HTML description parsing, fallback on parse error
+- [x] T013 [P] [US1] Write tests for constants in test/unit/constants.test.ts: test default values and env var overrides for CHUNK_SIZE, CHUNK_OVERLAP, BATCH_SIZE
 
 **Checkpoint**: All US1 tests pass; migration-specific code paths covered
 
@@ -73,10 +73,10 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 ### Tests for User Story 2
 
-- [ ] T014 [P] [US2] Write tests for ingestion orchestrator in test/unit/embed.body.of.knowledge.test.ts: test `embedBodyOfKnowledge` success path publishes result, test `setResultError` sets error fields and timestamps, test AlkemioClient init failure returns error result, test failed document read returns error result, test failed embedding returns error result with VECTOR_INSERT code, test timing metrics logged
-- [ ] T015 [P] [US2] Write tests for RabbitMQ connection in test/unit/event.bus/connection.test.ts: test Connection class connect/consume/send/disconnect, test message parsing (valid JSON, invalid JSON), test async consumer handler
-- [ ] T016 [P] [US2] Write tests for ingestion event classes in test/unit/event.bus/events/ingest.body.of.knowledge.test.ts: test IngestBodyOfKnowledge constructor with all fields, BodyOfKnowledgeType enum values
-- [ ] T017 [P] [US2] Write tests for ingestion result class in test/unit/event.bus/events/ingest.body.of.knowledge.result.test.ts: test IngestBodyOfKnowledgeResult constructor, ErrorCode enum values, IngestionResult enum values
+- [x] T014 [P] [US2] Write tests for ingestion orchestrator in test/unit/embed.body.of.knowledge.test.ts: test `embedBodyOfKnowledge` success path publishes result, test `setResultError` sets error fields and timestamps, test AlkemioClient init failure returns error result, test failed document read returns error result, test failed embedding returns error result with VECTOR_INSERT code, test timing metrics logged
+- [x] T015 [P] [US2] Write tests for RabbitMQ connection in test/unit/event.bus/connection.test.ts: test Connection class connect/consume/send/disconnect, test message parsing (valid JSON, invalid JSON), test async consumer handler
+- [x] T016 [P] [US2] Write tests for ingestion event classes in test/unit/event.bus/events/ingest.body.of.knowledge.test.ts: test IngestBodyOfKnowledge constructor with all fields, BodyOfKnowledgeType enum values
+- [x] T017 [P] [US2] Write tests for ingestion result class in test/unit/event.bus/events/ingest.body.of.knowledge.result.test.ts: test IngestBodyOfKnowledgeResult constructor, ErrorCode enum values, IngestionResult enum values
 
 **Checkpoint**: All US2 tests pass; error paths and observability covered
 
@@ -90,20 +90,20 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 ### Tests for User Story 3
 
-- [ ] T018 [P] [US3] Write tests for callout base handler in test/unit/callout.handlers/base.test.ts: test `baseHandler` processes messages, handles missing sender profile (optional chaining), formats dates, skips empty messages
-- [ ] T019 [P] [US3] Write tests for callout handler registry in test/unit/callout.handlers/index.test.ts: test `handleCallout` dispatches to correct handler by CalloutContributionType, test Memo type routes to baseHandler, test NONE fallback
-- [ ] T020 [P] [US3] Write tests for link collection handler in test/unit/callout.handlers/link.collection.test.ts: test `linkCollectionHandler` processes link callouts, handles empty collections
-- [ ] T021 [P] [US3] Write tests for document type mappings in test/unit/document.type.test.ts: test DocumentType enum values, test `typesMap` mappings for SpaceLevel and CalloutFramingType, test `mapType` function, test MimeTypeDocumentMap entries
-- [ ] T022 [P] [US3] Write tests for process.callouts in test/unit/process.callouts.test.ts: test callout processing dispatches to handlers, aggregates documents
-- [ ] T023 [P] [US3] Write tests for doc loader in test/unit/loaders/doc.loader.test.ts: test document file loading for PDF, DOCX, ODT mime types, handles load errors
-- [ ] T024 [P] [US3] Write tests for spreadsheet loader in test/unit/loaders/spreadsheet.loader.test.ts: test spreadsheet loading for XLS, XLSX, ODS mime types
-- [ ] T025 [P] [US3] Write tests for loader index in test/unit/loaders/index.test.ts: test loader registry dispatches to correct loader by mime type
-- [ ] T026 [P] [US3] Write tests for AlkemioCliClient in test/unit/graphql.client/AlkemioCliClient.test.ts: test initialise authenticates, test logUser logs display name, test optional chaining on missing profile
-- [ ] T027 [P] [US3] Write tests for index.ts entry point in test/unit/index.test.ts: test main function sets up connection and consumer, test result logging for success vs failure
-- [ ] T028 [P] [US3] Write tests for space data reader in test/unit/data.readers/space.test.ts: test space data fetching via mocked AlkemioCliClient, test document generation from space tree, test error handling on API failure
-- [ ] T029 [P] [US3] Write tests for knowledge base data reader in test/unit/data.readers/knowledge.base.test.ts: test knowledge base fetching, test document aggregation, test error handling
-- [ ] T030 [P] [US3] Write tests for space tree processor in test/unit/data.readers/process.space.tree.test.ts: test recursive subspace traversal, test callout processing at each level, test empty subspace handling
-- [ ] T031 [P] [US3] Write tests for logger in test/unit/logger.test.ts: test `serializeError` extracts message/stack from Error objects, test `getErrorMessage` handles string and Error inputs, test logger transports configured for production vs non-production
+- [x] T018 [P] [US3] Write tests for callout base handler in test/unit/callout.handlers/base.test.ts: test `baseHandler` processes messages, handles missing sender profile (optional chaining), formats dates, skips empty messages
+- [x] T019 [P] [US3] Write tests for callout handler registry in test/unit/callout.handlers/index.test.ts: test `handleCallout` dispatches to correct handler by CalloutContributionType, test Memo type routes to baseHandler, test NONE fallback
+- [x] T020 [P] [US3] Write tests for link collection handler in test/unit/callout.handlers/link.collection.test.ts: test `linkCollectionHandler` processes link callouts, handles empty collections
+- [x] T021 [P] [US3] Write tests for document type mappings in test/unit/document.type.test.ts: test DocumentType enum values, test `typesMap` mappings for SpaceLevel and CalloutFramingType, test `mapType` function, test MimeTypeDocumentMap entries
+- [x] T022 [P] [US3] Write tests for process.callouts in test/unit/process.callouts.test.ts: test callout processing dispatches to handlers, aggregates documents
+- [x] T023 [P] [US3] Write tests for doc loader in test/unit/loaders/doc.loader.test.ts: test document file loading for PDF, DOCX, ODT mime types, handles load errors
+- [x] T024 [P] [US3] Write tests for spreadsheet loader in test/unit/loaders/spreadsheet.loader.test.ts: test spreadsheet loading for XLS, XLSX, ODS mime types
+- [x] T025 [P] [US3] Write tests for loader index in test/unit/loaders/index.test.ts: test loader registry dispatches to correct loader by mime type
+- [x] T026 [P] [US3] Write tests for AlkemioCliClient in test/unit/graphql.client/AlkemioCliClient.test.ts: test initialise authenticates, test logUser logs display name, test optional chaining on missing profile
+- [x] T027 [P] [US3] Write tests for index.ts entry point in test/unit/index.test.ts: test main function sets up connection and consumer, test result logging for success vs failure
+- [x] T028 [P] [US3] Write tests for space data reader in test/unit/data.readers/space.test.ts: test space data fetching via mocked AlkemioCliClient, test document generation from space tree, test error handling on API failure
+- [x] T029 [P] [US3] Write tests for knowledge base data reader in test/unit/data.readers/knowledge.base.test.ts: test knowledge base fetching, test document aggregation, test error handling
+- [x] T030 [P] [US3] Write tests for space tree processor in test/unit/data.readers/process.space.tree.test.ts: test recursive subspace traversal, test callout processing at each level, test empty subspace handling
+- [x] T031 [P] [US3] Write tests for logger in test/unit/logger.test.ts: test `serializeError` extracts message/stack from Error objects, test `getErrorMessage` handles string and Error inputs, test logger transports configured for production vs non-production
 - [x] T032 [US3] Run `npx jest --coverage` and verify all thresholds met (90% lines, 90% statements, 85% functions, 80% branches). If any module is below threshold, add targeted tests for uncovered branches.
 
 **Checkpoint**: `npx jest --coverage` passes with all thresholds met

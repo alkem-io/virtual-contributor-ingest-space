@@ -178,10 +178,11 @@ describe('embedDocuments', () => {
 
   describe('short chunk merging', () => {
     it('should merge short first chunks with next chunk', async () => {
+      const longChunk = 'A much longer chunk that exceeds the minimum length threshold for merging'.repeat(5);
       // Splitter returns a short chunk followed by a normal one
       mockSplitDocuments.mockResolvedValue([
         { pageContent: 'short', metadata: { documentId: 'doc-1', type: DocumentType.KNOWLEDGE } },
-        { pageContent: 'A much longer chunk that exceeds the minimum length threshold for merging'.repeat(5), metadata: { documentId: 'doc-1', type: DocumentType.KNOWLEDGE } },
+        { pageContent: longChunk, metadata: { documentId: 'doc-1', type: DocumentType.KNOWLEDGE } },
       ]);
 
       const result = await embedDocuments(
@@ -193,6 +194,14 @@ describe('embedDocuments', () => {
       expect(result).toBe(true);
       // The short chunk should be merged into the next one
       expect(mockCollection.add).toHaveBeenCalled();
+      const addCall = mockCollection.add.mock.calls[0][0];
+      // The merged document should contain both the short prefix and the long chunk
+      const allDocs: string[] = addCall.documents;
+      const mergedDoc = allDocs.find((d: string) => d.includes('short') && d.includes(longChunk));
+      expect(mergedDoc).toBeDefined();
+      // Metadata should preserve the documentId
+      const correspondingIdx = allDocs.indexOf(mergedDoc!);
+      expect(addCall.metadatas[correspondingIdx].documentId).toBe('doc-1');
     });
 
     it('should handle all short chunks by creating a single document', async () => {
@@ -228,6 +237,15 @@ describe('embedDocuments', () => {
       // But splitter is still called for BoK summary generation
       // The first call should be for BoK summary, not for the spreadsheet itself
       expect(mockCollection.add).toHaveBeenCalled();
+      const addCall = mockCollection.add.mock.calls[0][0];
+      // The spreadsheet content should appear verbatim (unsplit) in the documents
+      const allDocs: string[] = addCall.documents;
+      const spreadsheetEntry = allDocs.find((d: string) => d.includes('col1,col2'));
+      expect(spreadsheetEntry).toBeDefined();
+      // Metadata should mark it as SPREADSHEET type
+      const idx = allDocs.indexOf(spreadsheetEntry!);
+      expect(addCall.metadatas[idx].type).toBe(DocumentType.SPREADSHEET);
+      expect(addCall.metadatas[idx].documentId).toBe('sheet-1');
     });
   });
 

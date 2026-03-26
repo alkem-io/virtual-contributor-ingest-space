@@ -153,6 +153,8 @@ describe('baseHandler', () => {
   });
 
   it('should format date using toLocaleString en-US', async () => {
+    const toLocaleStringSpy = vi.spyOn(Date.prototype, 'toLocaleString').mockReturnValue('6/15/2024, 2:30:00 PM');
+
     const callout = {
       id: 'callout-7',
       framing: {},
@@ -169,9 +171,9 @@ describe('baseHandler', () => {
     };
 
     const result = await baseHandler(callout as any, logger);
-    // The date should be formatted as en-US locale string
-    const dateStr = new Date('2024-06-15T14:30:00Z').toLocaleString('en-US');
-    expect(result[0].pageContent).toContain(dateStr);
+    expect(result[0].pageContent).toContain('6/15/2024, 2:30:00 PM');
+
+    toLocaleStringSpy.mockRestore();
   });
 
   it('should process link contributions', async () => {

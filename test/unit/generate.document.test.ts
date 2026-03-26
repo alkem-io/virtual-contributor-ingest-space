@@ -3,6 +3,7 @@
  * - generateDocument with full entity, missing fields, HTML parsing, fallback
  */
 import { describe, it, expect, vi } from 'vitest';
+import * as nodeHtmlParser from 'node-html-parser';
 
 vi.mock('../../src/generated/graphql', () => ({
   CalloutFramingType: {},
@@ -263,9 +264,11 @@ describe('generateDocument', () => {
     });
 
     it('should fall back to raw description on parse error', () => {
-      // node-html-parser should handle most strings, but if structuredText
-      // somehow throws, the code falls back to raw text.
-      // We test the fallback by providing a plain string
+      // Force node-html-parser's parse to throw so the catch branch is exercised
+      const parseSpy = vi.spyOn(nodeHtmlParser, 'parse').mockImplementationOnce(() => {
+        throw new Error('Simulated parse failure');
+      });
+
       const entity = {
         id: 'html-2',
         type: 'KNOWLEDGE',
@@ -278,7 +281,11 @@ describe('generateDocument', () => {
 
       const result = generateDocument(entity);
 
+      // The raw description should be preserved despite the parse error
       expect(result.pageContent).toContain('Plain text description without HTML');
+      expect(parseSpy).toHaveBeenCalled();
+
+      parseSpy.mockRestore();
     });
   });
 
