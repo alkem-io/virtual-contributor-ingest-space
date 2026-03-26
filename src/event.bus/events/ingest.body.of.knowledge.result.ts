@@ -28,5 +28,5 @@ export class IngestBodyOfKnowledgeResult {
     ).getTime(),
     public result: IngestionResult = IngestionResult.SUCCESS,
     public error?: IngestError
-  ) { }
+  ) {}
 }

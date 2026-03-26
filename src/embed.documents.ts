@@ -79,7 +79,10 @@ export const embedDocuments = async (
           chunk.pageContent = `${carry}\n${chunk.pageContent}`;
           carry = '';
         }
-        if (chunk.pageContent.length < MIN_CHUNK_LENGTH && splitted.length === 0) {
+        if (
+          chunk.pageContent.length < MIN_CHUNK_LENGTH &&
+          splitted.length === 0
+        ) {
           // Short first chunk — carry forward to merge with next
           carry = chunk.pageContent;
         } else {
@@ -91,7 +94,9 @@ export const embedDocuments = async (
         if (splitted.length > 0) {
           splitted[splitted.length - 1].pageContent += `\n${carry}`;
         } else {
-          splitted = [new Document({ pageContent: carry, metadata: doc.metadata })];
+          splitted = [
+            new Document({ pageContent: carry, metadata: doc.metadata }),
+          ];
         }
       }
     }
@@ -99,7 +104,9 @@ export const embedDocuments = async (
     logger.info(
       `Document ${docIndex + 1}/${docs.length} [${doc.metadata.documentId}] ` +
         `type=${doc.metadata.type}, length=${doc.pageContent.length} chars, ` +
-        `chunks=${splitted.length} [${splitted.map((c, i) => `${i}:${c.pageContent.length}`).join(', ')}]`
+        `chunks=${splitted.length} [${splitted
+          .map((c, i) => `${i}:${c.pageContent.length}`)
+          .join(', ')}]`
     );
 
     splitted.forEach((chunk, chunkIndex) => {
@@ -110,8 +117,17 @@ export const embedDocuments = async (
       // Strip non-primitive metadata values (e.g. LangChain's `loc` object)
       // ChromaDB only accepts string, number, boolean, or null
       const cleanMeta: Record<string, string | number | boolean | null> = {};
-      for (const [k, v] of Object.entries({ ...chunk.metadata, embeddingType: 'chunk', chunkIndex })) {
-        if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+      for (const [k, v] of Object.entries({
+        ...chunk.metadata,
+        embeddingType: 'chunk',
+        chunkIndex,
+      })) {
+        if (
+          v === null ||
+          typeof v === 'string' ||
+          typeof v === 'number' ||
+          typeof v === 'boolean'
+        ) {
           cleanMeta[k] = v;
         }
       }
@@ -140,9 +156,18 @@ export const embedDocuments = async (
 
         ids.push(`${doc.metadata.documentId}-${doc.metadata.type}-summary`);
         documents.push(documentSummary);
-        const summaryMeta: Record<string, string | number | boolean | null> = {};
-        for (const [k, v] of Object.entries({ ...doc.metadata, embeddingType: 'summary' })) {
-          if (v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+        const summaryMeta: Record<string, string | number | boolean | null> =
+          {};
+        for (const [k, v] of Object.entries({
+          ...doc.metadata,
+          embeddingType: 'summary',
+        })) {
+          if (
+            v === null ||
+            typeof v === 'string' ||
+            typeof v === 'number' ||
+            typeof v === 'boolean'
+          ) {
             summaryMeta[k] = v;
           }
         }
@@ -159,7 +184,9 @@ export const embedDocuments = async (
     } else {
       // Few chunks — push each chunk separately to summaries for BoK input
       logger.info(
-        `Document ${docIndex + 1}/${docs.length}: ${splitted.length} chunks, using chunks directly`
+        `Document ${docIndex + 1}/${docs.length}: ${
+          splitted.length
+        } chunks, using chunks directly`
       );
       for (const chunk of splitted) {
         summaries.push(chunk.pageContent);
@@ -167,7 +194,10 @@ export const embedDocuments = async (
     }
   }
 
-  const totalInputChars = docs.reduce((sum, doc) => sum + doc.pageContent.length, 0);
+  const totalInputChars = docs.reduce(
+    (sum, doc) => sum + doc.pageContent.length,
+    0
+  );
   const totalChunkChars = documents.reduce((sum, doc) => sum + doc.length, 0);
   logger.info(
     `Character processing complete: ${totalInputChars} input chars processed into ${documents.length} chunks (${totalChunkChars} total chunk chars)`

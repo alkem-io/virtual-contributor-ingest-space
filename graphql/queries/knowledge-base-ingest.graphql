@@ -1,4 +1,4 @@
-query knowledgeBaseIngest($knowledgeBaseID: UUID!){
+query knowledgeBaseIngest($knowledgeBaseID: UUID!) {
   lookup {
     knowledgeBase(ID: $knowledgeBaseID) {
       id

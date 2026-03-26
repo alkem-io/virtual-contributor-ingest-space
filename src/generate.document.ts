@@ -1,4 +1,4 @@
-import { Reference, Visual } from './generated/graphql';
+import { Reference } from './generated/graphql';
 import { DocumentType, mapType } from './document.type';
 import { parse } from 'node-html-parser';
 
@@ -22,7 +22,6 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
     tagline,
     displayName,
     location,
-    visuals,
     type: profileType,
     who,
     why,
@@ -55,7 +54,9 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
   if (why) contextParts.push(`Why: ${why}`);
   if (who) contextParts.push(`Who: ${who}`);
   if (postalCode || city || country)
-    contextParts.push(`Location: ${[postalCode, city, country].filter(Boolean).join(', ')}`);
+    contextParts.push(
+      `Location: ${[postalCode, city, country].filter(Boolean).join(', ')}`
+    );
 
   // Section 4: References — only those with descriptions (skip empty ones)
   const refParts = (references || [])
@@ -66,8 +67,10 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
   // Context and references separated by double newline as natural split points.
   let pageContent = intro;
   if (body) pageContent = `${pageContent} — ${body}`;
-  if (contextParts.length) pageContent = `${pageContent}\n\n${contextParts.join('\n')}`;
-  if (refParts.length) pageContent = `${pageContent}\n\nReferences:\n${refParts.join('\n')}`;
+  if (contextParts.length)
+    pageContent = `${pageContent}\n\n${contextParts.join('\n')}`;
+  if (refParts.length)
+    pageContent = `${pageContent}\n\nReferences:\n${refParts.join('\n')}`;
 
   return {
     documentId,

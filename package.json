@@ -1,6 +1,6 @@
 {
   "name": "@alkemio/ingest-alkemio-data",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "",
   "author": "Alkemio Foundation",
   "private": true,
@@ -13,11 +13,13 @@
     "clean": "rimraf ./dist",
     "format": "prettier --write \"src/**/*.ts\" \"graphql/**/*.graphql\"",
     "codegen": "graphql-codegen -v --config codegen.yml",
-    "lint": "tsc --noEmit && eslint src/**/*.ts{,x}",
-    "lint:fix": "tsc --noEmit && eslint src/**/*.ts{,x} --fix",
+    "lint": "tsc --noEmit && eslint \"src/**/*.ts\"",
+    "lint:fix": "tsc --noEmit && eslint \"src/**/*.ts\" --fix",
     "prepublishOnly": "npm run build",
     "start:dev": "dotenvx run -f .env.development -- nodemon",
-    "start": "node --trace-deprecation ./dist/index.js"
+    "start": "node --trace-deprecation ./dist/index.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^0.35.1",
@@ -29,6 +31,7 @@
     "@graphql-codegen/typescript-resolvers": "2.7.3",
     "@types/amqplib": "^0.10.5",
     "@types/graphql-upload": "^8.0.11",
+    "@types/jest": "^30.0.0",
     "@types/node": "^14.14.10",
     "@types/semver": "^7.3.4",
     "@types/supertest": "^2.0.8",
@@ -38,10 +41,12 @@
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.1.4",
+    "jest": "^30.3.0",
     "nodemon": "^3.1.0",
     "prettier": "^2.2.1",
     "rimraf": "^3.0.2",
     "supertest": "^4.0.2",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3"

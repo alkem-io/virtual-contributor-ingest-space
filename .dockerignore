@@ -18,6 +18,8 @@ dist
 
 # Tests (not needed for image build)
 test
+coverage
+jest.config.ts
 
 # Docs
 README.md

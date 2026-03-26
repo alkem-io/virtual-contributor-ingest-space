@@ -18,7 +18,9 @@ import { embedBodyOfKnowledge } from './embed.body.of.knowledge';
         { errorCode: resultEvent.error.code }
       );
     } else {
-      logger.info(`Ingest ${resultEvent.result} for: ${event.bodyOfKnowledgeId}`);
+      logger.info(
+        `Ingest ${resultEvent.result} for: ${event.bodyOfKnowledgeId}`
+      );
     }
   });
 })();

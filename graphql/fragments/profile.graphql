@@ -24,4 +24,3 @@ fragment ProfileFields on Profile {
     name
   }
 }
-

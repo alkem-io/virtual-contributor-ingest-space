@@ -20,7 +20,10 @@ export const setResultError = (
   message: string,
   code?: ErrorCode
 ) => {
-  logger.error(`setResultError: ${message}`, { errorCode: code, bodyOfKnowledgeId: result.bodyOfKnowledgeId });
+  logger.error(`setResultError: ${message}`, {
+    errorCode: code,
+    bodyOfKnowledgeId: result.bodyOfKnowledgeId,
+  });
   result.error = { code, message };
   result.result = IngestionResult.FAILURE;
   // this shenanigan is here to ensure the Timestamp is in UTC timezone
@@ -48,14 +51,19 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
   logger.info(
     `Ingestion started for ${event.type}: ${event.bodyOfKnowledgeId}`
   );
-  logger.info(`Using summarization model: mistral-small`);
+  logger.info('Using summarization model: mistral-small');
   const alkemioClient = new AlkemioCliClient();
 
   // make sure the service user has valid credentials
   try {
     await alkemioClient.initialise();
   } catch (error) {
-    logger.error('AlkemioClient initialisation failed', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
+    logger.error('AlkemioClient initialisation failed', {
+      error:
+        error instanceof Error
+          ? { message: error.message, stack: error.stack }
+          : error,
+    });
     return setResultError(resultEvent, 'AlkemioClient can not be initialised.');
   }
 
@@ -71,11 +79,18 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
       result = await embedKnowledgeBase(event, alkemioClient);
     }
   } catch (error) {
-    logger.error('Failed to read body of knowledge', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
+    logger.error('Failed to read body of knowledge', {
+      error:
+        error instanceof Error
+          ? { message: error.message, stack: error.stack }
+          : error,
+    });
     return setResultError(resultEvent, getErrorMessage(error));
   }
   if (!result.documents || !result.bodyOfKnowledge) {
-    logger.error('Body Of Knowledge could not be processed: no documents or bodyOfKnowledge returned');
+    logger.error(
+      'Body Of Knowledge could not be processed: no documents or bodyOfKnowledge returned'
+    );
     return setResultError(
       resultEvent,
       'Body Of Knowledge could not be processed.'
@@ -91,10 +106,21 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
       model
     );
   } catch (error) {
-    logger.error('Failed to insert embeddings', { error: error instanceof Error ? { message: error.message, stack: error.stack, cause: (error as any).cause } : error });
+    logger.error('Failed to insert embeddings', {
+      error:
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack,
+              cause: (error as any).cause,
+            }
+          : error,
+    });
     return setResultError(
       resultEvent,
-      `Failed to insert embeddings: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to insert embeddings: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
       ErrorCode.VECTOR_INSERT
     );
   }

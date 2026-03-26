@@ -25,7 +25,11 @@ export class OpenAICompatibleEmbeddingFunction implements EmbeddingFunction {
       return embeddings;
     } catch (error: any) {
       logger.error('Embedding generation failed', {
-        error: { message: error?.message, stack: error?.stack, status: error?.status },
+        error: {
+          message: error?.message,
+          stack: error?.stack,
+          status: error?.status,
+        },
         textCount: texts.length,
         firstTextLength: texts[0]?.length,
       });

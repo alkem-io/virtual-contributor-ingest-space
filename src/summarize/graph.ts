@@ -4,7 +4,6 @@ import { Document } from '@langchain/core/documents';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
-import { wrapSDK } from 'langsmith/wrappers';
 import logger from '../logger';
 
 export const summaryLength = parseInt(
@@ -89,7 +88,9 @@ export const buildGraph = (
       ((input.index + 1) / input.chunks.length) * 100
     );
     logger.info(
-      `Refining summary: chunk ${input.index + 1} of ${input.chunks.length} (${progressPercent}%, max length: ${maxSummaryLength})`
+      `Refining summary: chunk ${input.index + 1} of ${
+        input.chunks.length
+      } (${progressPercent}%, max length: ${maxSummaryLength})`
     );
 
     const context = input.chunks[input.index].pageContent;
