@@ -268,8 +268,8 @@ tests, and that it blocks merging on failure.
   and the migration from v1.x requires only client-side code changes.
 - The CI pipeline will use GitHub Actions, as the repository is
   hosted on GitHub.
-- The test framework will be Jest, as it is the standard for
-  TypeScript projects and supports coverage reporting natively.
+- The test framework is Vitest, chosen for its native ESM support,
+  fast execution, and built-in coverage reporting.
 - External service calls (Mistral API, Scaleway, ChromaDB, Alkemio
   GraphQL) will be mocked in unit tests; integration tests against
   real services are out of scope for this feature.

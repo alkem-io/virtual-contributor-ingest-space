@@ -120,9 +120,7 @@ describe('processSpaceTree', () => {
   });
 
   it('should handle deeply nested subspaces', async () => {
-    let callCount = 0;
     mockGenerateDocument.mockImplementation((space: any) => {
-      callCount++;
       return {
         documentId: space.id,
         source: `http://${space.id}.test`,
@@ -210,9 +208,7 @@ describe('processSpaceTree', () => {
   });
 
   it('should process multiple root-level spaces', async () => {
-    let callCount = 0;
     mockGenerateDocument.mockImplementation((space: any) => {
-      callCount++;
       return {
         documentId: space.id,
         source: `http://${space.id}.test`,

@@ -69,6 +69,10 @@ Refined overview:`
 ]);
 
 export const summariseBodyOfKnowledge = async (chunks: Document[]) => {
+  if (chunks.length === 0) {
+    logger.warn('Skipping body of knowledge summarization: received 0 chunks');
+    return '';
+  }
   logger.info(
     `Starting body of knowledge summarization with ${chunks.length} chunks`
   );

@@ -132,7 +132,7 @@ describe('handleCallout', () => {
       },
     };
 
-    const result = await handleCallout(callout as any, logger, null);
+    await handleCallout(callout as any, logger, null);
 
     expect(mockLinkCollectionHandler).toHaveBeenCalled();
     expect(mockBaseHandler).not.toHaveBeenCalled();

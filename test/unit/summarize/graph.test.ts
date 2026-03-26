@@ -89,49 +89,107 @@ describe('summarize/graph', () => {
     process.env = ORIGINAL_ENV;
   });
 
-  describe('calculateProgressiveLength', () => {
-    // calculateProgressiveLength is not exported, but we can test it indirectly
-    // by understanding its formula: Math.round(targetLength * Math.max(0.4, currentChunk / totalChunks))
-    // We test the logic via a local reimplementation since it's a private function.
+  describe('calculateProgressiveLength (via graph nodes)', () => {
+    // Validate calculateProgressiveLength indirectly by checking the maxSummaryLength
+    // value passed to the chain's invoke call during initialSummary and refineSummary.
 
-    const calculateProgressiveLength = (
-      currentChunk: number,
-      totalChunks: number,
-      targetLength: number
-    ): number => {
-      const minRatio = 0.4;
-      const progressRatio = currentChunk / totalChunks;
-      return Math.round(targetLength * Math.max(minRatio, progressRatio));
-    };
+    let initialSummaryFn: Function;
+    let refineSummaryFn: Function;
+    let mockChainInvoke: ReturnType<typeof vi.fn>;
 
-    it('should return minRatio * targetLength when ratio is 0/10', () => {
-      const result = calculateProgressiveLength(0, 10, 10000);
-      // ratio = 0/10 = 0, max(0.4, 0) = 0.4 => 10000 * 0.4 = 4000
-      expect(result).toBe(4000);
+    beforeEach(async () => {
+      vi.clearAllMocks();
+      mockChainInvoke = vi.fn().mockResolvedValue({ content: 'test summary' });
+
+      mockAddNode1.mockImplementation((_name: string, fn: Function) => {
+        initialSummaryFn = fn;
+        return { addNode: mockAddNode2 };
+      });
+      mockAddNode2.mockImplementation((_name: string, fn: Function) => {
+        refineSummaryFn = fn;
+        return { addEdge: mockAddEdge };
+      });
+
+      const { buildGraph } = await import('../../../src/summarize/graph');
+      const mockPrompt = {
+        pipe: vi.fn().mockReturnValue({
+          invoke: mockChainInvoke,
+        }),
+      };
+      buildGraph(mockPrompt as any, mockPrompt as any);
     });
 
-    it('should return half targetLength when ratio is 5/10', () => {
-      const result = calculateProgressiveLength(5, 10, 10000);
-      // ratio = 5/10 = 0.5, max(0.4, 0.5) = 0.5 => 10000 * 0.5 = 5000
-      expect(result).toBe(5000);
+    it('initialSummary should pass progressive maxSummaryLength to chain invoke', async () => {
+      // initialSummary uses currentChunk=1, totalChunks=chunks.length
+      // With 2 chunks: ratio = 1/2 = 0.5, max(0.4, 0.5) = 0.5 => summaryLength * 0.5
+      const { summaryLength } = await import('../../../src/summarize/graph');
+      const input = {
+        chunks: [{ pageContent: 'chunk0' }, { pageContent: 'chunk1' }],
+        index: 0,
+        summary: '',
+      };
+
+      await initialSummaryFn(input);
+
+      const expectedLength = Math.round(summaryLength * Math.max(0.4, 1 / 2));
+      expect(mockChainInvoke).toHaveBeenCalledWith(
+        expect.objectContaining({ maxSummaryLength: expectedLength })
+      );
     });
 
-    it('should return full targetLength when ratio is 10/10', () => {
-      const result = calculateProgressiveLength(10, 10, 10000);
-      // ratio = 10/10 = 1.0, max(0.4, 1.0) = 1.0 => 10000 * 1.0 = 10000
-      expect(result).toBe(10000);
+    it('refineSummary should pass progressive maxSummaryLength based on index', async () => {
+      // refineSummary uses currentChunk=index+1, totalChunks=chunks.length
+      // With 10 chunks at index 6: ratio = 7/10 = 0.7 => summaryLength * 0.7
+      const { summaryLength } = await import('../../../src/summarize/graph');
+      const chunks = Array.from({ length: 10 }, (_, i) => ({ pageContent: `chunk ${i}` }));
+      const input = {
+        chunks,
+        index: 6,
+        summary: 'existing summary',
+      };
+
+      await refineSummaryFn(input);
+
+      const expectedLength = Math.round(summaryLength * Math.max(0.4, 7 / 10));
+      expect(mockChainInvoke).toHaveBeenCalledWith(
+        expect.objectContaining({ maxSummaryLength: expectedLength })
+      );
     });
 
-    it('should use minRatio when progress ratio is below 0.4', () => {
-      const result = calculateProgressiveLength(1, 10, 10000);
-      // ratio = 1/10 = 0.1, max(0.4, 0.1) = 0.4 => 10000 * 0.4 = 4000
-      expect(result).toBe(4000);
+    it('should clamp to minRatio when progress is below 0.4', async () => {
+      // initialSummary with 10 chunks: ratio = 1/10 = 0.1, clamped to 0.4
+      const { summaryLength } = await import('../../../src/summarize/graph');
+      const chunks = Array.from({ length: 10 }, (_, i) => ({ pageContent: `chunk ${i}` }));
+      const input = {
+        chunks,
+        index: 0,
+        summary: '',
+      };
+
+      await initialSummaryFn(input);
+
+      const expectedLength = Math.round(summaryLength * 0.4);
+      expect(mockChainInvoke).toHaveBeenCalledWith(
+        expect.objectContaining({ maxSummaryLength: expectedLength })
+      );
     });
 
-    it('should use progress ratio when above 0.4', () => {
-      const result = calculateProgressiveLength(7, 10, 10000);
-      // ratio = 7/10 = 0.7, max(0.4, 0.7) = 0.7 => 10000 * 0.7 = 7000
-      expect(result).toBe(7000);
+    it('should use full length at final chunk', async () => {
+      // refineSummary at last chunk: index=9, 10 chunks => ratio = 10/10 = 1.0
+      const { summaryLength } = await import('../../../src/summarize/graph');
+      const chunks = Array.from({ length: 10 }, (_, i) => ({ pageContent: `chunk ${i}` }));
+      const input = {
+        chunks,
+        index: 9,
+        summary: 'existing summary',
+      };
+
+      await refineSummaryFn(input);
+
+      const expectedLength = Math.round(summaryLength * 1.0);
+      expect(mockChainInvoke).toHaveBeenCalledWith(
+        expect.objectContaining({ maxSummaryLength: expectedLength })
+      );
     });
   });
 
@@ -168,18 +226,6 @@ describe('summarize/graph', () => {
       expect(mockCompile).toHaveBeenCalled();
     });
 
-    it('should use internal model', async () => {
-      const { buildGraph } = await import('../../../src/summarize/graph');
-
-      const mockPrompt = {
-        pipe: vi.fn().mockReturnValue({
-          invoke: vi.fn().mockResolvedValue({ content: 'test' }),
-        }),
-      };
-
-      const graph = buildGraph(mockPrompt as any, mockPrompt as any);
-      expect(graph).toBeDefined();
-    });
   });
 
   describe('summaryLength', () => {

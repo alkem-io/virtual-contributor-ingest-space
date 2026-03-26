@@ -52,7 +52,7 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 - [x] T006 [P] [US1] Write tests for Mistral model initialization and config validation in test/unit/summarize/graph.test.ts: test `modelMistralSmall` creation, `buildGraph` wiring, `calculateProgressiveLength` at various ratios, missing env var throws
 - [x] T007 [P] [US1] Write tests for document-level summarization in test/unit/summarize/document.test.ts: test `summarizeDocument` invokes graph with correct prompts, returns summary content, handles chunk arrays of varying sizes
-- [x] T008 [P] [US1] Write tests for body-of-knowledge summarization in test/unit/summarize/body.of.knowledge.test.ts: test `summariseBodyOfKnowledge` invokes graph, passes recursion limit, returns summary
+- [x] T008 [P] [US1] Write tests for body-of-knowledge summarization in test/unit/summarize/body.of.knowledge.test.ts: test `summarizeBodyOfKnowledge` invokes graph, passes recursion limit, returns summary
 - [x] T009 [P] [US1] Write tests for OpenAI-compatible embedding function in test/unit/azure.embedding.function.test.ts: test `OpenAICompatibleEmbeddingFunction.generate` calls OpenAI SDK, returns vectors, logs debug info, handles API errors
 - [x] T010 [P] [US1] Write tests for ChromaDB connection in test/unit/db.connect.test.ts: test `dbConnect` creates client with correct host/port/headers, handles missing credentials
 - [x] T011 [P] [US1] Write tests for embed.documents chunking and embedding pipeline in test/unit/embed.documents.test.ts: test short-chunk merging (<200 chars), summarization threshold (>3 chunks), metadata sanitization (strip non-primitives), progressive summary length, batch insertion to ChromaDB, missing config returns false
@@ -116,7 +116,7 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 **Independent Test**: Read CLAUDE.md and verify it matches current project structure, commands, and conventions.
 
-- [x] T033 [US4] Write CLAUDE.md at repository root with sections: project description (Alkemio space ingestion service), architecture (RabbitMQ → fetch → chunk → summarise → embed → ChromaDB pipeline), key commands (build, lint, lint:fix, format, test, test:coverage, codegen, start:dev, start), project structure (src/ directories and their purpose), coding conventions (single quotes, trailing comma es5, 2-space indent, Winston structured logging, env vars for config), testing conventions (Jest + ts-jest, mocks in test/helpers/mocks.ts, 90% coverage threshold, exclude generated/), environment setup (list all env vars from .env.default with descriptions)
+- [x] T033 [US4] Write CLAUDE.md at repository root with sections: project description (Alkemio space ingestion service), architecture (RabbitMQ → fetch → chunk → summarize → embed → ChromaDB pipeline), key commands (build, lint, lint:fix, format, test, test:coverage, codegen, start:dev, start), project structure (src/ directories and their purpose), coding conventions (single quotes, trailing comma es5, 2-space indent, Winston structured logging, env vars for config), testing conventions (Jest + ts-jest, mocks in test/helpers/mocks.ts, 90% coverage threshold, exclude generated/), environment setup (list all env vars from .env.default with descriptions)
 
 **Checkpoint**: CLAUDE.md exists and is accurate
 

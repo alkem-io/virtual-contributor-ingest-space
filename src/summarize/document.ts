@@ -68,6 +68,10 @@ Refined summary:`
 ]);
 
 export const summarizeDocument = async (chunks: Document[]) => {
+  if (chunks.length === 0) {
+    logger.warn('Skipping document summarization: received 0 chunks');
+    return '';
+  }
   logger.info(`Starting document summarization with ${chunks.length} chunks`);
   const graph = buildGraph(summarizePrompt, refinePrompt);
   const final = await graph.invoke(
