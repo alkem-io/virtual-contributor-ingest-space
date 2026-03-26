@@ -2,18 +2,19 @@
  * Shared mock factories for unit tests.
  * All external dependencies are mocked here to avoid duplication.
  */
+import { vi } from 'vitest';
 
 // --- ChromaDB ---
 export const mockCollection = {
-  add: jest.fn().mockResolvedValue(undefined),
-  delete: jest.fn().mockResolvedValue(undefined),
-  get: jest.fn().mockResolvedValue({ ids: [], documents: [], metadatas: [] }),
-  count: jest.fn().mockResolvedValue(0),
+  add: vi.fn().mockResolvedValue(undefined),
+  delete: vi.fn().mockResolvedValue(undefined),
+  get: vi.fn().mockResolvedValue({ ids: [], documents: [], metadatas: [] }),
+  count: vi.fn().mockResolvedValue(0),
 };
 
 export const mockChromaClient = {
-  getOrCreateCollection: jest.fn().mockResolvedValue(mockCollection),
-  deleteCollection: jest.fn().mockResolvedValue(undefined),
+  getOrCreateCollection: vi.fn().mockResolvedValue(mockCollection),
+  deleteCollection: vi.fn().mockResolvedValue(undefined),
 };
 
 export function createMockChromaClient() {
@@ -22,33 +23,33 @@ export function createMockChromaClient() {
 
 // --- amqplib (RabbitMQ) ---
 export const mockChannel = {
-  assertQueue: jest.fn().mockResolvedValue({ queue: 'test-queue' }),
-  assertExchange: jest.fn().mockResolvedValue({}),
-  bindQueue: jest.fn().mockResolvedValue({}),
-  consume: jest.fn().mockResolvedValue({ consumerTag: 'test-tag' }),
-  sendToQueue: jest.fn().mockReturnValue(true),
-  ack: jest.fn(),
-  nack: jest.fn(),
-  prefetch: jest.fn(),
-  close: jest.fn().mockResolvedValue(undefined),
+  assertQueue: vi.fn().mockResolvedValue({ queue: 'test-queue' }),
+  assertExchange: vi.fn().mockResolvedValue({}),
+  bindQueue: vi.fn().mockResolvedValue({}),
+  consume: vi.fn().mockResolvedValue({ consumerTag: 'test-tag' }),
+  sendToQueue: vi.fn().mockReturnValue(true),
+  ack: vi.fn(),
+  nack: vi.fn(),
+  prefetch: vi.fn(),
+  close: vi.fn().mockResolvedValue(undefined),
 };
 
 export const mockAmqpConnection = {
-  createChannel: jest.fn().mockResolvedValue(mockChannel),
-  close: jest.fn().mockResolvedValue(undefined),
-  on: jest.fn(),
+  createChannel: vi.fn().mockResolvedValue(mockChannel),
+  close: vi.fn().mockResolvedValue(undefined),
+  on: vi.fn(),
 };
 
 export function createMockAmqplib() {
   return {
-    connect: jest.fn().mockResolvedValue(mockAmqpConnection),
+    connect: vi.fn().mockResolvedValue(mockAmqpConnection),
   };
 }
 
 // --- ChatMistralAI (summarization) ---
 export const mockChatModel = {
-  invoke: jest.fn().mockResolvedValue({ content: 'Mock summary content' }),
-  pipe: jest.fn().mockReturnThis(),
+  invoke: vi.fn().mockResolvedValue({ content: 'Mock summary content' }),
+  pipe: vi.fn().mockReturnThis(),
 };
 
 export function createMockChatMistralAI() {
@@ -58,7 +59,7 @@ export function createMockChatMistralAI() {
 // --- OpenAI embeddings (Scaleway) ---
 export const mockOpenAIClient = {
   embeddings: {
-    create: jest.fn().mockResolvedValue({
+    create: vi.fn().mockResolvedValue({
       data: [
         { embedding: [0.1, 0.2, 0.3], index: 0 },
       ],
@@ -72,14 +73,14 @@ export function createMockOpenAI() {
 
 // --- AlkemioCliClient ---
 export const mockAlkemioClient = {
-  initialise: jest.fn().mockResolvedValue(undefined),
-  logUser: jest.fn().mockResolvedValue(undefined),
-  validateConnection: jest.fn().mockResolvedValue(true),
-  ingestSpace: jest.fn().mockResolvedValue({ data: {} }),
-  ingestKnowledgeBase: jest.fn().mockResolvedValue({ data: {} }),
-  document: jest.fn().mockResolvedValue({ data: {} }),
+  initialise: vi.fn().mockResolvedValue(undefined),
+  logUser: vi.fn().mockResolvedValue(undefined),
+  validateConnection: vi.fn().mockResolvedValue(true),
+  ingestSpace: vi.fn().mockResolvedValue({ data: {} }),
+  ingestKnowledgeBase: vi.fn().mockResolvedValue({ data: {} }),
+  document: vi.fn().mockResolvedValue({ data: {} }),
   sdkClient: {
-    me: jest.fn().mockResolvedValue({
+    me: vi.fn().mockResolvedValue({
       data: { me: { user: { profile: { displayName: 'Test User' } } } },
     }),
   },
@@ -96,10 +97,10 @@ export function createMockAlkemioClient() {
 // --- Winston logger ---
 export function createMockLogger() {
   return {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
     defaultMeta: {} as Record<string, unknown>,
   };
 }

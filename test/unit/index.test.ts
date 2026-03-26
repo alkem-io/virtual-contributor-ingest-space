@@ -1,42 +1,62 @@
-const mockConsume = jest.fn();
-const mockSend = jest.fn();
-const mockConnectionGet = jest.fn().mockResolvedValue({
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const mockConsume = vi.fn();
+const mockSend = vi.fn();
+const mockConnectionGet = vi.fn().mockResolvedValue({
   consume: mockConsume,
   send: mockSend,
 });
 
-jest.mock('../../src/event.bus/connection', () => ({
+vi.mock('../../src/event.bus/connection', () => ({
   Connection: {
     get: mockConnectionGet,
   },
 }));
 
-const mockEmbedBodyOfKnowledge = jest.fn();
-jest.mock('../../src/embed.body.of.knowledge', () => ({
+const mockEmbedBodyOfKnowledge = vi.fn();
+vi.mock('../../src/embed.body.of.knowledge', () => ({
   embedBodyOfKnowledge: mockEmbedBodyOfKnowledge,
 }));
 
-jest.mock('../../src/logger', () => ({
+vi.mock('../../src/logger', () => ({
   __esModule: true,
   default: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
     defaultMeta: {},
   },
 }));
 
 describe('index (main entry)', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should set up connection and register consumer', async () => {
     // Require the module to trigger the IIFE
     // We need to isolate modules to re-run the IIFE each time
-    jest.isolateModules(() => {
-      require('../../src/index');
-    });
+    vi.resetModules();
+    // Re-setup mocks after resetModules
+    vi.doMock('../../src/event.bus/connection', () => ({
+      Connection: {
+        get: mockConnectionGet,
+      },
+    }));
+    vi.doMock('../../src/embed.body.of.knowledge', () => ({
+      embedBodyOfKnowledge: mockEmbedBodyOfKnowledge,
+    }));
+    vi.doMock('../../src/logger', () => ({
+      __esModule: true,
+      default: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        defaultMeta: {},
+      },
+    }));
+
+    await import('../../src/index');
 
     // Allow the async IIFE to settle
     await new Promise(resolve => setImmediate(resolve));
@@ -46,15 +66,31 @@ describe('index (main entry)', () => {
   });
 
   it('should log readiness message', async () => {
-    const logger = require('../../src/logger').default;
+    vi.resetModules();
+    vi.doMock('../../src/event.bus/connection', () => ({
+      Connection: {
+        get: mockConnectionGet,
+      },
+    }));
+    vi.doMock('../../src/embed.body.of.knowledge', () => ({
+      embedBodyOfKnowledge: mockEmbedBodyOfKnowledge,
+    }));
+    const mockLoggerModule = {
+      __esModule: true,
+      default: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        defaultMeta: {},
+      },
+    };
+    vi.doMock('../../src/logger', () => mockLoggerModule);
 
-    jest.isolateModules(() => {
-      require('../../src/index');
-    });
+    await import('../../src/index');
 
     await new Promise(resolve => setImmediate(resolve));
 
-    expect(logger.info).toHaveBeenCalledWith(
+    expect(mockLoggerModule.default.info).toHaveBeenCalledWith(
       expect.stringContaining('Waiting for RPC messages')
     );
   });
@@ -63,14 +99,31 @@ describe('index (main entry)', () => {
     let consumeCallback: Function;
 
     beforeEach(async () => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       mockConsume.mockImplementation((cb: Function) => {
         consumeCallback = cb;
       });
 
-      jest.isolateModules(() => {
-        require('../../src/index');
-      });
+      vi.resetModules();
+      vi.doMock('../../src/event.bus/connection', () => ({
+        Connection: {
+          get: mockConnectionGet,
+        },
+      }));
+      vi.doMock('../../src/embed.body.of.knowledge', () => ({
+        embedBodyOfKnowledge: mockEmbedBodyOfKnowledge,
+      }));
+      vi.doMock('../../src/logger', () => ({
+        __esModule: true,
+        default: {
+          info: vi.fn(),
+          error: vi.fn(),
+          warn: vi.fn(),
+          defaultMeta: {},
+        },
+      }));
+
+      await import('../../src/index');
 
       await new Promise(resolve => setImmediate(resolve));
     });
@@ -87,7 +140,8 @@ describe('index (main entry)', () => {
     });
 
     it('should log success when resultEvent has no error', async () => {
-      const logger = require('../../src/logger').default;
+      const loggerMod = await import('../../src/logger');
+      const logger = loggerMod.default;
       const mockEvent = { bodyOfKnowledgeId: 'bok-456' };
       const mockResult = { result: 'success', bodyOfKnowledgeId: 'bok-456' };
       mockEmbedBodyOfKnowledge.mockResolvedValue(mockResult);
@@ -100,7 +154,8 @@ describe('index (main entry)', () => {
     });
 
     it('should log error when resultEvent has an error', async () => {
-      const logger = require('../../src/logger').default;
+      const loggerMod = await import('../../src/logger');
+      const logger = loggerMod.default;
       const mockEvent = { bodyOfKnowledgeId: 'bok-789' };
       const mockResult = {
         result: 'failure',

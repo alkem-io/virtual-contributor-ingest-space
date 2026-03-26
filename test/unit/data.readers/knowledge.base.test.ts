@@ -1,11 +1,12 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Document } from '@langchain/core/documents';
 
-jest.mock('../../../src/generate.document', () => ({
-  generateDocument: jest.fn(),
+vi.mock('../../../src/generate.document', () => ({
+  generateDocument: vi.fn(),
 }));
 
-jest.mock('../../../src/process.callouts', () => ({
-  processCallouts: jest.fn(),
+vi.mock('../../../src/process.callouts', () => ({
+  processCallouts: vi.fn(),
 }));
 
 import { embedKnowledgeBase } from '../../../src/data.readers/knowledge.base';
@@ -18,8 +19,8 @@ import {
 } from '../../../src/event.bus/events/ingest.body.of.knowledge';
 import { DocumentType } from '../../../src/document.type';
 
-const mockGenerateDocument = generateDocument as jest.Mock;
-const mockProcessCallouts = processCallouts as jest.Mock;
+const mockGenerateDocument = generateDocument as ReturnType<typeof vi.fn>;
+const mockProcessCallouts = processCallouts as ReturnType<typeof vi.fn>;
 
 describe('embedKnowledgeBase', () => {
   const mockKB = {
@@ -31,11 +32,11 @@ describe('embedKnowledgeBase', () => {
   };
 
   const mockAlkemioClient = {
-    ingestKnowledgeBase: jest.fn().mockResolvedValue(mockKB),
+    ingestKnowledgeBase: vi.fn().mockResolvedValue(mockKB),
   } as any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockAlkemioClient.ingestKnowledgeBase.mockResolvedValue(mockKB);
     mockGenerateDocument.mockReturnValue({
       documentId: 'kb-1',

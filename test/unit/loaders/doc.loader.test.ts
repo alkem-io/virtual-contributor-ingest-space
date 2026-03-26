@@ -1,21 +1,29 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Document } from '@langchain/core/documents';
 
-jest.mock('fs', () => ({
-  readFileSync: jest.fn(),
+const { mockParseOfficeAsync } = vi.hoisted(() => ({
+  mockParseOfficeAsync: vi.fn(),
 }));
 
-const mockParseOfficeAsync = jest.fn();
-jest.mock('officeparser', () => ({
+vi.mock('node:fs', () => {
+  const readFileSync = vi.fn();
+  return {
+    default: { readFileSync },
+    readFileSync,
+  };
+});
+
+vi.mock('officeparser', () => ({
   parseOfficeAsync: mockParseOfficeAsync,
-  parseOffice: jest.fn(),
+  parseOffice: vi.fn(),
 }));
 
-import fs from 'fs';
+import fs from 'node:fs';
 import { DocLoader } from '../../../src/loaders/doc.loader';
 
 describe('DocLoader', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should create an instance with the given file path', () => {
@@ -25,7 +33,7 @@ describe('DocLoader', () => {
 
   it('should load and parse a document file', async () => {
     const mockBuffer = Buffer.from('mock file content');
-    (fs.readFileSync as jest.Mock).mockReturnValue(mockBuffer);
+    (fs.readFileSync as ReturnType<typeof vi.fn>).mockReturnValue(mockBuffer);
     mockParseOfficeAsync.mockResolvedValue('Parsed document text');
 
     const loader = new DocLoader('/tmp/test.odt');
@@ -40,7 +48,7 @@ describe('DocLoader', () => {
 
   it('should reject when parseOfficeAsync fails', async () => {
     const mockBuffer = Buffer.from('bad file');
-    (fs.readFileSync as jest.Mock).mockReturnValue(mockBuffer);
+    (fs.readFileSync as ReturnType<typeof vi.fn>).mockReturnValue(mockBuffer);
     mockParseOfficeAsync.mockRejectedValue(new Error('Parse error'));
 
     const loader = new DocLoader('/tmp/bad.odt');
@@ -49,7 +57,7 @@ describe('DocLoader', () => {
   });
 
   it('should reject when readFileSync throws', async () => {
-    (fs.readFileSync as jest.Mock).mockImplementation(() => {
+    (fs.readFileSync as ReturnType<typeof vi.fn>).mockImplementation(() => {
       throw new Error('File not found');
     });
 

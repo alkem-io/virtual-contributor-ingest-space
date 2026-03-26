@@ -32,4 +32,4 @@
 ## Notes
 
 - All items pass. Spec is ready for `/speckit.clarify` or `/speckit.plan`.
-- Assumptions section documents reasonable defaults for test framework (Jest), CI platform (GitHub Actions), and mock strategy.
+- Assumptions section documents reasonable defaults for testing, CI, and mock strategy.

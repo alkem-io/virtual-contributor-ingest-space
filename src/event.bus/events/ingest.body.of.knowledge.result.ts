@@ -1,6 +1,6 @@
-import {
-  IngestionPurpose,
+import type {
   BodyOfKnowledgeType,
+  IngestionPurpose,
 } from './ingest.body.of.knowledge';
 
 export enum IngestionResult {

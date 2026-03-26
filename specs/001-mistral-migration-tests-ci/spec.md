@@ -244,8 +244,8 @@ tests, and that it blocks merging on failure.
 
 ### Measurable Outcomes
 
-- **SC-001**: The ingestion pipeline successfully processes spaces end
-  to end using the new AI providers, producing identical functional
+- **SC-001**: The ingestion pipeline successfully processes spaces end-to-end
+  using the new AI providers, producing identical functional
   outcomes (documents chunked, summarized, embedded, stored) as the
   previous Azure-based pipeline.
 - **SC-002**: The automated test suite achieves at least 90% line

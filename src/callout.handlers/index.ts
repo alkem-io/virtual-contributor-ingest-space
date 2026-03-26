@@ -1,10 +1,9 @@
-import { Logger } from 'winston';
-import { Callout } from '../generated/graphql';
-import { Document } from '@langchain/core/documents';
+import type { Document } from '@langchain/core/documents';
+import type { Logger } from 'winston';
+import { type Callout, CalloutContributionType } from '../generated/graphql';
+import type { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
 import { baseHandler } from './base';
 import { linkCollectionHandler } from './link.collection';
-import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
-import { CalloutContributionType } from '../generated/graphql';
 
 type CalloutType = CalloutContributionType | 'NONE';
 
@@ -20,7 +19,7 @@ const handlersMap: Record<
   [CalloutContributionType.Post]: baseHandler,
   [CalloutContributionType.Whiteboard]: baseHandler,
   [CalloutContributionType.Memo]: baseHandler,
-  ['NONE']: baseHandler,
+  NONE: baseHandler,
 };
 
 export const handleCallout = async (

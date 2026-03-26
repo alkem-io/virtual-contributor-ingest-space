@@ -1,7 +1,7 @@
-import amqlib, { ChannelModel, Channel } from 'amqplib';
+import amqlib, { type Channel, type ChannelModel } from 'amqplib';
 import logger from '../logger';
 import { IngestBodyOfKnowledge } from './events/ingest.body.of.knowledge';
-import { IngestBodyOfKnowledgeResult } from './events/ingest.body.of.knowledge.result';
+import type { IngestBodyOfKnowledgeResult } from './events/ingest.body.of.knowledge.result';
 
 type ConsumeCallback = (event: IngestBodyOfKnowledge) => void | Promise<void>;
 
@@ -24,12 +24,12 @@ export class Connection {
   static #instance: Connection;
 
   static async get() {
-    if (!this.#instance) {
-      this.#instance = new Connection();
-      await this.#instance.connect();
+    if (!Connection.#instance) {
+      Connection.#instance = new Connection();
+      await Connection.#instance.connect();
     }
 
-    return this.#instance;
+    return Connection.#instance;
   }
 
   private getEnvValue(key: string): string {
@@ -126,28 +126,28 @@ export class Connection {
     this.channel.consume(
       this.config.incomingQueue,
       async msg => {
-        {
-          if (!msg) {
-            return logger.error('Invalid incoming message');
-          }
-          try {
-            const { bodyOfKnowledgeId, type, purpose, personaId } = JSON.parse(
-              msg.content.toString()
-            );
-            const event = new IngestBodyOfKnowledge(
-              bodyOfKnowledgeId,
-              type,
-              purpose,
-              personaId
-            );
-            await handler(event);
-          } catch (error) {
-            logger.error(error);
-          }
+        if (!msg) {
+          return logger.error('Invalid incoming message');
+        }
+        try {
+          const { bodyOfKnowledgeId, type, purpose, personaId } = JSON.parse(
+            msg.content.toString()
+          );
+          const event = new IngestBodyOfKnowledge(
+            bodyOfKnowledgeId,
+            type,
+            purpose,
+            personaId
+          );
+          await handler(event);
+          this.channel.ack(msg);
+        } catch (error) {
+          logger.error(error);
+          this.channel.nack(msg, false, false);
         }
       },
       {
-        noAck: true,
+        noAck: false,
       }
     );
   }

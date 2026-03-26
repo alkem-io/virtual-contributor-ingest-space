@@ -1,7 +1,7 @@
-import { ChatMistralAI } from '@langchain/mistralai';
+import type { Document } from '@langchain/core/documents';
+import type { ChatPromptTemplate } from '@langchain/core/prompts';
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
-import { Document } from '@langchain/core/documents';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { ChatMistralAI } from '@langchain/mistralai';
 
 import logger from '../logger';
 

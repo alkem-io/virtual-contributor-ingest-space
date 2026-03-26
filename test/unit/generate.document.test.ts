@@ -2,8 +2,9 @@
  * T012: Tests for src/generate.document.ts
  * - generateDocument with full entity, missing fields, HTML parsing, fallback
  */
+import { describe, it, expect, vi } from 'vitest';
 
-jest.mock('../../src/generated/graphql', () => ({
+vi.mock('../../src/generated/graphql', () => ({
   CalloutFramingType: {},
   MimeType: {},
   SpaceLevel: {
@@ -13,7 +14,7 @@ jest.mock('../../src/generated/graphql', () => ({
   },
 }));
 
-jest.mock('../../src/document.type', () => ({
+vi.mock('../../src/document.type', () => ({
   DocumentType: {
     KNOWLEDGE: 'KNOWLEDGE',
     SPACE: 'SPACE',
@@ -29,7 +30,7 @@ jest.mock('../../src/document.type', () => ({
     COLLECTION: 'COLLECTION',
     POST: 'POST',
   },
-  mapType: jest.fn((type: string) => type),
+  mapType: vi.fn((type: string) => type),
 }));
 
 import { generateDocument } from '../../src/generate.document';
@@ -307,8 +308,8 @@ describe('generateDocument', () => {
   });
 
   describe('type mapping', () => {
-    it('should use level when available', () => {
-      const { mapType } = require('../../src/document.type');
+    it('should use level when available', async () => {
+      const { mapType } = await import('../../src/document.type');
       const entity = {
         id: 'type-1',
         type: 'CALLOUT',
@@ -324,8 +325,8 @@ describe('generateDocument', () => {
       expect(mapType).toHaveBeenCalledWith('L0');
     });
 
-    it('should fall back to type when level is not available', () => {
-      const { mapType } = require('../../src/document.type');
+    it('should fall back to type when level is not available', async () => {
+      const { mapType } = await import('../../src/document.type');
       const entity = {
         id: 'type-2',
         type: 'CALLOUT',
@@ -340,8 +341,8 @@ describe('generateDocument', () => {
       expect(mapType).toHaveBeenCalledWith('CALLOUT');
     });
 
-    it('should fall back to profileType when both level and type are missing', () => {
-      const { mapType } = require('../../src/document.type');
+    it('should fall back to profileType when both level and type are missing', async () => {
+      const { mapType } = await import('../../src/document.type');
       const entity = {
         id: 'type-3',
         profile: {

@@ -1,7 +1,7 @@
-import { Callout, CalloutVisibility } from './generated/graphql';
-import { AlkemioCliClient } from './graphql.client/AlkemioCliClient';
-import { Document } from '@langchain/core/documents';
+import type { Document } from '@langchain/core/documents';
 import { handleCallout } from './callout.handlers';
+import { type Callout, CalloutVisibility } from './generated/graphql';
+import type { AlkemioCliClient } from './graphql.client/AlkemioCliClient';
 import logger from './logger';
 
 export const processCallouts = async (

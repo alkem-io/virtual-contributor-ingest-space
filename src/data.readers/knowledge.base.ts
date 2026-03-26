@@ -1,9 +1,9 @@
 import { Document } from '@langchain/core/documents';
-import { IngestBodyOfKnowledge } from '../event.bus/events/ingest.body.of.knowledge';
-import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
-import { processCallouts } from '../process.callouts';
-import { Callout } from '../generated/graphql';
+import type { IngestBodyOfKnowledge } from '../event.bus/events/ingest.body.of.knowledge';
 import { generateDocument } from '../generate.document';
+import type { Callout } from '../generated/graphql';
+import type { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
+import { processCallouts } from '../process.callouts';
 
 export const embedKnowledgeBase = async (
   event: IngestBodyOfKnowledge,
@@ -11,9 +11,8 @@ export const embedKnowledgeBase = async (
 ) => {
   const knowledgeBaseId = event.bodyOfKnowledgeId;
   // make sure the service user has sufficient priviliges
-  const knowledgeBase = await alkemioClient.ingestKnowledgeBase(
-    knowledgeBaseId
-  );
+  const knowledgeBase =
+    await alkemioClient.ingestKnowledgeBase(knowledgeBaseId);
   const documents: Document[] = [];
   const { documentId, source, pageContent, type, title } =
     generateDocument(knowledgeBase);

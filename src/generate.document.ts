@@ -1,6 +1,6 @@
-import { Reference } from './generated/graphql';
-import { DocumentType, mapType } from './document.type';
 import { parse } from 'node-html-parser';
+import { type DocumentType, mapType } from './document.type';
+import type { Reference } from './generated/graphql';
 
 interface GeneratedDocument {
   documentId: string;

@@ -1,27 +1,28 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Logger } from 'winston';
 import { Document } from '@langchain/core/documents';
 import { CalloutContributionType } from '../../../src/generated/graphql';
 
-jest.mock('../../../src/callout.handlers/base', () => ({
-  baseHandler: jest.fn(),
+vi.mock('../../../src/callout.handlers/base', () => ({
+  baseHandler: vi.fn(),
 }));
 
-jest.mock('../../../src/callout.handlers/link.collection', () => ({
-  linkCollectionHandler: jest.fn(),
+vi.mock('../../../src/callout.handlers/link.collection', () => ({
+  linkCollectionHandler: vi.fn(),
 }));
 
 import { handleCallout } from '../../../src/callout.handlers';
 import { baseHandler } from '../../../src/callout.handlers/base';
 import { linkCollectionHandler } from '../../../src/callout.handlers/link.collection';
 
-const mockBaseHandler = baseHandler as jest.Mock;
-const mockLinkCollectionHandler = linkCollectionHandler as jest.Mock;
+const mockBaseHandler = baseHandler as ReturnType<typeof vi.fn>;
+const mockLinkCollectionHandler = linkCollectionHandler as ReturnType<typeof vi.fn>;
 
 const createLogger = (): Logger =>
   ({
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   } as unknown as Logger);
 
 describe('handleCallout', () => {
@@ -29,7 +30,7 @@ describe('handleCallout', () => {
   const mockDocs = [new Document({ pageContent: 'test' })];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     logger = createLogger();
     mockBaseHandler.mockResolvedValue(mockDocs);
     mockLinkCollectionHandler.mockResolvedValue(mockDocs);

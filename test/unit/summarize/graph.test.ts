@@ -4,79 +4,80 @@
  * - buildGraph returns a graph object with invoke method
  * - Missing MISTRAL_API_KEY env var causes error
  */
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 // Must set env vars BEFORE importing the module under test,
 // because graph.ts reads them at module scope.
 const ORIGINAL_ENV = { ...process.env };
 
-const mockCompile = jest.fn().mockReturnValue({ invoke: jest.fn() });
-const mockAddConditionalEdges = jest.fn().mockReturnValue({ compile: mockCompile });
-const mockAddConditionalEdges2 = jest.fn().mockReturnValue({
+const mockCompile = vi.fn().mockReturnValue({ invoke: vi.fn() });
+const mockAddConditionalEdges = vi.fn().mockReturnValue({ compile: mockCompile });
+const mockAddConditionalEdges2 = vi.fn().mockReturnValue({
   addConditionalEdges: mockAddConditionalEdges,
 });
-const mockAddEdge = jest.fn().mockReturnValue({
+const mockAddEdge = vi.fn().mockReturnValue({
   addConditionalEdges: mockAddConditionalEdges2,
 });
-const mockAddNode2 = jest.fn().mockReturnValue({ addEdge: mockAddEdge });
-const mockAddNode1 = jest.fn().mockReturnValue({ addNode: mockAddNode2 });
+const mockAddNode2 = vi.fn().mockReturnValue({ addEdge: mockAddEdge });
+const mockAddNode1 = vi.fn().mockReturnValue({ addNode: mockAddNode2 });
 
-jest.mock('@langchain/mistralai', () => ({
-  ChatMistralAI: jest.fn().mockImplementation(() => ({
-    invoke: jest.fn().mockResolvedValue({ content: 'mock response' }),
-    pipe: jest.fn().mockReturnValue({
-      invoke: jest.fn().mockResolvedValue({ content: 'mock response' }),
+vi.mock('@langchain/mistralai', () => ({
+  ChatMistralAI: vi.fn().mockImplementation(() => ({
+    invoke: vi.fn().mockResolvedValue({ content: 'mock response' }),
+    pipe: vi.fn().mockReturnValue({
+      invoke: vi.fn().mockResolvedValue({ content: 'mock response' }),
     }),
   })),
 }));
 
-const mockAnnotationField = jest.fn();
-jest.mock('@langchain/langgraph', () => {
+const mockAnnotationField = vi.fn();
+vi.mock('@langchain/langgraph', () => {
   const AnnotationFn: any = (...args: any[]) => mockAnnotationField(...args);
-  AnnotationFn.Root = jest.fn().mockReturnValue({
+  AnnotationFn.Root = vi.fn().mockReturnValue({
     State: {},
   });
   return {
     Annotation: AnnotationFn,
     END: '__end__',
     START: '__start__',
-    StateGraph: jest.fn().mockImplementation(() => ({
+    StateGraph: vi.fn().mockImplementation(() => ({
       addNode: mockAddNode1,
     })),
   };
 });
 
-jest.mock('@langchain/core/documents', () => ({
-  Document: jest.fn(),
+vi.mock('@langchain/core/documents', () => ({
+  Document: vi.fn(),
 }));
 
-jest.mock('@langchain/core/prompts', () => ({
+vi.mock('@langchain/core/prompts', () => ({
   ChatPromptTemplate: {
-    fromMessages: jest.fn().mockReturnValue({
-      pipe: jest.fn().mockReturnValue({
-        invoke: jest.fn().mockResolvedValue({ content: 'mock' }),
+    fromMessages: vi.fn().mockReturnValue({
+      pipe: vi.fn().mockReturnValue({
+        invoke: vi.fn().mockResolvedValue({ content: 'mock' }),
       }),
     }),
   },
 }));
 
-jest.mock('langsmith/wrappers', () => ({
-  wrapSDK: jest.fn((x: any) => x),
+vi.mock('langsmith/wrappers', () => ({
+  wrapSDK: vi.fn((x: any) => x),
 }));
 
-jest.mock('../../../src/logger', () => ({
+vi.mock('../../../src/logger', () => ({
   __esModule: true,
   default: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
     defaultMeta: {},
   },
 }));
 
 describe('summarize/graph', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env = {
       ...ORIGINAL_ENV,
       MISTRAL_API_KEY: 'test-key',
@@ -135,12 +136,12 @@ describe('summarize/graph', () => {
   });
 
   describe('buildGraph', () => {
-    it('should return a graph object with invoke method', () => {
-      // Need to re-require since module caches
-      const { buildGraph } = require('../../../src/summarize/graph');
+    it('should return a graph object with invoke method', async () => {
+      // Need to re-import since module caches
+      const { buildGraph } = await import('../../../src/summarize/graph');
       const mockPrompt = {
-        pipe: jest.fn().mockReturnValue({
-          invoke: jest.fn().mockResolvedValue({ content: 'test' }),
+        pipe: vi.fn().mockReturnValue({
+          invoke: vi.fn().mockResolvedValue({ content: 'test' }),
         }),
       };
       const graph = buildGraph(mockPrompt as any, mockPrompt as any);
@@ -149,13 +150,13 @@ describe('summarize/graph', () => {
       expect(typeof graph.invoke).toBe('function');
     });
 
-    it('should create a StateGraph and compile it', () => {
-      const { StateGraph } = require('@langchain/langgraph');
-      const { buildGraph } = require('../../../src/summarize/graph');
+    it('should create a StateGraph and compile it', async () => {
+      const { StateGraph } = await import('@langchain/langgraph');
+      const { buildGraph } = await import('../../../src/summarize/graph');
 
       const mockPrompt = {
-        pipe: jest.fn().mockReturnValue({
-          invoke: jest.fn().mockResolvedValue({ content: 'test' }),
+        pipe: vi.fn().mockReturnValue({
+          invoke: vi.fn().mockResolvedValue({ content: 'test' }),
         }),
       };
 
@@ -167,12 +168,12 @@ describe('summarize/graph', () => {
       expect(mockCompile).toHaveBeenCalled();
     });
 
-    it('should use internal model', () => {
-      const { buildGraph } = require('../../../src/summarize/graph');
+    it('should use internal model', async () => {
+      const { buildGraph } = await import('../../../src/summarize/graph');
 
       const mockPrompt = {
-        pipe: jest.fn().mockReturnValue({
-          invoke: jest.fn().mockResolvedValue({ content: 'test' }),
+        pipe: vi.fn().mockReturnValue({
+          invoke: vi.fn().mockResolvedValue({ content: 'test' }),
         }),
       };
 
@@ -182,8 +183,8 @@ describe('summarize/graph', () => {
   });
 
   describe('summaryLength', () => {
-    it('should export summaryLength parsed from env or default 10000', () => {
-      const { summaryLength } = require('../../../src/summarize/graph');
+    it('should export summaryLength parsed from env or default 10000', async () => {
+      const { summaryLength } = await import('../../../src/summarize/graph');
       expect(typeof summaryLength).toBe('number');
       // Default value or env-defined value
       expect(summaryLength).toBeGreaterThan(0);
@@ -194,8 +195,8 @@ describe('summarize/graph', () => {
     let initialSummaryFn: Function;
     let refineSummaryFn: Function;
 
-    beforeEach(() => {
-      jest.clearAllMocks();
+    beforeEach(async () => {
+      vi.clearAllMocks();
       // Capture the functions passed to addNode
       mockAddNode1.mockImplementation((_name: string, fn: Function) => {
         initialSummaryFn = fn;
@@ -206,10 +207,10 @@ describe('summarize/graph', () => {
         return { addEdge: mockAddEdge };
       });
 
-      const { buildGraph } = require('../../../src/summarize/graph');
-      const mockChainInvoke = jest.fn().mockResolvedValue({ content: 'test summary content' });
+      const { buildGraph } = await import('../../../src/summarize/graph');
+      const mockChainInvoke = vi.fn().mockResolvedValue({ content: 'test summary content' });
       const mockPrompt = {
-        pipe: jest.fn().mockReturnValue({
+        pipe: vi.fn().mockReturnValue({
           invoke: mockChainInvoke,
         }),
       };
@@ -262,24 +263,24 @@ describe('summarize/graph', () => {
   describe('shouldRefine (via conditional edges)', () => {
     let shouldRefineFn: Function;
 
-    beforeEach(() => {
-      jest.clearAllMocks();
+    beforeEach(async () => {
+      vi.clearAllMocks();
       // Capture shouldRefine from the first addConditionalEdges call
       mockAddEdge.mockImplementation(() => ({
-        addConditionalEdges: jest.fn().mockImplementation((_source: string, fn: Function, _targets: string[]) => {
+        addConditionalEdges: vi.fn().mockImplementation((_source: string, fn: Function, _targets: string[]) => {
           shouldRefineFn = fn;
           return {
-            addConditionalEdges: jest.fn().mockImplementation(() => ({
-              compile: jest.fn().mockReturnValue({ invoke: jest.fn() }),
+            addConditionalEdges: vi.fn().mockImplementation(() => ({
+              compile: vi.fn().mockReturnValue({ invoke: vi.fn() }),
             })),
           };
         }),
       }));
 
-      const { buildGraph } = require('../../../src/summarize/graph');
+      const { buildGraph } = await import('../../../src/summarize/graph');
       const mockPrompt = {
-        pipe: jest.fn().mockReturnValue({
-          invoke: jest.fn().mockResolvedValue({ content: 'test' }),
+        pipe: vi.fn().mockReturnValue({
+          invoke: vi.fn().mockResolvedValue({ content: 'test' }),
         }),
       };
 
@@ -310,32 +311,98 @@ describe('summarize/graph', () => {
   });
 
   describe('missing env vars', () => {
-    it('should throw error when MISTRAL_API_KEY is missing', () => {
-      // We need to isolate the module to test module-level throw.
-      // Since the module was already loaded with valid env, we test the pattern:
-      // The module-level code checks for MISTRAL_API_KEY and throws.
-      // To verify this, we check that the env guard exists in the source.
-      // A true isolation test would require jest.isolateModules.
-      jest.isolateModules(() => {
-        process.env.MISTRAL_API_KEY = '';
-        delete process.env.MISTRAL_API_KEY;
-        process.env.MISTRAL_SMALL_MODEL_NAME = 'some-model';
+    it('should throw error when MISTRAL_API_KEY is missing', async () => {
+      vi.resetModules();
+      process.env.MISTRAL_API_KEY = '';
+      delete process.env.MISTRAL_API_KEY;
+      process.env.MISTRAL_SMALL_MODEL_NAME = 'some-model';
 
-        expect(() => {
-          require('../../../src/summarize/graph');
-        }).toThrow('MISTRAL_API_KEY environment variable is not set.');
+      // Re-mock dependencies after resetModules
+      vi.doMock('@langchain/mistralai', () => ({
+        ChatMistralAI: vi.fn().mockImplementation(() => ({
+          invoke: vi.fn().mockResolvedValue({ content: 'mock response' }),
+          pipe: vi.fn().mockReturnValue({
+            invoke: vi.fn().mockResolvedValue({ content: 'mock response' }),
+          }),
+        })),
+      }));
+      vi.doMock('@langchain/langgraph', () => {
+        const AnnotationFn: any = (...args: any[]) => vi.fn()(...args);
+        AnnotationFn.Root = vi.fn().mockReturnValue({ State: {} });
+        return {
+          Annotation: AnnotationFn,
+          END: '__end__',
+          START: '__start__',
+          StateGraph: vi.fn().mockImplementation(() => ({
+            addNode: mockAddNode1,
+          })),
+        };
       });
+      vi.doMock('@langchain/core/documents', () => ({ Document: vi.fn() }));
+      vi.doMock('@langchain/core/prompts', () => ({
+        ChatPromptTemplate: {
+          fromMessages: vi.fn().mockReturnValue({
+            pipe: vi.fn().mockReturnValue({
+              invoke: vi.fn().mockResolvedValue({ content: 'mock' }),
+            }),
+          }),
+        },
+      }));
+      vi.doMock('langsmith/wrappers', () => ({ wrapSDK: vi.fn((x: any) => x) }));
+      vi.doMock('../../../src/logger', () => ({
+        __esModule: true,
+        default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), defaultMeta: {} },
+      }));
+
+      await expect(
+        import('../../../src/summarize/graph')
+      ).rejects.toThrow('MISTRAL_API_KEY environment variable is not set.');
     });
 
-    it('should throw error when MISTRAL_SMALL_MODEL_NAME is missing', () => {
-      jest.isolateModules(() => {
-        process.env.MISTRAL_API_KEY = 'test-key';
-        delete process.env.MISTRAL_SMALL_MODEL_NAME;
+    it('should throw error when MISTRAL_SMALL_MODEL_NAME is missing', async () => {
+      vi.resetModules();
+      process.env.MISTRAL_API_KEY = 'test-key';
+      delete process.env.MISTRAL_SMALL_MODEL_NAME;
 
-        expect(() => {
-          require('../../../src/summarize/graph');
-        }).toThrow('MISTRAL_SMALL_MODEL_NAME environment variable is not set.');
+      vi.doMock('@langchain/mistralai', () => ({
+        ChatMistralAI: vi.fn().mockImplementation(() => ({
+          invoke: vi.fn().mockResolvedValue({ content: 'mock response' }),
+          pipe: vi.fn().mockReturnValue({
+            invoke: vi.fn().mockResolvedValue({ content: 'mock response' }),
+          }),
+        })),
+      }));
+      vi.doMock('@langchain/langgraph', () => {
+        const AnnotationFn: any = (...args: any[]) => vi.fn()(...args);
+        AnnotationFn.Root = vi.fn().mockReturnValue({ State: {} });
+        return {
+          Annotation: AnnotationFn,
+          END: '__end__',
+          START: '__start__',
+          StateGraph: vi.fn().mockImplementation(() => ({
+            addNode: mockAddNode1,
+          })),
+        };
       });
+      vi.doMock('@langchain/core/documents', () => ({ Document: vi.fn() }));
+      vi.doMock('@langchain/core/prompts', () => ({
+        ChatPromptTemplate: {
+          fromMessages: vi.fn().mockReturnValue({
+            pipe: vi.fn().mockReturnValue({
+              invoke: vi.fn().mockResolvedValue({ content: 'mock' }),
+            }),
+          }),
+        },
+      }));
+      vi.doMock('langsmith/wrappers', () => ({ wrapSDK: vi.fn((x: any) => x) }));
+      vi.doMock('../../../src/logger', () => ({
+        __esModule: true,
+        default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), defaultMeta: {} },
+      }));
+
+      await expect(
+        import('../../../src/summarize/graph')
+      ).rejects.toThrow('MISTRAL_SMALL_MODEL_NAME environment variable is not set.');
     });
   });
 });

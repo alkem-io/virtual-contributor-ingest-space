@@ -1,29 +1,30 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Document } from '@langchain/core/documents';
 import { CalloutVisibility } from '../../src/generated/graphql';
 
-jest.mock('../../src/callout.handlers', () => ({
-  handleCallout: jest.fn(),
+vi.mock('../../src/callout.handlers', () => ({
+  handleCallout: vi.fn(),
 }));
 
-jest.mock('../../src/logger', () => ({
+vi.mock('../../src/logger', () => ({
   __esModule: true,
   default: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
 import { processCallouts } from '../../src/process.callouts';
 import { handleCallout } from '../../src/callout.handlers';
 
-const mockHandleCallout = handleCallout as jest.Mock;
+const mockHandleCallout = handleCallout as ReturnType<typeof vi.fn>;
 
 describe('processCallouts', () => {
   const mockAlkemioClient = {} as any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should process published callouts and return documents', async () => {

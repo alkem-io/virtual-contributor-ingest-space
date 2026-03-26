@@ -3,60 +3,72 @@
  * - embedDocuments function: short chunk merging, summarization threshold,
  *   metadata sanitization, missing config returns false, batch insertion
  */
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
-import { createMockLogger } from '../helpers/mocks';
+const {
+  mockLogger,
+  mockCollection,
+  mockChromaClient,
+  mockSplitDocuments,
+} = vi.hoisted(() => {
+  const mockCollection = {
+    add: vi.fn().mockResolvedValue(undefined),
+  };
+  return {
+    mockLogger: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      defaultMeta: {} as Record<string, unknown>,
+    },
+    mockCollection,
+    mockChromaClient: {
+      heartbeat: vi.fn().mockResolvedValue(1234567890),
+      deleteCollection: vi.fn().mockResolvedValue(undefined),
+      getOrCreateCollection: vi.fn().mockResolvedValue(mockCollection),
+    },
+    mockSplitDocuments: vi.fn(),
+  };
+});
 
-const mockLogger = createMockLogger();
-
-jest.mock('../../src/logger', () => ({
+vi.mock('../../src/logger', () => ({
   __esModule: true,
   default: mockLogger,
 }));
 
-const mockCollection = {
-  add: jest.fn().mockResolvedValue(undefined),
-};
-
-const mockChromaClient = {
-  heartbeat: jest.fn().mockResolvedValue(1234567890),
-  deleteCollection: jest.fn().mockResolvedValue(undefined),
-  getOrCreateCollection: jest.fn().mockResolvedValue(mockCollection),
-};
-
-jest.mock('../../src/db.connect', () => ({
-  dbConnect: jest.fn(() => mockChromaClient),
+vi.mock('../../src/db.connect', () => ({
+  dbConnect: vi.fn(() => mockChromaClient),
 }));
 
-jest.mock('@chroma-core/openai', () => ({
-  OpenAIEmbeddingFunction: jest.fn().mockImplementation(() => ({
-    generate: jest.fn().mockResolvedValue([[0.1, 0.2, 0.3]]),
+vi.mock('@chroma-core/openai', () => ({
+  OpenAIEmbeddingFunction: vi.fn().mockImplementation(() => ({
+    generate: vi.fn().mockResolvedValue([[0.1, 0.2, 0.3]]),
   })),
 }));
 
-const mockSplitDocuments = jest.fn();
-
-jest.mock('@langchain/textsplitters', () => ({
-  RecursiveCharacterTextSplitter: jest.fn().mockImplementation(() => ({
+vi.mock('@langchain/textsplitters', () => ({
+  RecursiveCharacterTextSplitter: vi.fn().mockImplementation(() => ({
     splitDocuments: mockSplitDocuments,
   })),
 }));
 
-jest.mock('../../src/summarize/document', () => ({
-  summarizeDocument: jest.fn().mockResolvedValue('Document summary text'),
+vi.mock('../../src/summarize/document', () => ({
+  summarizeDocument: vi.fn().mockResolvedValue('Document summary text'),
 }));
 
-jest.mock('../../src/summarize/body.of.knowledge', () => ({
-  summariseBodyOfKnowledge: jest.fn().mockResolvedValue('BoK summary text'),
+vi.mock('../../src/summarize/body.of.knowledge', () => ({
+  summariseBodyOfKnowledge: vi.fn().mockResolvedValue('BoK summary text'),
 }));
 
-jest.mock('@langchain/core/documents', () => ({
-  Document: jest.fn().mockImplementation((args: any) => ({
+vi.mock('@langchain/core/documents', () => ({
+  Document: vi.fn().mockImplementation((args: any) => ({
     pageContent: args.pageContent,
     metadata: args.metadata || {},
   })),
 }));
 
-jest.mock('chromadb', () => ({
+vi.mock('chromadb', () => ({
   Metadata: {},
 }));
 
@@ -85,7 +97,7 @@ describe('embedDocuments', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockLogger.defaultMeta = {} as any;
     process.env = {
       ...ORIGINAL_ENV,
@@ -106,8 +118,8 @@ describe('embedDocuments', () => {
     );
 
     // Reset summarize mocks
-    (summarizeDocument as jest.Mock).mockResolvedValue('Document summary text');
-    (summariseBodyOfKnowledge as jest.Mock).mockResolvedValue('BoK summary text');
+    (summarizeDocument as ReturnType<typeof vi.fn>).mockResolvedValue('Document summary text');
+    (summariseBodyOfKnowledge as ReturnType<typeof vi.fn>).mockResolvedValue('BoK summary text');
   });
 
   afterAll(() => {
@@ -277,7 +289,7 @@ describe('embedDocuments', () => {
         { pageContent: 'bok chunk', metadata: {} },
       ]);
 
-      (summarizeDocument as jest.Mock).mockRejectedValueOnce(
+      (summarizeDocument as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
         new Error('Summarization failed')
       );
 

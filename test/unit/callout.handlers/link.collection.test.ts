@@ -1,66 +1,72 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Logger } from 'winston';
 import { Document } from '@langchain/core/documents';
 import { MimeType } from '../../../src/generated/graphql';
 import { DocumentType } from '../../../src/document.type';
 
-jest.mock('fs', () => ({
-  createWriteStream: jest.fn(),
-  readFileSync: jest.fn(),
-  unlinkSync: jest.fn(),
-}));
+vi.mock('node:fs', () => {
+  const mod = {
+    createWriteStream: vi.fn(),
+    readFileSync: vi.fn(),
+    unlinkSync: vi.fn(),
+  };
+  return { default: mod, ...mod };
+});
 
-jest.mock('https', () => ({
-  get: jest.fn(),
-}));
+vi.mock('node:https', () => {
+  const mod = { get: vi.fn() };
+  return { default: mod, ...mod };
+});
 
-jest.mock('http', () => ({
-  get: jest.fn(),
-}));
+vi.mock('node:http', () => {
+  const mod = { get: vi.fn() };
+  return { default: mod, ...mod };
+});
 
-jest.mock('@langchain/community/document_loaders/fs/pdf', () => ({
-  PDFLoader: jest.fn().mockImplementation(() => ({
-    load: jest.fn().mockResolvedValue([new Document({ pageContent: 'pdf content' })]),
+vi.mock('@langchain/community/document_loaders/fs/pdf', () => ({
+  PDFLoader: vi.fn().mockImplementation(() => ({
+    load: vi.fn().mockResolvedValue([new Document({ pageContent: 'pdf content' })]),
   })),
 }));
 
-jest.mock('@langchain/community/document_loaders/fs/docx', () => ({
-  DocxLoader: jest.fn().mockImplementation(() => ({
-    load: jest.fn().mockResolvedValue([new Document({ pageContent: 'docx content' })]),
+vi.mock('@langchain/community/document_loaders/fs/docx', () => ({
+  DocxLoader: vi.fn().mockImplementation(() => ({
+    load: vi.fn().mockResolvedValue([new Document({ pageContent: 'docx content' })]),
   })),
 }));
 
-jest.mock('../../../src/loaders', () => ({
-  SpreadSheetLoader: jest.fn().mockImplementation(() => ({
-    load: jest.fn().mockResolvedValue([new Document({ pageContent: 'sheet content' })]),
+vi.mock('../../../src/loaders', () => ({
+  SpreadSheetLoader: vi.fn().mockImplementation(() => ({
+    load: vi.fn().mockResolvedValue([new Document({ pageContent: 'sheet content' })]),
   })),
-  DocLoader: jest.fn().mockImplementation(() => ({
-    load: jest.fn().mockResolvedValue([new Document({ pageContent: 'doc content' })]),
+  DocLoader: vi.fn().mockImplementation(() => ({
+    load: vi.fn().mockResolvedValue([new Document({ pageContent: 'doc content' })]),
   })),
 }));
 
-jest.mock('../../../src/logger', () => ({
-  serializeError: jest.fn((e: any) => e),
+vi.mock('../../../src/logger', () => ({
+  serializeError: vi.fn((e: any) => e),
 }));
 
 import { linkCollectionHandler } from '../../../src/callout.handlers/link.collection';
 
 const createLogger = (): Logger =>
   ({
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   } as unknown as Logger);
 
 const createAlkemioClient = (docInfo: any = null) => ({
   apiToken: 'test-token',
-  document: jest.fn().mockResolvedValue(docInfo),
+  document: vi.fn().mockResolvedValue(docInfo),
 });
 
 describe('linkCollectionHandler', () => {
   let logger: Logger;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     logger = createLogger();
   });
 
@@ -250,32 +256,32 @@ describe('linkCollectionHandler', () => {
     });
 
     it('should download and load a PDF document via https', async () => {
-      const fs = require('fs');
-      const https = require('https');
+      const fs = await import('node:fs');
+      const https = await import('node:https');
 
       // Mock fs.createWriteStream to return an object with pipe/on/close
       const mockWriteStream = {
-        on: jest.fn().mockImplementation((event: string, cb: Function) => {
+        on: vi.fn().mockImplementation((event: string, cb: Function) => {
           if (event === 'finish') {
             // Simulate finish event immediately
             cb();
           }
           return mockWriteStream;
         }),
-        close: jest.fn(),
+        close: vi.fn(),
       };
-      fs.createWriteStream.mockReturnValue(mockWriteStream);
-      fs.unlinkSync.mockReturnValue(undefined);
+      (fs.createWriteStream as ReturnType<typeof vi.fn>).mockReturnValue(mockWriteStream);
+      (fs.unlinkSync as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
       // Mock https.get to simulate a successful response
       const mockResponse = {
         statusCode: 200,
-        pipe: jest.fn(),
+        pipe: vi.fn(),
       };
-      https.get.mockImplementation(
+      (https.get as ReturnType<typeof vi.fn>).mockImplementation(
         (_uri: string, _opts: any, callback: Function) => {
           callback(mockResponse);
-          return { on: jest.fn() };
+          return { on: vi.fn() };
         }
       );
 
@@ -301,27 +307,27 @@ describe('linkCollectionHandler', () => {
     });
 
     it('should download via http for non-https URIs', async () => {
-      const fs = require('fs');
-      const http = require('http');
+      const fs = await import('node:fs');
+      const http = await import('node:http');
 
       const mockWriteStream = {
-        on: jest.fn().mockImplementation((event: string, cb: Function) => {
+        on: vi.fn().mockImplementation((event: string, cb: Function) => {
           if (event === 'finish') cb();
           return mockWriteStream;
         }),
-        close: jest.fn(),
+        close: vi.fn(),
       };
-      fs.createWriteStream.mockReturnValue(mockWriteStream);
-      fs.unlinkSync.mockReturnValue(undefined);
+      (fs.createWriteStream as ReturnType<typeof vi.fn>).mockReturnValue(mockWriteStream);
+      (fs.unlinkSync as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
       const mockResponse = {
         statusCode: 200,
-        pipe: jest.fn(),
+        pipe: vi.fn(),
       };
-      http.get.mockImplementation(
+      (http.get as ReturnType<typeof vi.fn>).mockImplementation(
         (_uri: string, _opts: any, callback: Function) => {
           callback(mockResponse);
-          return { on: jest.fn() };
+          return { on: vi.fn() };
         }
       );
 
@@ -339,27 +345,27 @@ describe('linkCollectionHandler', () => {
     });
 
     it('should handle download failure (non-200 status) and log error', async () => {
-      const fs = require('fs');
-      const https = require('https');
+      const fs = await import('node:fs');
+      const https = await import('node:https');
 
       const mockWriteStream = {
-        on: jest.fn().mockImplementation((event: string, cb: Function) => {
+        on: vi.fn().mockImplementation((event: string, cb: Function) => {
           if (event === 'finish') cb();
           return mockWriteStream;
         }),
-        close: jest.fn(),
+        close: vi.fn(),
       };
-      fs.createWriteStream.mockReturnValue(mockWriteStream);
-      fs.unlinkSync.mockReturnValue(undefined);
+      (fs.createWriteStream as ReturnType<typeof vi.fn>).mockReturnValue(mockWriteStream);
+      (fs.unlinkSync as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
       const mockResponse = {
         statusCode: 404,
-        pipe: jest.fn(),
+        pipe: vi.fn(),
       };
-      https.get.mockImplementation(
+      (https.get as ReturnType<typeof vi.fn>).mockImplementation(
         (_uri: string, _opts: any, callback: Function) => {
           callback(mockResponse);
-          return { on: jest.fn() };
+          return { on: vi.fn() };
         }
       );
 
@@ -378,18 +384,18 @@ describe('linkCollectionHandler', () => {
     });
 
     it('should handle network error during download', async () => {
-      const fs = require('fs');
-      const https = require('https');
+      const fs = await import('node:fs');
+      const https = await import('node:https');
 
-      fs.createWriteStream.mockReturnValue({
-        on: jest.fn(),
-        close: jest.fn(),
+      (fs.createWriteStream as ReturnType<typeof vi.fn>).mockReturnValue({
+        on: vi.fn(),
+        close: vi.fn(),
       });
 
-      https.get.mockImplementation(
+      (https.get as ReturnType<typeof vi.fn>).mockImplementation(
         (_uri: string, _opts: any, _callback: Function) => {
           return {
-            on: jest.fn().mockImplementation((event: string, cb: Function) => {
+            on: vi.fn().mockImplementation((event: string, cb: Function) => {
               if (event === 'error') cb(new Error('Network error'));
             }),
           };
@@ -410,34 +416,34 @@ describe('linkCollectionHandler', () => {
     });
 
     it('should handle loader.load() failure and log error', async () => {
-      const fs = require('fs');
-      const https = require('https');
-      const { PDFLoader } = require('@langchain/community/document_loaders/fs/pdf');
+      const fs = await import('node:fs');
+      const https = await import('node:https');
+      const { PDFLoader } = await import('@langchain/community/document_loaders/fs/pdf');
 
       const mockWriteStream = {
-        on: jest.fn().mockImplementation((event: string, cb: Function) => {
+        on: vi.fn().mockImplementation((event: string, cb: Function) => {
           if (event === 'finish') cb();
           return mockWriteStream;
         }),
-        close: jest.fn(),
+        close: vi.fn(),
       };
-      fs.createWriteStream.mockReturnValue(mockWriteStream);
-      fs.unlinkSync.mockReturnValue(undefined);
+      (fs.createWriteStream as ReturnType<typeof vi.fn>).mockReturnValue(mockWriteStream);
+      (fs.unlinkSync as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
       const mockResponse = {
         statusCode: 200,
-        pipe: jest.fn(),
+        pipe: vi.fn(),
       };
-      https.get.mockImplementation(
+      (https.get as ReturnType<typeof vi.fn>).mockImplementation(
         (_uri: string, _opts: any, callback: Function) => {
           callback(mockResponse);
-          return { on: jest.fn() };
+          return { on: vi.fn() };
         }
       );
 
       // Make the loader throw
-      PDFLoader.mockImplementation(() => ({
-        load: jest.fn().mockRejectedValue(new Error('Corrupt PDF')),
+      (PDFLoader as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+        load: vi.fn().mockRejectedValue(new Error('Corrupt PDF')),
       }));
 
       const client = createAlkemioClient({ mimeType: MimeType.Pdf });
@@ -457,27 +463,27 @@ describe('linkCollectionHandler', () => {
     });
 
     it('should use correct loader for XLSX documents', async () => {
-      const fs = require('fs');
-      const https = require('https');
+      const fs = await import('node:fs');
+      const https = await import('node:https');
 
       const mockWriteStream = {
-        on: jest.fn().mockImplementation((event: string, cb: Function) => {
+        on: vi.fn().mockImplementation((event: string, cb: Function) => {
           if (event === 'finish') cb();
           return mockWriteStream;
         }),
-        close: jest.fn(),
+        close: vi.fn(),
       };
-      fs.createWriteStream.mockReturnValue(mockWriteStream);
-      fs.unlinkSync.mockReturnValue(undefined);
+      (fs.createWriteStream as ReturnType<typeof vi.fn>).mockReturnValue(mockWriteStream);
+      (fs.unlinkSync as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
       const mockResponse = {
         statusCode: 200,
-        pipe: jest.fn(),
+        pipe: vi.fn(),
       };
-      https.get.mockImplementation(
+      (https.get as ReturnType<typeof vi.fn>).mockImplementation(
         (_uri: string, _opts: any, callback: Function) => {
           callback(mockResponse);
-          return { on: jest.fn() };
+          return { on: vi.fn() };
         }
       );
 
@@ -499,27 +505,27 @@ describe('linkCollectionHandler', () => {
     });
 
     it('should use DocxLoader for DOCX documents', async () => {
-      const fs = require('fs');
-      const https = require('https');
+      const fs = await import('node:fs');
+      const https = await import('node:https');
 
       const mockWriteStream = {
-        on: jest.fn().mockImplementation((event: string, cb: Function) => {
+        on: vi.fn().mockImplementation((event: string, cb: Function) => {
           if (event === 'finish') cb();
           return mockWriteStream;
         }),
-        close: jest.fn(),
+        close: vi.fn(),
       };
-      fs.createWriteStream.mockReturnValue(mockWriteStream);
-      fs.unlinkSync.mockReturnValue(undefined);
+      (fs.createWriteStream as ReturnType<typeof vi.fn>).mockReturnValue(mockWriteStream);
+      (fs.unlinkSync as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
       const mockResponse = {
         statusCode: 200,
-        pipe: jest.fn(),
+        pipe: vi.fn(),
       };
-      https.get.mockImplementation(
+      (https.get as ReturnType<typeof vi.fn>).mockImplementation(
         (_uri: string, _opts: any, callback: Function) => {
           callback(mockResponse);
-          return { on: jest.fn() };
+          return { on: vi.fn() };
         }
       );
 

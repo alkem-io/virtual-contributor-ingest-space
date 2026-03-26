@@ -1,18 +1,18 @@
-import logger, { getErrorMessage } from './logger';
-import { AlkemioCliClient } from './graphql.client/AlkemioCliClient';
+import { embedKnowledgeBase } from './data.readers/knowledge.base';
+import { embedSpace } from './data.readers/space';
+import type { ReadResult } from './data.readers/types';
+import { embedDocuments } from './embed.documents';
+import {
+  BodyOfKnowledgeType,
+  type IngestBodyOfKnowledge,
+} from './event.bus/events/ingest.body.of.knowledge';
 import {
   ErrorCode,
   IngestBodyOfKnowledgeResult,
   IngestionResult,
 } from './event.bus/events/ingest.body.of.knowledge.result';
-import { embedSpace } from './data.readers/space';
-import { embedKnowledgeBase } from './data.readers/knowledge.base';
-import {
-  IngestBodyOfKnowledge,
-  BodyOfKnowledgeType,
-} from './event.bus/events/ingest.body.of.knowledge';
-import { ReadResult } from './data.readers/types';
-import { embedDocuments } from './embed.documents';
+import { AlkemioCliClient } from './graphql.client/AlkemioCliClient';
+import logger, { getErrorMessage } from './logger';
 
 export const setResultError = (
   result: IngestBodyOfKnowledgeResult,

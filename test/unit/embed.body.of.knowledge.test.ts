@@ -1,32 +1,59 @@
-import { createMockLogger, createMockAlkemioClient } from '../helpers/mocks';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockLogger = createMockLogger();
-jest.mock('../../src/logger', () => ({
+const {
+  mockLogger,
+  mockAlkemioInstance,
+  mockEmbedSpace,
+  mockEmbedKnowledgeBase,
+  mockEmbedDocuments,
+} = vi.hoisted(() => ({
+  mockLogger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    defaultMeta: {} as Record<string, unknown>,
+  },
+  mockAlkemioInstance: {
+    initialise: vi.fn().mockResolvedValue(undefined),
+    logUser: vi.fn().mockResolvedValue(undefined),
+    validateConnection: vi.fn().mockResolvedValue(true),
+    ingestSpace: vi.fn().mockResolvedValue({ data: {} }),
+    ingestKnowledgeBase: vi.fn().mockResolvedValue({ data: {} }),
+    document: vi.fn().mockResolvedValue({ data: {} }),
+    sdkClient: { me: vi.fn() },
+    alkemioLibClient: {},
+    config: {},
+    apiToken: 'mock-token',
+    logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), defaultMeta: {} },
+  },
+  mockEmbedSpace: vi.fn(),
+  mockEmbedKnowledgeBase: vi.fn(),
+  mockEmbedDocuments: vi.fn(),
+}));
+
+vi.mock('../../src/logger', () => ({
   __esModule: true,
   default: mockLogger,
-  getErrorMessage: jest.fn((err: unknown) => {
+  getErrorMessage: vi.fn((err: unknown) => {
     if (err instanceof Error) return err.message;
     return String(err);
   }),
 }));
 
-const mockAlkemioInstance = createMockAlkemioClient();
-jest.mock('../../src/graphql.client/AlkemioCliClient', () => ({
-  AlkemioCliClient: jest.fn(() => mockAlkemioInstance),
+vi.mock('../../src/graphql.client/AlkemioCliClient', () => ({
+  AlkemioCliClient: vi.fn(() => mockAlkemioInstance),
 }));
 
-const mockEmbedSpace = jest.fn();
-jest.mock('../../src/data.readers/space', () => ({
+vi.mock('../../src/data.readers/space', () => ({
   embedSpace: mockEmbedSpace,
 }));
 
-const mockEmbedKnowledgeBase = jest.fn();
-jest.mock('../../src/data.readers/knowledge.base', () => ({
+vi.mock('../../src/data.readers/knowledge.base', () => ({
   embedKnowledgeBase: mockEmbedKnowledgeBase,
 }));
 
-const mockEmbedDocuments = jest.fn();
-jest.mock('../../src/embed.documents', () => ({
+vi.mock('../../src/embed.documents', () => ({
   embedDocuments: mockEmbedDocuments,
 }));
 
@@ -47,7 +74,7 @@ import {
 
 describe('embed.body.of.knowledge', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockAlkemioInstance.initialise.mockResolvedValue(undefined);
   });
 

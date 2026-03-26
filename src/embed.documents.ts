@@ -1,15 +1,15 @@
+import { OpenAIEmbeddingFunction } from '@chroma-core/openai';
 import { Document } from '@langchain/core/documents';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import logger from './logger';
-import { dbConnect } from './db.connect';
-import { Metadata } from 'chromadb';
-import { DocumentType } from './document.type';
+import type { Metadata } from 'chromadb';
 import { BATCH_SIZE, CHUNK_OVERLAP, CHUNK_SIZE } from './constants';
-import { OpenAIEmbeddingFunction } from '@chroma-core/openai';
-import { summarizeDocument } from './summarize/document';
+import type { BodyOfKnowledgeReadResult } from './data.readers/types';
+import { dbConnect } from './db.connect';
+import { DocumentType } from './document.type';
+import type { IngestionPurpose } from './event.bus/events/ingest.body.of.knowledge';
+import logger from './logger';
 import { summariseBodyOfKnowledge } from './summarize/body.of.knowledge';
-import { IngestionPurpose } from './event.bus/events/ingest.body.of.knowledge';
-import { BodyOfKnowledgeReadResult } from './data.readers/types';
+import { summarizeDocument } from './summarize/document';
 
 const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
   Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
@@ -62,7 +62,7 @@ export const embedDocuments = async (
 
   for (let docIndex = 0; docIndex < docs.length; docIndex++) {
     const doc = docs[docIndex];
-    let splitted;
+    let splitted: Document[];
     // do not split spreadhseets to prevent data loss
     if (doc.metadata.type === DocumentType.SPREADSHEET) {
       splitted = [doc];
@@ -244,14 +244,14 @@ export const embedDocuments = async (
     logger.info(`Deleting old collection: ${name}`);
     await client.deleteCollection({ name });
     logger.info(`Collection: ${name} deleted.`);
-  } catch (error) {
+  } catch (_error) {
     logger.info(`Collection '${name}' doesn't exist. First time ingestion.`);
   }
 
   logger.info(`Creating collection: ${name}`);
   const collection = await client.getOrCreateCollection({
     name,
-    metadata: { createdAt: new Date().getTime() },
+    metadata: { createdAt: Date.now() },
     embeddingFunction,
   });
 
@@ -283,8 +283,6 @@ export const embedDocuments = async (
           stack: error?.stack,
           status: error?.status,
           statusText: error?.statusText,
-          body: error?.body,
-          cause: error?.cause,
         },
         collection: name,
         batchIndex: i,

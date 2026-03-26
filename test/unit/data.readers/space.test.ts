@@ -1,7 +1,8 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Document } from '@langchain/core/documents';
 
-jest.mock('../../../src/data.readers/process.space.tree', () => ({
-  processSpaceTree: jest.fn(),
+vi.mock('../../../src/data.readers/process.space.tree', () => ({
+  processSpaceTree: vi.fn(),
 }));
 
 import { embedSpace } from '../../../src/data.readers/space';
@@ -12,7 +13,7 @@ import {
   IngestBodyOfKnowledge,
 } from '../../../src/event.bus/events/ingest.body.of.knowledge';
 
-const mockProcessSpaceTree = processSpaceTree as jest.Mock;
+const mockProcessSpaceTree = processSpaceTree as ReturnType<typeof vi.fn>;
 
 describe('embedSpace', () => {
   const mockSpace = {
@@ -22,11 +23,11 @@ describe('embedSpace', () => {
   };
 
   const mockAlkemioClient = {
-    ingestSpace: jest.fn().mockResolvedValue(mockSpace),
+    ingestSpace: vi.fn().mockResolvedValue(mockSpace),
   } as any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockAlkemioClient.ingestSpace.mockResolvedValue(mockSpace);
   });
 

@@ -1,26 +1,27 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Document } from '@langchain/core/documents';
 import { DocumentType } from '../../../src/document.type';
 
-jest.mock('../../../src/generate.document', () => ({
-  generateDocument: jest.fn(),
+vi.mock('../../../src/generate.document', () => ({
+  generateDocument: vi.fn(),
 }));
 
-jest.mock('../../../src/process.callouts', () => ({
-  processCallouts: jest.fn(),
+vi.mock('../../../src/process.callouts', () => ({
+  processCallouts: vi.fn(),
 }));
 
 import { processSpaceTree } from '../../../src/data.readers/process.space.tree';
 import { generateDocument } from '../../../src/generate.document';
 import { processCallouts } from '../../../src/process.callouts';
 
-const mockGenerateDocument = generateDocument as jest.Mock;
-const mockProcessCallouts = processCallouts as jest.Mock;
+const mockGenerateDocument = generateDocument as ReturnType<typeof vi.fn>;
+const mockProcessCallouts = processCallouts as ReturnType<typeof vi.fn>;
 
 describe('processSpaceTree', () => {
   const mockAlkemioClient = {} as any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockProcessCallouts.mockResolvedValue([]);
   });
 

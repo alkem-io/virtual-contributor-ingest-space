@@ -1,7 +1,7 @@
-import logger from './logger';
-import { Connection } from './event.bus/connection';
-import { IngestBodyOfKnowledge } from './event.bus/events/ingest.body.of.knowledge';
 import { embedBodyOfKnowledge } from './embed.body.of.knowledge';
+import { Connection } from './event.bus/connection';
+import type { IngestBodyOfKnowledge } from './event.bus/events/ingest.body.of.knowledge';
+import logger from './logger';
 
 (async () => {
   logger.info('Ingest Space ready. Waiting for RPC messages...');

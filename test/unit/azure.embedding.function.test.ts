@@ -3,13 +3,14 @@
  * - OpenAICompatibleEmbeddingFunction.generate returns embeddings
  * - Error handling on API failure
  */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockCreate = jest.fn();
+const mockCreate = vi.fn();
 
-jest.mock('openai', () => {
+vi.mock('openai', () => {
   return {
     __esModule: true,
-    default: jest.fn().mockImplementation(() => ({
+    default: vi.fn().mockImplementation(() => ({
       embeddings: {
         create: mockCreate,
       },
@@ -17,13 +18,13 @@ jest.mock('openai', () => {
   };
 });
 
-jest.mock('../../src/logger', () => ({
+vi.mock('../../src/logger', () => ({
   __esModule: true,
   default: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
     defaultMeta: {},
   },
 }));
@@ -35,7 +36,7 @@ describe('OpenAICompatibleEmbeddingFunction', () => {
   let embeddingFn: OpenAICompatibleEmbeddingFunction;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     embeddingFn = new OpenAICompatibleEmbeddingFunction(
       'https://api.example.com',
       'test-api-key',
@@ -102,7 +103,7 @@ describe('OpenAICompatibleEmbeddingFunction', () => {
     });
 
     it('should log error details on failure', async () => {
-      const logger = require('../../src/logger').default;
+      const logger = (await import('../../src/logger')).default;
       const apiError = new Error('Connection timeout');
       (apiError as any).status = 503;
       mockCreate.mockRejectedValue(apiError);

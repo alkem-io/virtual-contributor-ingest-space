@@ -1,11 +1,9 @@
-import { Document } from '@langchain/core/documents';
-
-import { Space } from '../generated/graphql';
-
-import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
+import type { Document } from '@langchain/core/documents';
+import type { IngestBodyOfKnowledge } from 'src/event.bus/events/ingest.body.of.knowledge';
+import type { Space } from '../generated/graphql';
+import type { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
 import { processSpaceTree } from './process.space.tree';
-import { IngestBodyOfKnowledge } from 'src/event.bus/events/ingest.body.of.knowledge';
-import { ReadResult } from './types';
+import type { ReadResult } from './types';
 
 export const embedSpace = async (
   event: IngestBodyOfKnowledge,

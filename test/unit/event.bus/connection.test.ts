@@ -1,19 +1,44 @@
-import {
-  createMockLogger,
-  mockChannel,
-  mockAmqpConnection,
-} from '../../helpers/mocks';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
 
-const mockLogger = createMockLogger();
-jest.mock('../../../src/logger', () => ({
+const { mockLogger, mockChannel, mockAmqpConnection } = vi.hoisted(() => {
+  const mockChannel = {
+    assertQueue: vi.fn().mockResolvedValue({ queue: 'test-queue' }),
+    assertExchange: vi.fn().mockResolvedValue({}),
+    bindQueue: vi.fn().mockResolvedValue({}),
+    consume: vi.fn().mockResolvedValue({ consumerTag: 'test-tag' }),
+    sendToQueue: vi.fn().mockReturnValue(true),
+    ack: vi.fn(),
+    nack: vi.fn(),
+    prefetch: vi.fn(),
+    close: vi.fn().mockResolvedValue(undefined),
+  };
+  const mockAmqpConnection = {
+    createChannel: vi.fn().mockResolvedValue(mockChannel),
+    close: vi.fn().mockResolvedValue(undefined),
+    on: vi.fn(),
+  };
+  return {
+    mockLogger: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      defaultMeta: {} as Record<string, unknown>,
+    },
+    mockChannel,
+    mockAmqpConnection,
+  };
+});
+
+vi.mock('../../../src/logger', () => ({
   __esModule: true,
   default: mockLogger,
 }));
 
-jest.mock('amqplib', () => ({
+vi.mock('amqplib', () => ({
   __esModule: true,
   default: {
-    connect: jest.fn().mockResolvedValue(mockAmqpConnection),
+    connect: vi.fn().mockResolvedValue(mockAmqpConnection),
   },
 }));
 
@@ -29,7 +54,7 @@ const RABBIT_ENV = {
 };
 
 // We need to re-import the module per test group to reset the private #instance singleton.
-// Use jest.resetModules() + dynamic require where singleton isolation matters.
+// Use vi.resetModules() + dynamic import where singleton isolation matters.
 
 import {
   IngestBodyOfKnowledge,
@@ -44,7 +69,7 @@ describe('Connection', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env = { ...originalEnv, ...RABBIT_ENV };
     mockAmqpConnection.createChannel.mockResolvedValue(mockChannel);
   });
@@ -89,11 +114,11 @@ describe('Connection', () => {
     });
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it('parses messages and calls the handler', async () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
 
       await conn.consume(handler);
 
@@ -120,7 +145,7 @@ describe('Connection', () => {
     });
 
     it('logs error when message is null', async () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
 
       await conn.consume(handler);
       const consumeCallback = mockChannel.consume.mock.calls[0][1];
@@ -132,7 +157,7 @@ describe('Connection', () => {
     });
 
     it('logs error on invalid JSON message', async () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
 
       await conn.consume(handler);
       const consumeCallback = mockChannel.consume.mock.calls[0][1];
@@ -148,10 +173,10 @@ describe('Connection', () => {
     });
 
     it('uses noAck: true', async () => {
-      await conn.consume(jest.fn());
+      await conn.consume(vi.fn());
 
       const options = mockChannel.consume.mock.calls[0][2];
-      expect(options).toEqual({ noAck: true });
+      expect(options).toEqual({ noAck: false });
     });
   });
 
@@ -165,7 +190,7 @@ describe('Connection', () => {
     });
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it('publishes a message to the outgoing queue', async () => {

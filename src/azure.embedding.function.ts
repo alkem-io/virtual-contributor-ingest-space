@@ -1,4 +1,4 @@
-import { EmbeddingFunction } from 'chromadb';
+import type { EmbeddingFunction } from 'chromadb';
 import OpenAI from 'openai';
 import logger from './logger';
 

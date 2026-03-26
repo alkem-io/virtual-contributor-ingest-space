@@ -1,13 +1,15 @@
-jest.mock('graphql-request', () => ({
-  GraphQLClient: jest.fn().mockImplementation(() => ({})),
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('graphql-request', () => ({
+  GraphQLClient: vi.fn().mockImplementation(() => ({})),
 }));
 
-jest.mock('../../../src/generated/graphql', () => ({
-  getSdk: jest.fn().mockReturnValue({
-    me: jest.fn(),
-    spaceIngest: jest.fn(),
-    knowledgeBaseIngest: jest.fn(),
-    document: jest.fn(),
+vi.mock('../../../src/generated/graphql', () => ({
+  getSdk: vi.fn().mockReturnValue({
+    me: vi.fn(),
+    spaceIngest: vi.fn(),
+    knowledgeBaseIngest: vi.fn(),
+    document: vi.fn(),
   }),
   // Re-export enums needed by other imports
   CalloutContributionType: {
@@ -25,22 +27,22 @@ jest.mock('../../../src/generated/graphql', () => ({
   CalloutFramingType: {},
 }));
 
-jest.mock('@alkemio/client-lib', () => ({
-  AlkemioClient: jest.fn().mockImplementation(() => ({
-    enableAuthentication: jest.fn().mockResolvedValue(undefined),
+vi.mock('@alkemio/client-lib', () => ({
+  AlkemioClient: vi.fn().mockImplementation(() => ({
+    enableAuthentication: vi.fn().mockResolvedValue(undefined),
     apiToken: 'mock-api-token',
   })),
-  createConfigUsingEnvVars: jest.fn().mockReturnValue({
+  createConfigUsingEnvVars: vi.fn().mockReturnValue({
     apiEndpointPrivateGraphql: 'http://localhost/graphql',
   }),
 }));
 
-jest.mock('../../../src/logger', () => ({
+vi.mock('../../../src/logger', () => ({
   __esModule: true,
   default: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -51,14 +53,14 @@ import { getSdk } from '../../../src/generated/graphql';
 
 describe('AlkemioCliClient', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('constructor', () => {
     it('should create instance with provided config', () => {
       const config = {
         apiEndpointPrivateGraphql: 'http://test/graphql',
-        logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn() } as any,
+        logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() } as any,
       };
 
       const client = new AlkemioCliClient(config as any);
@@ -76,7 +78,7 @@ describe('AlkemioCliClient', () => {
     });
 
     it('should throw when no config and env vars return nothing', () => {
-      (createConfigUsingEnvVars as jest.Mock).mockReturnValueOnce(undefined);
+      (createConfigUsingEnvVars as ReturnType<typeof vi.fn>).mockReturnValueOnce(undefined);
 
       expect(() => new AlkemioCliClient()).toThrow('Unable to find env vars config');
     });
@@ -108,7 +110,7 @@ describe('AlkemioCliClient', () => {
     });
 
     it('should throw when AlkemioClient creation fails', async () => {
-      (AlkemioClient as jest.Mock).mockImplementationOnce(() => {
+      (AlkemioClient as ReturnType<typeof vi.fn>).mockImplementationOnce(() => {
         throw new Error('Auth failure');
       });
 
@@ -125,7 +127,7 @@ describe('AlkemioCliClient', () => {
       const client = new AlkemioCliClient();
       await client.initialise();
 
-      const mockMe = (client.sdkClient.me as jest.Mock);
+      const mockMe = (client.sdkClient.me as ReturnType<typeof vi.fn>);
       mockMe.mockResolvedValue({
         data: {
           me: {
@@ -149,7 +151,7 @@ describe('AlkemioCliClient', () => {
       const client = new AlkemioCliClient();
       await client.initialise();
 
-      const mockMe = (client.sdkClient.me as jest.Mock);
+      const mockMe = (client.sdkClient.me as ReturnType<typeof vi.fn>);
       mockMe.mockResolvedValue({
         data: {
           me: {
@@ -169,7 +171,7 @@ describe('AlkemioCliClient', () => {
       const client = new AlkemioCliClient();
       await client.initialise();
 
-      const mockMe = (client.sdkClient.me as jest.Mock);
+      const mockMe = (client.sdkClient.me as ReturnType<typeof vi.fn>);
       mockMe.mockResolvedValue({
         data: {
           me: {
@@ -188,7 +190,7 @@ describe('AlkemioCliClient', () => {
       await client.initialise();
 
       const mockSpace = { id: 'space-1', name: 'Test Space' };
-      (client.sdkClient.spaceIngest as jest.Mock).mockResolvedValue({
+      (client.sdkClient.spaceIngest as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { lookup: { space: mockSpace } },
       });
 
@@ -207,7 +209,7 @@ describe('AlkemioCliClient', () => {
       await client.initialise();
 
       const mockKB = { id: 'kb-1', name: 'Test KB' };
-      (client.sdkClient.knowledgeBaseIngest as jest.Mock).mockResolvedValue({
+      (client.sdkClient.knowledgeBaseIngest as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { lookup: { knowledgeBase: mockKB } },
       });
 
@@ -226,7 +228,7 @@ describe('AlkemioCliClient', () => {
       await client.initialise();
 
       const mockDoc = { id: 'doc-1', mimeType: 'PDF' };
-      (client.sdkClient.document as jest.Mock).mockResolvedValue({
+      (client.sdkClient.document as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { lookup: { document: mockDoc } },
       });
 

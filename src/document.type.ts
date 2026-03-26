@@ -1,4 +1,8 @@
-import { CalloutFramingType, MimeType, SpaceLevel } from './generated/graphql'; // '@alkemio/client-lib';
+import {
+  type CalloutFramingType,
+  MimeType,
+  SpaceLevel,
+} from './generated/graphql'; // '@alkemio/client-lib';
 
 export enum DocumentType {
   KNOWLEDGE = 'KNOWLEDGE',

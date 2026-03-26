@@ -3,25 +3,26 @@
  * - dbConnect creates ChromaClient with correct config
  * - Missing credentials handling
  */
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 const mockChromaClientInstance = {
-  heartbeat: jest.fn().mockResolvedValue(1234567890),
+  heartbeat: vi.fn().mockResolvedValue(1234567890),
 };
 
-jest.mock('chromadb', () => ({
-  ChromaClient: jest.fn().mockImplementation(() => mockChromaClientInstance),
+vi.mock('chromadb', () => ({
+  ChromaClient: vi.fn().mockImplementation(() => mockChromaClientInstance),
 }));
 
 import { dbConnect } from '../../src/db.connect';
 import { ChromaClient } from 'chromadb';
 
-const MockedChromaClient = ChromaClient as jest.MockedClass<typeof ChromaClient>;
+const MockedChromaClient = ChromaClient as unknown as ReturnType<typeof vi.fn>;
 
 describe('dbConnect', () => {
   const ORIGINAL_ENV = { ...process.env };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env = {
       ...ORIGINAL_ENV,
       VECTOR_DB_CREDENTIALS: 'test-credentials',

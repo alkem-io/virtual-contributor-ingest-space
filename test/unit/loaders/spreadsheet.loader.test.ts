@@ -1,9 +1,10 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Document } from '@langchain/core/documents';
 
-const mockReadFile = jest.fn();
-const mockSheetToCsv = jest.fn();
+const mockReadFile = vi.fn();
+const mockSheetToCsv = vi.fn();
 
-jest.mock('xlsx', () => ({
+vi.mock('xlsx', () => ({
   readFile: mockReadFile,
   utils: {
     sheet_to_csv: mockSheetToCsv,
@@ -14,7 +15,7 @@ import { SpreadSheetLoader } from '../../../src/loaders/spreadsheet.loader';
 
 describe('SpreadSheetLoader', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should create an instance with the given file path', () => {

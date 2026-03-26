@@ -1,28 +1,29 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Document } from '@langchain/core/documents';
 import { Logger } from 'winston';
 import { baseHandler } from '../../../src/callout.handlers/base';
 import { DocumentType } from '../../../src/document.type';
 
-jest.mock('../../../src/generate.document', () => ({
-  generateDocument: jest.fn(),
+vi.mock('../../../src/generate.document', () => ({
+  generateDocument: vi.fn(),
 }));
 
 import { generateDocument } from '../../../src/generate.document';
 
-const mockGenerateDocument = generateDocument as jest.Mock;
+const mockGenerateDocument = generateDocument as ReturnType<typeof vi.fn>;
 
 const createLogger = (): Logger =>
   ({
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   } as unknown as Logger);
 
 describe('baseHandler', () => {
   let logger: Logger;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     logger = createLogger();
     mockGenerateDocument.mockReturnValue({
       documentId: 'doc-1',

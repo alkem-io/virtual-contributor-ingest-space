@@ -2,50 +2,51 @@
  * T007: Tests for src/summarize/document.ts
  * - summarizeDocument calls graph.invoke and returns summary
  */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-jest.mock('../../../src/summarize/graph', () => ({
-  buildGraph: jest.fn(),
+vi.mock('../../../src/summarize/graph', () => ({
+  buildGraph: vi.fn(),
 }));
 
-jest.mock('../../../src/logger', () => ({
+vi.mock('../../../src/logger', () => ({
   __esModule: true,
   default: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
     defaultMeta: {},
   },
 }));
 
-jest.mock('@langchain/core/prompts', () => ({
+vi.mock('@langchain/core/prompts', () => ({
   SystemMessagePromptTemplate: {
-    fromTemplate: jest.fn().mockReturnValue({}),
+    fromTemplate: vi.fn().mockReturnValue({}),
   },
   HumanMessagePromptTemplate: {
-    fromTemplate: jest.fn().mockReturnValue({}),
+    fromTemplate: vi.fn().mockReturnValue({}),
   },
   ChatPromptTemplate: {
-    fromMessages: jest.fn().mockReturnValue({
-      pipe: jest.fn(),
+    fromMessages: vi.fn().mockReturnValue({
+      pipe: vi.fn(),
     }),
   },
 }));
 
-jest.mock('@langchain/core/documents', () => ({
-  Document: jest.fn().mockImplementation((args: any) => args),
+vi.mock('@langchain/core/documents', () => ({
+  Document: vi.fn().mockImplementation((args: any) => args),
 }));
 
 import { summarizeDocument } from '../../../src/summarize/document';
 import { buildGraph } from '../../../src/summarize/graph';
 
-const mockBuildGraph = buildGraph as jest.MockedFunction<typeof buildGraph>;
+const mockBuildGraph = buildGraph as ReturnType<typeof vi.fn>;
 
 describe('summarize/document', () => {
-  const mockInvoke = jest.fn();
+  const mockInvoke = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockInvoke.mockResolvedValue({ summary: 'Test document summary' });
     mockBuildGraph.mockReturnValue({ invoke: mockInvoke } as any);
   });
