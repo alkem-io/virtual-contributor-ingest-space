@@ -8,7 +8,6 @@ import { BATCH_SIZE, CHUNK_OVERLAP, CHUNK_SIZE } from './constants';
 import { OpenAIEmbeddingFunction } from '@chroma-core/openai';
 import { summarizeDocument } from './summarize/document';
 import { summariseBodyOfKnowledge } from './summarize/body.of.knowledge';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { IngestionPurpose } from './event.bus/events/ingest.body.of.knowledge';
 import { BodyOfKnowledgeReadResult } from './data.readers/types';
 
@@ -20,8 +19,7 @@ const batch = <T>(arr: T[], size: number): Array<Array<T>> =>
 export const embedDocuments = async (
   bodyOfKnowledge: BodyOfKnowledgeReadResult,
   docs: Document[],
-  purpose: IngestionPurpose,
-  model: BaseChatModel
+  purpose: IngestionPurpose
 ) => {
   const bokID = bodyOfKnowledge.id;
   logger.defaultMeta.bodyOfKnowledgeId = bokID;
@@ -143,7 +141,7 @@ export const embedDocuments = async (
       const summaryStartTime = Date.now();
 
       try {
-        const documentSummary = await summarizeDocument(splitted, model);
+        const documentSummary = await summarizeDocument(splitted);
 
         const summaryDuration = (
           (Date.now() - summaryStartTime) /
@@ -216,7 +214,7 @@ export const embedDocuments = async (
   );
 
   const bokStartTime = Date.now();
-  const bokSummary = await summariseBodyOfKnowledge(bokChunks, model);
+  const bokSummary = await summariseBodyOfKnowledge(bokChunks);
   const bokDuration = ((Date.now() - bokStartTime) / 1000).toFixed(2);
 
   logger.info(

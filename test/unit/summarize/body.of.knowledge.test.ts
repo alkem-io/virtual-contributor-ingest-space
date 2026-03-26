@@ -36,10 +36,6 @@ jest.mock('@langchain/core/documents', () => ({
   Document: jest.fn().mockImplementation((args: any) => args),
 }));
 
-jest.mock('@langchain/core/language_models/chat_models', () => ({
-  BaseChatModel: jest.fn(),
-}));
-
 import { summariseBodyOfKnowledge } from '../../../src/summarize/body.of.knowledge';
 import { buildGraph } from '../../../src/summarize/graph';
 
@@ -47,7 +43,6 @@ const mockBuildGraph = buildGraph as jest.MockedFunction<typeof buildGraph>;
 
 describe('summarize/body.of.knowledge', () => {
   const mockInvoke = jest.fn();
-  const mockModel = {} as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -55,19 +50,18 @@ describe('summarize/body.of.knowledge', () => {
     mockBuildGraph.mockReturnValue({ invoke: mockInvoke } as any);
   });
 
-  it('should call buildGraph with prompts and model', async () => {
+  it('should call buildGraph with prompts', async () => {
     const chunks = [
       { pageContent: 'doc summary 1', metadata: {} },
       { pageContent: 'doc summary 2', metadata: {} },
     ] as any[];
 
-    await summariseBodyOfKnowledge(chunks, mockModel);
+    await summariseBodyOfKnowledge(chunks);
 
     expect(mockBuildGraph).toHaveBeenCalledTimes(1);
     expect(mockBuildGraph).toHaveBeenCalledWith(
       expect.anything(), // summarizePrompt
-      expect.anything(), // refinePrompt
-      mockModel
+      expect.anything()  // refinePrompt
     );
   });
 
@@ -78,7 +72,7 @@ describe('summarize/body.of.knowledge', () => {
       { pageContent: 'summary 3', metadata: {} },
     ] as any[];
 
-    await summariseBodyOfKnowledge(chunks, mockModel);
+    await summariseBodyOfKnowledge(chunks);
 
     expect(mockInvoke).toHaveBeenCalledTimes(1);
     expect(mockInvoke).toHaveBeenCalledWith(
@@ -91,7 +85,7 @@ describe('summarize/body.of.knowledge', () => {
     const chunks = [{ pageContent: 'chunk', metadata: {} }] as any[];
     mockInvoke.mockResolvedValue({ summary: 'Body of knowledge overview' });
 
-    const result = await summariseBodyOfKnowledge(chunks, mockModel);
+    const result = await summariseBodyOfKnowledge(chunks);
 
     expect(result).toBe('Body of knowledge overview');
   });
@@ -102,7 +96,7 @@ describe('summarize/body.of.knowledge', () => {
       metadata: {},
     })) as any[];
 
-    await summariseBodyOfKnowledge(chunks, mockModel);
+    await summariseBodyOfKnowledge(chunks);
 
     expect(mockInvoke).toHaveBeenCalledWith(
       { chunks },
@@ -114,7 +108,7 @@ describe('summarize/body.of.knowledge', () => {
     const chunks = [{ pageContent: 'only doc', metadata: {} }] as any[];
     mockInvoke.mockResolvedValue({ summary: 'Single doc BoK' });
 
-    const result = await summariseBodyOfKnowledge(chunks, mockModel);
+    const result = await summariseBodyOfKnowledge(chunks);
 
     expect(result).toBe('Single doc BoK');
     expect(mockInvoke).toHaveBeenCalledWith(
@@ -127,7 +121,7 @@ describe('summarize/body.of.knowledge', () => {
     const chunks = [{ pageContent: 'chunk', metadata: {} }] as any[];
     mockInvoke.mockRejectedValue(new Error('BoK summarization failed'));
 
-    await expect(summariseBodyOfKnowledge(chunks, mockModel)).rejects.toThrow(
+    await expect(summariseBodyOfKnowledge(chunks)).rejects.toThrow(
       'BoK summarization failed'
     );
   });

@@ -13,7 +13,6 @@ import {
 } from './event.bus/events/ingest.body.of.knowledge';
 import { ReadResult } from './data.readers/types';
 import { embedDocuments } from './embed.documents';
-import { modelMistralSmall } from './summarize/graph';
 
 export const setResultError = (
   result: IngestBodyOfKnowledgeResult,
@@ -42,7 +41,6 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
   );
 
   const purpose = event.purpose;
-  const model = modelMistralSmall;
 
   logger.defaultMeta.bodyOfKnowledgeId = event.bodyOfKnowledgeId;
   logger.defaultMeta.type = event.type;
@@ -51,7 +49,6 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
   logger.info(
     `Ingestion started for ${event.type}: ${event.bodyOfKnowledgeId}`
   );
-  logger.info('Using summarization model: mistral-small');
   const alkemioClient = new AlkemioCliClient();
 
   // make sure the service user has valid credentials
@@ -102,8 +99,7 @@ export const embedBodyOfKnowledge = async (event: IngestBodyOfKnowledge) => {
     embeddingResult = await embedDocuments(
       result.bodyOfKnowledge,
       result.documents,
-      purpose,
-      model
+      purpose
     );
   } catch (error) {
     logger.error('Failed to insert embeddings', {

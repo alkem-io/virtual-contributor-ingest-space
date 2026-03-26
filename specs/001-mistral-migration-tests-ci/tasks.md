@@ -74,8 +74,8 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 ### Tests for User Story 2
 
 - [ ] T014 [P] [US2] Write tests for ingestion orchestrator in test/unit/embed.body.of.knowledge.test.ts: test `embedBodyOfKnowledge` success path publishes result, test `setResultError` sets error fields and timestamps, test AlkemioClient init failure returns error result, test failed document read returns error result, test failed embedding returns error result with VECTOR_INSERT code, test timing metrics logged
-- [ ] T015 [P] [US2] Write tests for RabbitMQ connection in test/unit/event.bus/connection.test.ts: test Connection class connect/consume/send/disconnect, test message parsing (valid JSON, invalid JSON), test async consumer handler, test summarizationModel field parsing with default fallback
-- [ ] T016 [P] [US2] Write tests for ingestion event classes in test/unit/event.bus/events/ingest.body.of.knowledge.test.ts: test IngestBodyOfKnowledge constructor with all fields, default summarizationModel, BodyOfKnowledgeType enum values, SummarizationModel enum values
+- [ ] T015 [P] [US2] Write tests for RabbitMQ connection in test/unit/event.bus/connection.test.ts: test Connection class connect/consume/send/disconnect, test message parsing (valid JSON, invalid JSON), test async consumer handler
+- [ ] T016 [P] [US2] Write tests for ingestion event classes in test/unit/event.bus/events/ingest.body.of.knowledge.test.ts: test IngestBodyOfKnowledge constructor with all fields, BodyOfKnowledgeType enum values
 - [ ] T017 [P] [US2] Write tests for ingestion result class in test/unit/event.bus/events/ingest.body.of.knowledge.result.test.ts: test IngestBodyOfKnowledgeResult constructor, ErrorCode enum values, IngestionResult enum values
 
 **Checkpoint**: All US2 tests pass; error paths and observability covered

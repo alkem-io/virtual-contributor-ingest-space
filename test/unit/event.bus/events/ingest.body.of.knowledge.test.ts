@@ -2,7 +2,6 @@ import {
   IngestBodyOfKnowledge,
   BodyOfKnowledgeType,
   IngestionPurpose,
-  SummarizationModel,
 } from '../../../../src/event.bus/events/ingest.body.of.knowledge';
 
 describe('IngestBodyOfKnowledge', () => {
@@ -12,26 +11,13 @@ describe('IngestBodyOfKnowledge', () => {
         'space-123',
         BodyOfKnowledgeType.ALKEMIO_SPACE,
         IngestionPurpose.KNOWLEDGE,
-        'persona-456',
-        SummarizationModel.MISTRAL_SMALL
+        'persona-456'
       );
 
       expect(event.bodyOfKnowledgeId).toBe('space-123');
       expect(event.type).toBe(BodyOfKnowledgeType.ALKEMIO_SPACE);
       expect(event.purpose).toBe(IngestionPurpose.KNOWLEDGE);
       expect(event.personaId).toBe('persona-456');
-      expect(event.summarizationModel).toBe(SummarizationModel.MISTRAL_SMALL);
-    });
-
-    it('defaults summarizationModel to MISTRAL_SMALL', () => {
-      const event = new IngestBodyOfKnowledge(
-        'kb-789',
-        BodyOfKnowledgeType.ALKEMIO_KNOWLEDGE_BASE,
-        IngestionPurpose.CONTEXT,
-        'persona-001'
-      );
-
-      expect(event.summarizationModel).toBe(SummarizationModel.MISTRAL_SMALL);
     });
 
     it('fields are readonly', () => {
@@ -60,10 +46,6 @@ describe('IngestBodyOfKnowledge', () => {
     it('IngestionPurpose has expected values', () => {
       expect(IngestionPurpose.KNOWLEDGE).toBe('knowledge');
       expect(IngestionPurpose.CONTEXT).toBe('context');
-    });
-
-    it('SummarizationModel has expected values', () => {
-      expect(SummarizationModel.MISTRAL_SMALL).toBe('mistral-small');
     });
   });
 });

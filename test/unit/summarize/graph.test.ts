@@ -59,10 +59,6 @@ jest.mock('@langchain/core/prompts', () => ({
   },
 }));
 
-jest.mock('@langchain/core/language_models/chat_models', () => ({
-  BaseChatModel: jest.fn(),
-}));
-
 jest.mock('langsmith/wrappers', () => ({
   wrapSDK: jest.fn((x: any) => x),
 }));
@@ -171,7 +167,7 @@ describe('summarize/graph', () => {
       expect(mockCompile).toHaveBeenCalled();
     });
 
-    it('should use default model when none provided', () => {
+    it('should use internal model', () => {
       const { buildGraph } = require('../../../src/summarize/graph');
 
       const mockPrompt = {
@@ -180,28 +176,8 @@ describe('summarize/graph', () => {
         }),
       };
 
-      // Call without third argument - should use modelMistralSmall default
       const graph = buildGraph(mockPrompt as any, mockPrompt as any);
       expect(graph).toBeDefined();
-    });
-
-    it('should use provided custom model', () => {
-      const { buildGraph } = require('../../../src/summarize/graph');
-
-      const mockPrompt = {
-        pipe: jest.fn().mockReturnValue({
-          invoke: jest.fn().mockResolvedValue({ content: 'test' }),
-        }),
-      };
-      const mockModel = {
-        invoke: jest.fn(),
-        pipe: jest.fn(),
-      };
-
-      const graph = buildGraph(mockPrompt as any, mockPrompt as any, mockModel as any);
-      expect(graph).toBeDefined();
-      // The prompt.pipe should be called with the custom model
-      expect(mockPrompt.pipe).toHaveBeenCalledWith(mockModel);
     });
   });
 

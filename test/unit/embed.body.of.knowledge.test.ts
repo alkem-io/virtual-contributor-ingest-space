@@ -30,10 +30,6 @@ jest.mock('../../src/embed.documents', () => ({
   embedDocuments: mockEmbedDocuments,
 }));
 
-jest.mock('../../src/summarize/graph', () => ({
-  modelMistralSmall: { fake: 'model' },
-}));
-
 import {
   setResultError,
   embedBodyOfKnowledge,
@@ -151,8 +147,7 @@ describe('embed.body.of.knowledge', () => {
       expect(mockEmbedDocuments).toHaveBeenCalledWith(
         bodyOfKnowledge,
         docs,
-        IngestionPurpose.KNOWLEDGE,
-        { fake: 'model' }
+        IngestionPurpose.KNOWLEDGE
       );
     });
 

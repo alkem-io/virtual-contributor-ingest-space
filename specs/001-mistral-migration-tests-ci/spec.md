@@ -179,8 +179,6 @@ tests, and that it blocks merging on failure.
 - What happens when ChromaDB is unreachable during embedding insertion?
 - What happens when the Scaleway embeddings endpoint returns
   differently-dimensioned vectors than ChromaDB expects?
-- What happens when a RabbitMQ message has an unrecognized
-  `summarizationModel` value?
 
 ## Clarifications
 
@@ -229,8 +227,7 @@ tests, and that it blocks merging on failure.
 ### Key Entities
 
 - **Ingestion Event**: A message received from RabbitMQ containing a
-  body-of-knowledge identifier, type, purpose, persona, and optional
-  summarization model selection.
+  body-of-knowledge identifier, type, purpose, and persona.
 - **Body of Knowledge**: A collection of documents fetched from the
   Alkemio platform that represents a space's content. Gets summarized
   into a single overview.
@@ -265,9 +262,8 @@ tests, and that it blocks merging on failure.
 
 - The Mistral API and Scaleway embeddings endpoint are stable,
   production-ready services with acceptable latency and uptime.
-- The existing RabbitMQ message format is extended (not replaced)
-  with the optional `summarizationModel` field, maintaining backward
-  compatibility with existing message producers.
+- The existing RabbitMQ message format is unchanged, maintaining
+  backward compatibility with existing message producers.
 - ChromaDB v3.x is a stable release suitable for production use,
   and the migration from v1.x requires only client-side code changes.
 - The CI pipeline will use GitHub Actions, as the repository is

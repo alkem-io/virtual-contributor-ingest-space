@@ -36,10 +36,6 @@ jest.mock('@langchain/core/documents', () => ({
   Document: jest.fn().mockImplementation((args: any) => args),
 }));
 
-jest.mock('@langchain/core/language_models/chat_models', () => ({
-  BaseChatModel: jest.fn(),
-}));
-
 import { summarizeDocument } from '../../../src/summarize/document';
 import { buildGraph } from '../../../src/summarize/graph';
 
@@ -47,7 +43,6 @@ const mockBuildGraph = buildGraph as jest.MockedFunction<typeof buildGraph>;
 
 describe('summarize/document', () => {
   const mockInvoke = jest.fn();
-  const mockModel = {} as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -55,19 +50,18 @@ describe('summarize/document', () => {
     mockBuildGraph.mockReturnValue({ invoke: mockInvoke } as any);
   });
 
-  it('should call buildGraph with summarize and refine prompts and model', async () => {
+  it('should call buildGraph with summarize and refine prompts', async () => {
     const chunks = [
       { pageContent: 'chunk1', metadata: {} },
       { pageContent: 'chunk2', metadata: {} },
     ] as any[];
 
-    await summarizeDocument(chunks, mockModel);
+    await summarizeDocument(chunks);
 
     expect(mockBuildGraph).toHaveBeenCalledTimes(1);
     expect(mockBuildGraph).toHaveBeenCalledWith(
       expect.anything(), // summarizePrompt
-      expect.anything(), // refinePrompt
-      mockModel
+      expect.anything()  // refinePrompt
     );
   });
 
@@ -78,7 +72,7 @@ describe('summarize/document', () => {
       { pageContent: 'chunk3', metadata: {} },
     ] as any[];
 
-    await summarizeDocument(chunks, mockModel);
+    await summarizeDocument(chunks);
 
     expect(mockInvoke).toHaveBeenCalledTimes(1);
     expect(mockInvoke).toHaveBeenCalledWith(
@@ -91,7 +85,7 @@ describe('summarize/document', () => {
     const chunks = [{ pageContent: 'chunk1', metadata: {} }] as any[];
     mockInvoke.mockResolvedValue({ summary: 'Final summary result' });
 
-    const result = await summarizeDocument(chunks, mockModel);
+    const result = await summarizeDocument(chunks);
 
     expect(result).toBe('Final summary result');
   });
@@ -102,7 +96,7 @@ describe('summarize/document', () => {
       metadata: {},
     })) as any[];
 
-    await summarizeDocument(chunks, mockModel);
+    await summarizeDocument(chunks);
 
     // recursionLimit = 5 * 2 + 10 = 20
     expect(mockInvoke).toHaveBeenCalledWith(
@@ -115,7 +109,7 @@ describe('summarize/document', () => {
     const chunks = [{ pageContent: 'only chunk', metadata: {} }] as any[];
     mockInvoke.mockResolvedValue({ summary: 'Single chunk summary' });
 
-    const result = await summarizeDocument(chunks, mockModel);
+    const result = await summarizeDocument(chunks);
 
     expect(result).toBe('Single chunk summary');
     expect(mockInvoke).toHaveBeenCalledWith(
@@ -128,7 +122,7 @@ describe('summarize/document', () => {
     const chunks = [{ pageContent: 'chunk1', metadata: {} }] as any[];
     mockInvoke.mockRejectedValue(new Error('Graph invocation failed'));
 
-    await expect(summarizeDocument(chunks, mockModel)).rejects.toThrow(
+    await expect(summarizeDocument(chunks)).rejects.toThrow(
       'Graph invocation failed'
     );
   });

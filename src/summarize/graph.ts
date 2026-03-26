@@ -2,7 +2,6 @@ import { ChatMistralAI } from '@langchain/mistralai';
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import { Document } from '@langchain/core/documents';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 import logger from '../logger';
 
@@ -43,11 +42,10 @@ logger.debug(`Initialized Mistral Small model: ${mistralSmallModelName}`);
 
 export const buildGraph = (
   summarizePrompt: ChatPromptTemplate,
-  refinePrompt: ChatPromptTemplate,
-  model: BaseChatModel = modelMistralSmall
+  refinePrompt: ChatPromptTemplate
 ) => {
-  const summaryChain = summarizePrompt.pipe(model);
-  const refineChain = refinePrompt.pipe(model);
+  const summaryChain = summarizePrompt.pipe(modelMistralSmall);
+  const refineChain = refinePrompt.pipe(modelMistralSmall);
 
   const SummarizeAnnotation = Annotation.Root({
     chunks: Annotation<Document[]>(),

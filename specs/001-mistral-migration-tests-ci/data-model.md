@@ -14,14 +14,10 @@ Received from the RabbitMQ input queue.
 | type | BodyOfKnowledgeType | yes | `alkemio-space` or `alkemio-knowledge-base` |
 | purpose | IngestionPurpose | yes | Purpose of the ingestion run |
 | personaId | string | yes | Persona identifier for the virtual contributor |
-| summarizationModel | SummarizationModel | no | Model selection, defaults to `mistral-small` |
 
 ### BodyOfKnowledgeType (enum)
 - `alkemio-space`
 - `alkemio-knowledge-base`
-
-### SummarizationModel (enum)
-- `mistral-small` (default)
 
 ## Ingestion Result (Output Message)
 

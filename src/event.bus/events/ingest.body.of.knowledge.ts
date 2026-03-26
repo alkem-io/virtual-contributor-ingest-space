@@ -7,16 +7,11 @@ export enum BodyOfKnowledgeType {
   ALKEMIO_KNOWLEDGE_BASE = 'alkemio-knowledge-base',
 }
 
-export enum SummarizationModel {
-  MISTRAL_SMALL = 'mistral-small',
-}
-
 export class IngestBodyOfKnowledge {
   constructor(
     public readonly bodyOfKnowledgeId: string,
     public readonly type: BodyOfKnowledgeType,
     public readonly purpose: IngestionPurpose,
-    public readonly personaId: string,
-    public readonly summarizationModel: SummarizationModel = SummarizationModel.MISTRAL_SMALL
+    public readonly personaId: string
   ) {}
 }

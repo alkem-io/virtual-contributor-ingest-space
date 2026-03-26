@@ -5,7 +5,6 @@ import {
 } from '@langchain/core/prompts';
 import { Document } from '@langchain/core/documents';
 import { buildGraph } from './graph';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import logger from '../logger';
 const systemMessage = SystemMessagePromptTemplate.fromTemplate(
   `Expert at creating structured, information-dense summaries for semantic search and vector retrieval.
@@ -65,12 +64,9 @@ Refined summary:`
   ),
 ]);
 
-export const summarizeDocument = async (
-  chunks: Document[],
-  model: BaseChatModel
-) => {
+export const summarizeDocument = async (chunks: Document[]) => {
   logger.info(`Starting document summarization with ${chunks.length} chunks`);
-  const graph = buildGraph(summarizePrompt, refinePrompt, model);
+  const graph = buildGraph(summarizePrompt, refinePrompt);
   const final = await graph.invoke(
     { chunks },
     { recursionLimit: chunks.length * 2 + 10 }

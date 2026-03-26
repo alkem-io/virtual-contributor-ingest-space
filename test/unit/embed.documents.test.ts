@@ -56,10 +56,6 @@ jest.mock('@langchain/core/documents', () => ({
   })),
 }));
 
-jest.mock('@langchain/core/language_models/chat_models', () => ({
-  BaseChatModel: jest.fn(),
-}));
-
 jest.mock('chromadb', () => ({
   Metadata: {},
 }));
@@ -74,8 +70,6 @@ import { Document } from '@langchain/core/documents';
 const ORIGINAL_ENV = { ...process.env };
 
 describe('embedDocuments', () => {
-  const mockModel = {} as any;
-
   const createDoc = (content: string, metadata: any = {}): Document => ({
     pageContent: content,
     metadata: {
@@ -127,8 +121,7 @@ describe('embedDocuments', () => {
       const result = await embedDocuments(
         defaultBoK,
         [createDoc('test')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(result).toBe(false);
@@ -140,8 +133,7 @@ describe('embedDocuments', () => {
       const result = await embedDocuments(
         defaultBoK,
         [createDoc('test')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(result).toBe(false);
@@ -153,8 +145,7 @@ describe('embedDocuments', () => {
       const result = await embedDocuments(
         defaultBoK,
         [createDoc('test')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(result).toBe(false);
@@ -166,8 +157,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [createDoc('test')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(mockLogger.error).toHaveBeenCalled();
@@ -185,8 +175,7 @@ describe('embedDocuments', () => {
       const result = await embedDocuments(
         defaultBoK,
         [createDoc('test content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(result).toBe(true);
@@ -202,8 +191,7 @@ describe('embedDocuments', () => {
       const result = await embedDocuments(
         defaultBoK,
         [createDoc('tiny')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(result).toBe(true);
@@ -220,8 +208,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [spreadsheetDoc],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       // splitDocuments should NOT be called for spreadsheets
@@ -250,8 +237,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [createDoc('long content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(summarizeDocument).toHaveBeenCalledTimes(1);
@@ -272,8 +258,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(summarizeDocument).not.toHaveBeenCalled();
@@ -300,8 +285,7 @@ describe('embedDocuments', () => {
       const result = await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(result).toBe(true);
@@ -334,8 +318,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       const addCall = mockCollection.add.mock.calls[0][0];
@@ -365,8 +348,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(mockCollection.add).toHaveBeenCalled();
@@ -387,8 +369,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(mockChromaClient.getOrCreateCollection).toHaveBeenCalledWith(
@@ -409,8 +390,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(mockChromaClient.deleteCollection).toHaveBeenCalledWith({
@@ -433,8 +413,7 @@ describe('embedDocuments', () => {
       const result = await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(result).toBe(true);
@@ -454,8 +433,7 @@ describe('embedDocuments', () => {
         embedDocuments(
           defaultBoK,
           [createDoc('content')],
-          IngestionPurpose.KNOWLEDGE,
-          mockModel
+          IngestionPurpose.KNOWLEDGE
         )
       ).rejects.toThrow('Batch add failed');
     });
@@ -473,8 +451,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(summariseBodyOfKnowledge).toHaveBeenCalledTimes(1);
@@ -495,8 +472,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       const addCall = mockCollection.add.mock.calls[0][0];
@@ -523,8 +499,7 @@ describe('embedDocuments', () => {
       await embedDocuments(
         bokWithAbout,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       const addCall = mockCollection.add.mock.calls[0][0];
@@ -546,8 +521,7 @@ describe('embedDocuments', () => {
       const result = await embedDocuments(
         defaultBoK,
         [createDoc('content')],
-        IngestionPurpose.KNOWLEDGE,
-        mockModel
+        IngestionPurpose.KNOWLEDGE
       );
 
       expect(result).toBe(true);
