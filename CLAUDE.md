@@ -61,8 +61,7 @@ src/
 
 ## Coding Conventions
 
-- **Formatting (Prettier):** single quotes, trailing commas (es5), 2-space indent, semicolons, bracket spacing, arrow parens avoided when possible.
-- **Linting (ESLint):** TypeScript ESLint with Prettier integration. Single quotes enforced. No multiple empty lines. Unused vars are errors (prefix unused args with `_`).
+- **Formatting & Linting (Biome):** Single quotes, trailing commas (es5), 2-space indent, semicolons, bracket spacing, arrow parens avoided when possible. Unused variables are errors (prefix unused args with `_`). Import organization is enforced automatically.
 - **TypeScript:** strict mode, target ES2018, CommonJS modules, decorators enabled.
 - **Logging:** Winston for structured logging. Use `logger.info()`, `logger.error()`, etc.
 - **Configuration:** All configuration via environment variables. No hardcoded secrets or endpoints.

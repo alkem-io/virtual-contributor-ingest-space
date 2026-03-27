@@ -27,8 +27,9 @@ export class Connection {
 
   static async get() {
     if (!Connection.#instance) {
-      Connection.#instance = new Connection();
-      await Connection.#instance.connect();
+      const instance = new Connection();
+      await instance.connect();
+      Connection.#instance = instance;
     }
 
     return Connection.#instance;
