@@ -26,11 +26,11 @@ Entry point: `src/index.ts` -- connects to RabbitMQ, consumes messages, calls `e
 | ----------------------- | ---------------------------------------------------------- |
 | `npm run build`         | Compile TypeScript (runs `clean` first via `prebuild`)     |
 | `npm run clean`         | Remove `dist/` directory                                   |
-| `npm run lint`          | Type-check with `tsc --noEmit` then run ESLint             |
-| `npm run lint:fix`      | Lint with auto-fix                                         |
-| `npm run format`        | Prettier on `src/**/*.ts` and `graphql/**/*.graphql`       |
-| `npm test`              | Run Jest tests                                             |
-| `npm run test:coverage` | Run Jest with coverage reporting                           |
+| `npm run lint`          | Type-check with `tsc --noEmit` then run Biome              |
+| `npm run lint:fix`      | Lint with auto-fix via Biome                               |
+| `npm run format`        | Biome format on `src/` and `graphql/`                      |
+| `npm test`              | Run Vitest tests                                           |
+| `npm run test:coverage` | Run Vitest with coverage reporting                         |
 | `npm run codegen`       | Generate TypeScript types from GraphQL schema              |
 | `npm run start:dev`     | Start with dotenvx loading `.env.development`, via nodemon |
 | `npm start`             | Run compiled output (`node ./dist/index.js`)               |
@@ -70,7 +70,7 @@ src/
 
 ## Testing Conventions
 
-- **Framework:** Jest with ts-jest preset, Node test environment.
+- **Framework:** Vitest with v8 coverage provider, Node test environment.
 - **Test location:** `test/` directory, matching `**/test/**/*.test.ts`.
 - **Mocks:** Shared mocks in `test/helpers/mocks.ts`.
 - **Coverage thresholds:**

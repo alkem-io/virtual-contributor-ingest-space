@@ -172,11 +172,54 @@ describe('Connection', () => {
       expect(mockLogger.error).toHaveBeenCalled();
     });
 
-    it('uses noAck: true', async () => {
-      await conn.consume(vi.fn());
+    it('uses noAck: false for manual acknowledgment', async () => {
+      await conn.consume(vi.fn().mockResolvedValue({ error: undefined }));
 
       const options = mockChannel.consume.mock.calls[0][2];
       expect(options).toEqual({ noAck: false });
+    });
+
+    it('acks the message on successful handler resolution', async () => {
+      const handler = vi.fn().mockResolvedValue({ error: undefined });
+      await conn.consume(handler);
+
+      const callback = mockChannel.consume.mock.calls[0][1];
+      const msg = {
+        content: Buffer.from(
+          JSON.stringify({
+            bodyOfKnowledgeId: 'bok-1',
+            type: 'alkemio-space',
+            purpose: 'knowledge',
+            personaId: 'p-1',
+          })
+        ),
+      };
+      await callback(msg);
+
+      expect(handler).toHaveBeenCalled();
+      expect(mockChannel.ack).toHaveBeenCalledWith(msg);
+      expect(mockChannel.nack).not.toHaveBeenCalled();
+    });
+
+    it('nacks the message without requeue when handler throws', async () => {
+      const handler = vi.fn().mockRejectedValue(new Error('unexpected'));
+      await conn.consume(handler);
+
+      const callback = mockChannel.consume.mock.calls[0][1];
+      const msg = {
+        content: Buffer.from(
+          JSON.stringify({
+            bodyOfKnowledgeId: 'bok-1',
+            type: 'alkemio-space',
+            purpose: 'knowledge',
+            personaId: 'p-1',
+          })
+        ),
+      };
+      await callback(msg);
+
+      expect(mockChannel.nack).toHaveBeenCalledWith(msg, false, false);
+      expect(mockChannel.ack).not.toHaveBeenCalled();
     });
   });
 

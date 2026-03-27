@@ -46,14 +46,11 @@ npm run lint:fix
 # Format
 npm run format
 
-# Check formatting (CI-style)
-npx prettier --check "src/**/*.ts" "graphql/**/*.graphql"
-
 # Run tests
-npx jest
+npx vitest run
 
 # Run tests with coverage
-npx jest --coverage
+npx vitest run --coverage
 
 # Regenerate GraphQL types (after schema changes)
 npm run codegen

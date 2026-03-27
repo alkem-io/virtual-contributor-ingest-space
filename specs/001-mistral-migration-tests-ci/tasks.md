@@ -19,12 +19,12 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 **Purpose**: Install test tooling and create project structure for testing
 
-- [x] T001 Install Jest dev dependencies: `jest`, `ts-jest`, `@types/jest` in package.json
-- [x] T002 Create Jest configuration in jest.config.ts with ts-jest preset, test match `test/**/*.test.ts`, coverage thresholds (90% lines, 90% statements, 85% functions, 80% branches), coverage exclusions for `src/generated/`, `node_modules/`, `dist/`
-- [x] T003 Add `test` and `test:coverage` scripts to package.json (`jest` and `jest --coverage`)
+- [x] T001 Install Vitest dev dependencies: `vitest`, `@vitest/coverage-v8` in package.json
+- [x] T002 Create Vitest configuration in vitest.config.ts with v8 coverage provider, test match `test/**/*.test.ts`, coverage thresholds (90% lines, 90% statements, 85% functions, 80% branches), coverage exclusions for `src/generated/`, `node_modules/`, `dist/`
+- [x] T003 Add `test` and `test:coverage` scripts to package.json (`vitest run` and `vitest run --coverage`)
 - [x] T004 Create test directory structure: test/unit/, test/unit/callout.handlers/, test/unit/data.readers/, test/unit/event.bus/, test/unit/event.bus/events/, test/unit/loaders/, test/unit/summarize/, test/unit/graphql.client/, test/helpers/
 
-**Checkpoint**: `npx jest --showConfig` runs without errors
+**Checkpoint**: `npx vitest run --reporter=verbose` runs without errors
 
 ---
 
@@ -46,7 +46,7 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 **Status**: Implementation complete on branch. Tasks below validate the migration via tests.
 
-**Independent Test**: Run `npx jest test/unit/summarize/ test/unit/azure.embedding.function.test.ts test/unit/embed.documents.test.ts test/unit/db.connect.test.ts` and confirm all pass.
+**Independent Test**: Run `npx vitest run test/unit/summarize/ test/unit/azure.embedding.function.test.ts test/unit/embed.documents.test.ts test/unit/db.connect.test.ts` and confirm all pass.
 
 ### Tests for User Story 1
 
@@ -69,7 +69,7 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 **Status**: Implementation complete on branch. Tasks below validate via tests.
 
-**Independent Test**: Run `npx jest test/unit/embed.body.of.knowledge.test.ts test/unit/event.bus/` and confirm all pass.
+**Independent Test**: Run `npx vitest run test/unit/embed.body.of.knowledge.test.ts test/unit/event.bus/` and confirm all pass.
 
 ### Tests for User Story 2
 
@@ -86,7 +86,7 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 **Goal**: Complete remaining test files to reach 90%+ line coverage
 
-**Independent Test**: Run `npx jest --coverage` and verify 90%+ lines excluding generated/.
+**Independent Test**: Run `npx vitest run --coverage` and verify 90%+ lines excluding generated/.
 
 ### Tests for User Story 3
 
@@ -104,9 +104,9 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 - [x] T029 [P] [US3] Write tests for knowledge base data reader in test/unit/data.readers/knowledge.base.test.ts: test knowledge base fetching, test document aggregation, test error handling
 - [x] T030 [P] [US3] Write tests for space tree processor in test/unit/data.readers/process.space.tree.test.ts: test recursive subspace traversal, test callout processing at each level, test empty subspace handling
 - [x] T031 [P] [US3] Write tests for logger in test/unit/logger.test.ts: test `serializeError` extracts message/stack from Error objects, test `getErrorMessage` handles string and Error inputs, test logger transports configured for production vs non-production
-- [x] T032 [US3] Run `npx jest --coverage` and verify all thresholds met (90% lines, 90% statements, 85% functions, 80% branches). If any module is below threshold, add targeted tests for uncovered branches.
+- [x] T032 [US3] Run `npx vitest run --coverage` and verify all thresholds met (90% lines, 90% statements, 85% functions, 80% branches). If any module is below threshold, add targeted tests for uncovered branches.
 
-**Checkpoint**: `npx jest --coverage` passes with all thresholds met
+**Checkpoint**: `npx vitest run --coverage` passes with all thresholds met
 
 ---
 
@@ -116,7 +116,7 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 **Independent Test**: Read CLAUDE.md and verify it matches current project structure, commands, and conventions.
 
-- [x] T033 [US4] Write CLAUDE.md at repository root with sections: project description (Alkemio space ingestion service), architecture (RabbitMQ → fetch → chunk → summarize → embed → ChromaDB pipeline), key commands (build, lint, lint:fix, format, test, test:coverage, codegen, start:dev, start), project structure (src/ directories and their purpose), coding conventions (single quotes, trailing comma es5, 2-space indent, Winston structured logging, env vars for config), testing conventions (Jest + ts-jest, mocks in test/helpers/mocks.ts, 90% coverage threshold, exclude generated/), environment setup (list all env vars from .env.default with descriptions)
+- [x] T033 [US4] Write CLAUDE.md at repository root with sections: project description (Alkemio space ingestion service), architecture (RabbitMQ → fetch → chunk → summarize → embed → ChromaDB pipeline), key commands (build, lint, lint:fix, format, test, test:coverage, codegen, start:dev, start), project structure (src/ directories and their purpose), coding conventions (single quotes, trailing comma es5, 2-space indent, Winston structured logging, env vars for config), testing conventions (Vitest, mocks in test/helpers/mocks.ts, 90% coverage threshold, exclude generated/), environment setup (list all env vars from .env.default with descriptions)
 
 **Checkpoint**: CLAUDE.md exists and is accurate
 
@@ -128,7 +128,7 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 **Independent Test**: Push a commit and verify the CI workflow runs all steps.
 
-- [x] T034 [US5] Create GitHub Actions workflow in .github/workflows/ci.yml: trigger on push to any branch and pull_request to develop, single job on ubuntu-latest, steps: checkout, setup Node.js 22.x, npm ci, run `npm run lint`, run `npx prettier --check "src/**/*.ts" "graphql/**/*.graphql"`, run `npm run build`, run `npx jest --coverage`; fail pipeline if any step fails
+- [x] T034 [US5] Create GitHub Actions workflow in .github/workflows/ci.yml: trigger on push to any branch and pull_request to develop, single job on ubuntu-latest, steps: checkout, setup Node.js 22.x, npm ci, run `npm run lint`, run `npx prettier --check "src/**/*.ts" "graphql/**/*.graphql"`, run `npm run build`, run `npx vitest run --coverage`; fail pipeline if any step fails
 - [x] T035 [US5] Verify CI workflow syntax is valid by running `act --list` or reviewing YAML structure manually
 
 **Checkpoint**: CI pipeline runs and reports pass/fail correctly
@@ -139,7 +139,7 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 
 **Purpose**: Final validation and cleanup
 
-- [x] T036 Run full quality gate locally: `npm run lint && npx prettier --check "src/**/*.ts" "graphql/**/*.graphql" && npm run build && npx jest --coverage`
+- [x] T036 Run full quality gate locally: `npm run lint && npm run build && npx vitest run --coverage`
 - [x] T037 Verify no secrets or credentials in committed files (scan .env.default, CLAUDE.md)
 - [x] T038 Run quickstart.md validation: verify all commands listed in specs/001-mistral-migration-tests-ci/quickstart.md work correctly
 
@@ -150,7 +150,7 @@ work focuses on US3 (test suite), US4 (CLAUDE.md), and US5 (CI pipeline).
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: No dependencies — can start immediately
-- **Foundational (Phase 2)**: Depends on Phase 1 (Jest installed and configured)
+- **Foundational (Phase 2)**: Depends on Phase 1 (Vitest installed and configured)
 - **US1 Tests (Phase 3)**: Depends on Phase 2 (mock factories available)
 - **US2 Tests (Phase 4)**: Depends on Phase 2 (mock factories available); can run in parallel with Phase 3
 - **US3 Tests (Phase 5)**: Depends on Phase 2 (mock factories available); can run in parallel with Phases 3-4
@@ -209,15 +209,15 @@ Task: "Write tests for AlkemioCliClient in test/unit/graphql.client/"
 
 ### MVP First (US1 Tests Only)
 
-1. Complete Phase 1: Setup (Jest infra)
+1. Complete Phase 1: Setup (Vitest infra)
 2. Complete Phase 2: Foundational (mock factories)
 3. Complete Phase 3: US1 tests
-4. **STOP and VALIDATE**: `npx jest` passes for migration-critical code
+4. **STOP and VALIDATE**: `npx vitest run` passes for migration-critical code
 5. Continue to remaining stories
 
 ### Incremental Delivery
 
-1. Setup + Foundational → Jest working
+1. Setup + Foundational → Vitest working
 2. US1 tests → Migration validated
 3. US2 tests → Error handling validated
 4. US3 tests → Full coverage achieved (90%+)

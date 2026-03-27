@@ -3,7 +3,9 @@ import logger from '../logger';
 import { IngestBodyOfKnowledge } from './events/ingest.body.of.knowledge';
 import type { IngestBodyOfKnowledgeResult } from './events/ingest.body.of.knowledge.result';
 
-type ConsumeCallback = (event: IngestBodyOfKnowledge) => void | Promise<void>;
+type ConsumeCallback = (
+  event: IngestBodyOfKnowledge
+) => IngestBodyOfKnowledgeResult | Promise<IngestBodyOfKnowledgeResult>;
 
 type ConnectionConfig = {
   host: string;
@@ -139,9 +141,19 @@ export class Connection {
             purpose,
             personaId
           );
-          await handler(event);
+          const result = await handler(event);
+          if (result.error) {
+            // Business logic failure — ack the message (requeuing would
+            // just fail again) but log the failure for observability.
+            logger.warn(
+              `Handler returned error for ${event.bodyOfKnowledgeId}: ${result.error.message}`,
+              { errorCode: result.error.code }
+            );
+          }
           this.channel.ack(msg);
         } catch (error) {
+          // Infrastructure failure (JSON parse, unexpected throw) —
+          // nack without requeue (dead-letter if configured).
           logger.error(error);
           this.channel.nack(msg, false, false);
         }

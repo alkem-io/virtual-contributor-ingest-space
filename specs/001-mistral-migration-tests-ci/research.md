@@ -1,16 +1,16 @@
 # Research: Migrate to Mistral Platform with Tests and CI
 
-## R1: Jest Configuration for TypeScript Projects
+## R1: Vitest Configuration for TypeScript Projects
 
-**Decision**: Use Jest with `ts-jest` preset and `jest.config.ts` in TypeScript.
+**Decision**: Use Vitest with `vitest.config.ts` and v8 coverage provider.
 
-**Rationale**: Jest is the industry-standard testing framework for TypeScript/Node.js.
-`ts-jest` provides native TypeScript compilation without requiring a separate build step
-for tests. The project already uses TypeScript with CommonJS modules (`module: "commonjs"`
-in tsconfig), which `ts-jest` handles natively.
+**Rationale**: Vitest is the standard testing framework across the Alkemio stack.
+It provides native TypeScript support, fast execution, and built-in coverage
+reporting. The project uses TypeScript with CommonJS modules, which Vitest
+handles via its transform pipeline.
 
 **Configuration choices**:
-- Preset: `ts-jest` (compiles TS on-the-fly during test runs)
+- Coverage provider: v8
 - Test match: `test/**/*.test.ts`
 - Coverage: enabled with `--coverage` flag, thresholds enforced at 90% lines
 - Coverage exclusions: `src/generated/`, `node_modules/`, `dist/`
@@ -18,14 +18,13 @@ in tsconfig), which `ts-jest` handles natively.
 - Test environment: `node` (no DOM needed for a backend service)
 
 **Alternatives considered**:
-- Vitest: faster but requires ESM migration; project is CommonJS, risk of incompatibility
-  with some LangChain/ChromaDB modules. Not worth the migration effort.
-- Mocha + Chai + nyc: more setup required, less integrated coverage. Jest provides
-  all-in-one with better DX.
+- Jest + ts-jest: Initially chosen, then migrated to Vitest for consistency
+  with the rest of the stack and faster test execution.
+- Mocha + Chai + nyc: more setup required, less integrated coverage.
 
 ## R2: Mocking Strategy for External Dependencies
 
-**Decision**: Use Jest's built-in `jest.mock()` for module-level mocks and manual
+**Decision**: Use Vitest's built-in `vi.mock()` for module-level mocks and manual
 mock factories in `test/helpers/mocks.ts` for shared test doubles.
 
 **Rationale**: The service has 5 external dependencies that must be mocked:
@@ -35,7 +34,7 @@ mock factories in `test/helpers/mocks.ts` for shared test doubles.
 4. **Scaleway embeddings (OpenAI)**: Mock `embeddings.create` to return fixed vectors
 5. **Alkemio GraphQL client**: Mock `AlkemioCliClient` methods
 
-Jest's `jest.mock()` with factory functions is the standard approach. Creating a shared
+Vitest's `vi.mock()` with factory functions is the standard approach. Creating a shared
 `mocks.ts` helper avoids duplication across 20+ test files.
 
 **Alternatives considered**:
@@ -46,11 +45,11 @@ Jest's `jest.mock()` with factory functions is the standard approach. Creating a
 
 ## R3: Coverage Enforcement Strategy
 
-**Decision**: Enforce coverage thresholds in Jest config with `coverageThreshold.global`
-set to 90% for lines, and also enforce in CI via the same mechanism (Jest exits non-zero
-when thresholds are not met).
+**Decision**: Enforce coverage thresholds in Vitest config with `coverage.thresholds`
+set to 90% for lines, and also enforce in CI via the same mechanism (Vitest exits
+non-zero when thresholds are not met).
 
-**Rationale**: Single source of truth for coverage — configured in `jest.config.ts`,
+**Rationale**: Single source of truth for coverage — configured in `vitest.config.ts`,
 enforced locally and in CI without separate tooling.
 
 **Configuration**:
@@ -84,7 +83,7 @@ reproducible installs from lockfile.
 - Lint step: `npm run lint` (existing script: `tsc --noEmit && eslint`)
 - Format check: `npx prettier --check "src/**/*.ts" "graphql/**/*.graphql"`
 - Build: `npm run build`
-- Test: `npx jest --coverage` (coverage thresholds enforced by Jest config)
+- Test: `npx vitest run --coverage` (coverage thresholds enforced by Vitest config)
 - No caching for now — npm ci is fast enough for this project size
 
 **Alternatives considered**:
@@ -107,7 +106,7 @@ stable, structural information that rarely changes — not transient project sta
 3. Key commands (build, lint, format, test, codegen, start)
 4. Project structure (key directories and their purpose)
 5. Coding conventions (from constitution: naming, error handling, logging)
-6. Testing conventions (Jest, mock strategy, coverage requirements)
+6. Testing conventions (Vitest, mock strategy, coverage requirements)
 7. Environment setup (required env vars, .env files)
 
 ## R6: Test File Organization

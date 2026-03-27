@@ -22,5 +22,6 @@ import logger from './logger';
         `Ingest ${resultEvent.result} for: ${event.bodyOfKnowledgeId}`
       );
     }
+    return resultEvent;
   });
 })();

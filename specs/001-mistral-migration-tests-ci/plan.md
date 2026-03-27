@@ -9,7 +9,7 @@ Migrate the AI provider stack from Azure OpenAI/Mistral to native Mistral API
 (summarization) and Scaleway OpenAI-compatible endpoint (embeddings), upgrade
 ChromaDB client from v1.x to v3.x, improve summarization prompts and chunking
 logic, add structured logging with timing metrics, then retrofit a comprehensive
-Jest test suite (90%+ coverage excluding generated code), create CLAUDE.md, and
+Vitest test suite (90%+ coverage excluding generated code), create CLAUDE.md, and
 add a GitHub Actions CI pipeline for lint/format/build/test gates.
 
 ## Technical Context
@@ -17,7 +17,7 @@ add a GitHub Actions CI pipeline for lint/format/build/test gates.
 **Language/Version**: TypeScript 5.3+ on Node.js 22 (Volta-pinned), target ES2018, CommonJS modules
 **Primary Dependencies**: `@langchain/mistralai` (summarization), `@chroma-core/openai` + `openai` (embeddings), `chromadb` v3.3 (vector store), `amqplib` (RabbitMQ), `@alkemio/client-lib` + `graphql-request` (Alkemio API), `@langchain/langgraph` (summarization graph), Winston (logging)
 **Storage**: ChromaDB (vector database, external service)
-**Testing**: Jest with `ts-jest` preset, coverage thresholds enforced, `generated/` excluded
+**Testing**: Vitest with v8 coverage provider, coverage thresholds enforced, `generated/` excluded
 **Target Platform**: Linux containers (distroless Node.js 22), deployed via Kubernetes
 **Project Type**: Background worker service (message-driven, no HTTP)
 **Performance Goals**: Process a full space ingestion within reasonable time; AI provider latency dominates
@@ -134,7 +134,7 @@ test/
 └── ci.yml                            # Lint + format + build + test pipeline
 
 CLAUDE.md                             # Developer guidance for Claude Code
-jest.config.ts                        # Jest configuration
+vitest.config.ts                      # Vitest configuration
 ```
 
 **Structure Decision**: Single project with `src/` for source and `test/` for tests
