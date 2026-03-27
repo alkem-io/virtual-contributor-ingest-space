@@ -15,7 +15,7 @@ RUN apt-get update \
 		ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 
 # Install full deps for build (includes devDependencies like typescript).
 RUN npm ci

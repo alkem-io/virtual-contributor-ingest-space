@@ -1,8 +1,8 @@
-import { Logger } from 'winston';
-import { Callout } from '../generated/graphql';
 import { Document } from '@langchain/core/documents';
-import { generateDocument } from '../generate.document';
+import type { Logger } from 'winston';
 import { DocumentType } from '../document.type';
+import { generateDocument } from '../generate.document';
+import type { Callout } from '../generated/graphql';
 
 export const baseHandler = async (
   callout: Partial<Callout>,
@@ -34,9 +34,8 @@ export const baseHandler = async (
       continue;
     }
 
-    const {
-      profile: { displayName: senderName, url: senderUrl },
-    } = message.sender;
+    const senderName = message.sender.profile?.displayName ?? 'Unknown';
+    const senderUrl = message.sender.profile?.url ?? '';
     const postedOn = new Date(message.timestamp).toLocaleString('en-US');
     processedMessages.push(
       `\t${senderName} with profile link ${senderUrl} said '${message.message}' on ${postedOn}`
@@ -62,7 +61,7 @@ export const baseHandler = async (
   logger.info(`Generating documents for Callout (${documentId}) contributions`);
 
   for (const contribution of callout.contributions || []) {
-    let docLike;
+    let docLike: Record<string, any> | undefined;
     if (contribution.link) {
       docLike = contribution.link;
     } else if (contribution.post) {

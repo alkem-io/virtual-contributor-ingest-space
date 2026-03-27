@@ -1,9 +1,11 @@
-import amqlib, { ChannelModel, Channel } from 'amqplib';
+import amqlib, { type Channel, type ChannelModel } from 'amqplib';
 import logger from '../logger';
 import { IngestBodyOfKnowledge } from './events/ingest.body.of.knowledge';
-import { IngestBodyOfKnowledgeResult } from './events/ingest.body.of.knowledge.result';
+import type { IngestBodyOfKnowledgeResult } from './events/ingest.body.of.knowledge.result';
 
-type ConsumeCallback = (event: IngestBodyOfKnowledge) => void | Promise<void>;
+type ConsumeCallback = (
+  event: IngestBodyOfKnowledge
+) => IngestBodyOfKnowledgeResult | Promise<IngestBodyOfKnowledgeResult>;
 
 type ConnectionConfig = {
   host: string;
@@ -24,12 +26,13 @@ export class Connection {
   static #instance: Connection;
 
   static async get() {
-    if (!this.#instance) {
-      this.#instance = new Connection();
-      await this.#instance.connect();
+    if (!Connection.#instance) {
+      const instance = new Connection();
+      await instance.connect();
+      Connection.#instance = instance;
     }
 
-    return this.#instance;
+    return Connection.#instance;
   }
 
   private getEnvValue(key: string): string {
@@ -125,29 +128,39 @@ export class Connection {
   async consume(handler: ConsumeCallback) {
     this.channel.consume(
       this.config.incomingQueue,
-      msg => {
-        {
-          if (!msg) {
-            return logger.error('Invalid incoming message');
-          }
-          try {
-            const { bodyOfKnowledgeId, type, purpose, personaId } = JSON.parse(
-              msg.content.toString()
+      async msg => {
+        if (!msg) {
+          return logger.error('Invalid incoming message');
+        }
+        try {
+          const { bodyOfKnowledgeId, type, purpose, personaId } = JSON.parse(
+            msg.content.toString()
+          );
+          const event = new IngestBodyOfKnowledge(
+            bodyOfKnowledgeId,
+            type,
+            purpose,
+            personaId
+          );
+          const result = await handler(event);
+          if (result.error) {
+            // Business logic failure — ack the message (requeuing would
+            // just fail again) but log the failure for observability.
+            logger.warn(
+              `Handler returned error for ${event.bodyOfKnowledgeId}: ${result.error.message}`,
+              { errorCode: result.error.code }
             );
-            const event = new IngestBodyOfKnowledge(
-              bodyOfKnowledgeId,
-              type,
-              purpose,
-              personaId
-            );
-            handler(event);
-          } catch (error) {
-            logger.error(error);
           }
+          this.channel.ack(msg);
+        } catch (error) {
+          // Infrastructure failure (JSON parse, unexpected throw) —
+          // nack without requeue (dead-letter if configured).
+          logger.error(error);
+          this.channel.nack(msg, false, false);
         }
       },
       {
-        noAck: true,
+        noAck: false,
       }
     );
   }

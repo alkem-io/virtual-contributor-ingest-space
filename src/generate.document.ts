@@ -1,6 +1,6 @@
-import { Reference, Visual } from './generated/graphql';
-import { DocumentType, mapType } from './document.type';
 import { parse } from 'node-html-parser';
+import { type DocumentType, mapType } from './document.type';
+import type { Reference } from './generated/graphql';
 
 interface GeneratedDocument {
   documentId: string;
@@ -22,7 +22,6 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
     tagline,
     displayName,
     location,
-    visuals,
     type: profileType,
     who,
     why,
@@ -32,45 +31,47 @@ export const generateDocument = (docLike: any): GeneratedDocument => {
 
   const { city, country, postalCode } = location || {};
 
-  let pageContent = `Name: ${displayName}`;
-  if (tagline) pageContent = `${pageContent}\nTagline: ${tagline}`;
-  if (tagset?.tags.length)
-    pageContent = `${pageContent}\nTags: ${tagset?.tags.join(', ')}`;
+  // Section 1: Dense intro line — name, tagline, tags (stays with first chunk)
+  const introParts = [displayName];
+  if (tagline) introParts.push(tagline);
+  if (tagset?.tags.length) introParts.push(`(${tagset.tags.join(', ')})`);
+  const intro = introParts.join(' — ');
+
+  // Section 2: Main content — description body (bulk of the document)
+  let body = '';
   if (description) {
     try {
       const descriptionRoot = parse(description);
-      pageContent = `${pageContent}\nDescription: ${descriptionRoot.structuredText}`;
+      body = descriptionRoot.structuredText.trim();
     } catch (error) {
       console.error('Error parsing HTML description:', error);
-      pageContent = `${pageContent}\nDescription: ${description}`; // Fallback to raw description
+      body = description.trim();
     }
   }
-  if (why) pageContent = `${pageContent}\nWhy: ${why}`;
-  if (who) pageContent = `${pageContent}\nWho: ${who}`;
 
-  let processedVisuals = '';
-  (visuals || []).forEach((visual: Visual) => {
-    if (visual.uri) {
-      processedVisuals += `\t${visual.name}: ${visual.uri}`;
-    }
-  });
-
-  if (processedVisuals)
-    pageContent = `${pageContent}\nVisuals:\n${processedVisuals}`;
-
+  // Section 3: Context fields — grouped together
+  const contextParts: string[] = [];
+  if (why) contextParts.push(`Why: ${why}`);
+  if (who) contextParts.push(`Who: ${who}`);
   if (postalCode || city || country)
-    pageContent = `${pageContent}\nLocation: ${postalCode} ${city} ${country}`;
+    contextParts.push(
+      `Location: ${[postalCode, city, country].filter(Boolean).join(', ')}`
+    );
 
-  const processedRefs = (references || [])
-    .map(
-      ({ description, name, uri }: Reference) =>
-        `\tReference name: ${name}\n\tReference description: ${description}\n\tUri: ${uri}\n`
-    )
-    .join('\n');
-  if (processedRefs)
-    pageContent = `${pageContent}\nReferences:\n${processedRefs}`;
+  // Section 4: References — only those with descriptions (skip empty ones)
+  const refParts = (references || [])
+    .filter(({ description }: Reference) => description)
+    .map(({ description, name }: Reference) => `- ${name}: ${description}`);
 
-  pageContent = `${pageContent}\nURL: ${source}`;
+  // Assemble: intro joined to body without a newline so the splitter keeps them together.
+  // Context and references separated by double newline as natural split points.
+  let pageContent = intro;
+  if (body) pageContent = `${pageContent} — ${body}`;
+  if (contextParts.length)
+    pageContent = `${pageContent}\n\n${contextParts.join('\n')}`;
+  if (refParts.length)
+    pageContent = `${pageContent}\n\nReferences:\n${refParts.join('\n')}`;
+
   return {
     documentId,
     source,

@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
 import { Document } from '@langchain/core/documents';
 

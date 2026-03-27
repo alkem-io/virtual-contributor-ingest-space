@@ -13,5 +13,5 @@ export class IngestBodyOfKnowledge {
     public readonly type: BodyOfKnowledgeType,
     public readonly purpose: IngestionPurpose,
     public readonly personaId: string
-  ) { }
+  ) {}
 }

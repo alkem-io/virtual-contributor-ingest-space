@@ -15,4 +15,3 @@ fragment ProfileNoTagsetFields on Profile {
     name
   }
 }
-

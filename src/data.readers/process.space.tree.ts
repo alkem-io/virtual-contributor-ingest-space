@@ -1,9 +1,7 @@
 import { Document } from '@langchain/core/documents';
-
-import { Space } from '../generated/graphql';
-
 import { generateDocument } from '../generate.document';
-import { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
+import type { Space } from '../generated/graphql';
+import type { AlkemioCliClient } from '../graphql.client/AlkemioCliClient';
 import { processCallouts } from '../process.callouts';
 
 // recursive function

@@ -1,15 +1,15 @@
-import fs from 'fs';
-import https from 'https';
-import http from 'http';
-import { Logger } from 'winston';
-import { MimeType, Callout } from '../generated/graphql';
-import { Document } from '@langchain/core/documents';
-import { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
-import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
+import fs from 'node:fs';
+import http from 'node:http';
+import https from 'node:https';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
+import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
+import type { BaseDocumentLoader } from '@langchain/core/document_loaders/base';
+import type { Document } from '@langchain/core/documents';
+import type { AlkemioCliClient } from 'src/graphql.client/AlkemioCliClient';
+import type { Logger } from 'winston';
 import { MimeTypeDocumentMap } from '../document.type';
-import { SpreadSheetLoader, DocLoader } from '../loaders';
-import { AlkemioCliClient } from 'src/graphql.client/AlkemioCliClient';
+import { type Callout, MimeType } from '../generated/graphql';
+import { DocLoader, SpreadSheetLoader } from '../loaders';
 import { serializeError } from '../logger';
 
 const downloadDocument = async (
@@ -18,7 +18,7 @@ const downloadDocument = async (
   apiToken: string
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
-    let client;
+    let client: typeof https | typeof http;
     if (uri.startsWith('https')) {
       client = https;
     } else {
@@ -104,7 +104,7 @@ export const linkCollectionHandler = async (
       continue;
     }
 
-    let docInfo;
+    let docInfo: { mimeType: MimeType; [key: string]: unknown } | undefined;
     try {
       docInfo = await alkemioClient.document(documentId);
       if (!docInfo) {
@@ -123,7 +123,7 @@ export const linkCollectionHandler = async (
 
     const path = `/tmp/${documentId}`;
 
-    let download;
+    let download: boolean;
 
     try {
       download = await downloadDocument(link.uri, path, alkemioClient.apiToken);

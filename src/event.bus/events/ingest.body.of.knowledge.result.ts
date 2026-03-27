@@ -1,6 +1,6 @@
-import {
-  IngestionPurpose,
+import type {
   BodyOfKnowledgeType,
+  IngestionPurpose,
 } from './ingest.body.of.knowledge';
 
 export enum IngestionResult {
@@ -28,5 +28,5 @@ export class IngestBodyOfKnowledgeResult {
     ).getTime(),
     public result: IngestionResult = IngestionResult.SUCCESS,
     public error?: IngestError
-  ) { }
+  ) {}
 }

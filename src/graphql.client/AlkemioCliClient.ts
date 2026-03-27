@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { GraphQLClient } from 'graphql-request';
-import { Sdk, getSdk } from '../generated/graphql';
-import { Logger } from 'winston';
+
 import {
   AlkemioClient,
-  AlkemioClientConfig as BaseAlkemioClientConfig,
+  type AlkemioClientConfig as BaseAlkemioClientConfig,
   createConfigUsingEnvVars,
 } from '@alkemio/client-lib';
+import { GraphQLClient } from 'graphql-request';
+import type { Logger } from 'winston';
+import { getSdk, type Sdk } from '../generated/graphql';
 import logger from '../logger';
 
 interface AlkemioClientConfig extends BaseAlkemioClientConfig {
@@ -60,7 +61,7 @@ export class AlkemioCliClient {
   async logUser() {
     const userResponse = await this.sdkClient.me();
     this.logger.info(
-      `Authenticated user: '${userResponse.data.me.user?.profile.displayName}'`
+      `Authenticated user: '${userResponse.data.me.user?.profile?.displayName}'`
     );
   }
 

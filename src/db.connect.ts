@@ -14,11 +14,18 @@ export const dbConnect = () => {
     throw new Error('VECTOR_DB_HOST and VECTOR_DB_PORT must be provided');
   }
 
+  const parsedPort = Number(port);
+  if (!Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+    throw new Error(
+      `VECTOR_DB_PORT must be a valid port number (1-65535), got: ${port}`
+    );
+  }
+
   const client = new ChromaClient({
-    path: `http://${process.env.VECTOR_DB_HOST}:${process.env.VECTOR_DB_PORT}`,
-    auth: {
-      credentials,
-      provider: 'basic',
+    host,
+    port: parsedPort,
+    headers: {
+      Authorization: `Bearer ${credentials}`,
     },
   });
 

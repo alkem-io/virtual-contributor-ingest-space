@@ -1,4 +1,4 @@
-query spaceIngest($spaceID: UUID!){
+query spaceIngest($spaceID: UUID!) {
   lookup {
     space(ID: $spaceID) {
       ...SpaceIngest

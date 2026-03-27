@@ -18,6 +18,8 @@ dist
 
 # Tests (not needed for image build)
 test
+coverage
+vitest.config.ts
 
 # Docs
 README.md

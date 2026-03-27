@@ -8,4 +8,5 @@ dist
 secrets/*.json
 .idea
 .vscode
-
+.claude/
+coverage/

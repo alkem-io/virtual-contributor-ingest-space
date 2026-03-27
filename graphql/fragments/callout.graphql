@@ -11,17 +11,9 @@ fragment CalloutFields on Callout {
     messagesCount
     messages {
       sender {
-        ... on User {
-          profile {
-            url
-            displayName
-          }
-        }
-        ... on VirtualContributor {
-          profile {
-            url
-            displayName
-          }
+        profile {
+          url
+          displayName
         }
       }
       message
